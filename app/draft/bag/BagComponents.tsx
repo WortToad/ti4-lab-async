@@ -149,7 +149,7 @@ function UnitDetails({
   return (
     <Stack gap="sm">
       <Group gap="sm">
-        <UnitSymbol unit={unit.type} size={56} />
+        <UnitSymbol unit={unit.type} />
         <Text size="sm" fw={600}>
           {unitLabel(unit.type)}
         </Text>
@@ -235,7 +235,7 @@ export function BagItemCard({
       <Group
         gap="sm"
         wrap="nowrap"
-        align="flex-start"
+        align="center"
         className={classes.header}
       >
         <Box className={classes.icon}>
