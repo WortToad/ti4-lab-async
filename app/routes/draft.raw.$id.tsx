@@ -348,7 +348,7 @@ function RawGame({
         </Paper>
         {!controlled && draft.phase !== "complete" && (
           <Text size="sm" c="dimmed">
-            Join an available slot above, or rejoin with your UUID, to see your
+            Join the lobby above, or rejoin with your UUID, to see your
             private hand and make choices. Spectators can watch the shared map.
           </Text>
         )}

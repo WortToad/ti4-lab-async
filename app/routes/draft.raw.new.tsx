@@ -138,7 +138,7 @@ export default function RawNew() {
             <NumberInput
               name="playerCount"
               label="Player slots"
-              description="Share one lobby link. Each player claims a slot and sets their name before the admin starts."
+              description="Share one lobby link. Each player enters their name and joins before the admin starts."
               value={count}
               onChange={(value) =>
                 setCount(typeof value === "number" ? value : 0)
@@ -189,9 +189,9 @@ export default function RawNew() {
               }
             />
             <Alert color="blue" title="One lobby link for everyone">
-              Share the lobby link. Players choose a free slot, enter their
-              name, and save their recovery UUID. The host starts once everyone
-              has joined. Seating and cards stay hidden until then. Admin
+              Share the lobby link. Players enter their name, join, and save
+              their recovery UUID. The host starts once everyone has joined.
+              Seating and cards stay hidden until then. Admin
               recovery controls include undo, checkpoints, and private save
               files; only your own hidden hands are visible when you also join
               as a player.

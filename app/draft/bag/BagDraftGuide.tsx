@@ -36,7 +36,7 @@ export function BagDraftGuide({
   const stages = [
     {
       title: "Join the lobby",
-      text: "Choose an open slot, enter your name and save your recovery UUID. The admin starts once everyone has joined.",
+      text: "Enter your name to join, then save your recovery UUID. The admin starts once everyone has joined.",
     },
     {
       title: "Collect from passing bags",

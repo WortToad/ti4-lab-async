@@ -67,12 +67,12 @@ async function joinedRoom() {
   const first = await service.mutateBaseLobby(
     created.id,
     await request(created.id),
-    { type: "join", playerId: 0, name: "Alice" },
+    { type: "join", name: "Alice" },
   );
   const second = await service.mutateBaseLobby(
     created.id,
     await request(created.id),
-    { type: "join", playerId: 1, name: "Bob" },
+    { type: "join", name: "Bob" },
   );
   await service.mutateBaseLobby(created.id, admin, { type: "start" });
   return {
@@ -84,20 +84,20 @@ async function joinedRoom() {
 }
 
 describe("managed base draft lobbies", () => {
-  it("lets separate players claim distinct free slots from the same loaded lobby revision", async () => {
+  it("automatically assigns separate players from the same loaded lobby revision without changing draft order", async () => {
     const room = await drafts.createDraft(fixture());
     const anonymous = await request(room.id);
     const joined = await Promise.all([
       service.mutateBaseLobby(
         room.id,
         anonymous,
-        { type: "join", playerId: 0, name: "Alice" },
+        { type: "join", name: "Alice" },
         0,
       ),
       service.mutateBaseLobby(
         room.id,
         anonymous,
-        { type: "join", playerId: 1, name: "Bob" },
+        { type: "join", name: "Bob" },
         0,
       ),
     ]);
@@ -107,6 +107,13 @@ describe("managed base draft lobbies", () => {
     expect(
       service.getBaseLobby(room.id)!.slots.every((slot) => !!slot.uuid),
     ).toBe(true);
+    expect(new Set(joined.map((result) => result.issued!.uuid)).size).toBe(2);
+    const saved = JSON.parse((await drafts.draftById(room.id)).data as string);
+    expect(saved.players).toEqual([
+      { id: 1, name: "Bob" },
+      { id: 0, name: "Alice" },
+    ]);
+    expect(saved.pickOrder).toEqual(fixture().pickOrder);
     expect(
       (
         await service.mutateBaseLobby(
@@ -118,7 +125,7 @@ describe("managed base draft lobbies", () => {
       ).issued?.uuid,
     ).toBe(joined[0].issued!.uuid);
   });
-  it("creates a hidden waiting lobby with ordered non-seating slots and requires all joins", async () => {
+  it("creates a hidden waiting lobby and requires every player to join", async () => {
     const created = await drafts.createDraft(fixture());
     const spectator = await request(created.id);
     const lobby = service.getBaseLobby(created.id)!;
@@ -134,11 +141,26 @@ describe("managed base draft lobbies", () => {
     await expect(
       service.mutateBaseLobby(created.id, host, { type: "start" }),
     ).rejects.toThrow(/Every player/);
+    await service.mutateBaseLobby(created.id, spectator, {
+      type: "join",
+      name: "Alice",
+    });
+    await expect(
+      service.mutateBaseLobby(created.id, host, { type: "start" }),
+    ).rejects.toThrow(/Every player/);
+  });
+
+  it("allows only one concurrent join for the final place and rejects joins when full", async () => {
+    const created = await drafts.createDraft(fixture());
+    const spectator = await request(created.id);
+    await service.mutateBaseLobby(created.id, spectator, {
+      type: "join",
+      name: "Alice",
+    });
     const results = await Promise.allSettled(
-      ["Alice", "Mallory"].map(async (name) =>
+      ["Bob", "Mallory"].map(async (name) =>
         service.mutateBaseLobby(created.id, spectator, {
           type: "join",
-          playerId: 0,
           name,
         }),
       ),
@@ -147,9 +169,40 @@ describe("managed base draft lobbies", () => {
       results.filter((result) => result.status === "fulfilled"),
     ).toHaveLength(1);
     expect(
-      service.getBaseLobby(created.id)!.slots.find((slot) => slot.id === 0)!
-        .name,
-    ).toBe("Alice");
+      results.find((result) => result.status === "rejected"),
+    ).toMatchObject({
+      reason: new Error("This lobby is full."),
+    });
+    expect(
+      service.getBaseLobby(created.id)!.slots.map((slot) => slot.name),
+    ).toEqual(["Bob", "Alice"]);
+    await expect(
+      service.mutateBaseLobby(created.id, spectator, {
+        type: "join",
+        name: "Charlie",
+      }),
+    ).rejects.toThrow(/lobby is full/);
+    expect(service.getBaseLobby(created.id)!.revision).toBe(2);
+  });
+
+  it("does not assign another place to an already joined player", async () => {
+    const created = await drafts.createDraft(fixture());
+    const joined = await service.mutateBaseLobby(
+      created.id,
+      await request(created.id),
+      { type: "join", name: "Alice" },
+    );
+    await expect(
+      service.mutateBaseLobby(
+        created.id,
+        await request(created.id, joined.issued!.uuid),
+        { type: "join", name: "Other Alice" },
+      ),
+    ).rejects.toThrow(/already joined/);
+    expect(
+      service.getBaseLobby(created.id)!.slots.filter((slot) => slot.uuid),
+    ).toEqual([{ id: 0, name: "Alice", uuid: joined.issued!.uuid }]);
+    expect(service.getBaseLobby(created.id)!.revision).toBe(1);
   });
 
   it("supports admin and player identity together, global UUID recovery, and slot ownership", async () => {
@@ -265,6 +318,22 @@ describe("managed base draft lobbies", () => {
 
   it("replaces disconnected players without losing picks and invalidates old UUIDs", async () => {
     const room = await joinedRoom();
+    for (const playerId of [0, 1]) {
+      const before = await drafts.draftById(room.id);
+      const next = sync.applyBaseSelection(
+        JSON.parse(before.data as string),
+        {
+          type: "SELECT_FACTION",
+          playerId,
+          factionId: playerId === 0 ? "sol" : "arborec",
+        },
+        playerId,
+      );
+      await drafts.updateDraft(room.id, next, before.data as string);
+    }
+    const beforeReplacement = JSON.parse(
+      (await drafts.draftById(room.id)).data as string,
+    ) as Draft;
     await service.mutateBaseLobby(room.id, room.admin, {
       type: "release",
       playerId: 1,
@@ -277,7 +346,7 @@ describe("managed base draft lobbies", () => {
     const replacement = await service.mutateBaseLobby(
       room.id,
       await request(room.id),
-      { type: "join", playerId: 1, name: "Charlie" },
+      { type: "join", name: "Charlie" },
     );
     await service.mutateBaseLobby(room.id, room.admin, { type: "resume" });
     expect(
@@ -288,6 +357,14 @@ describe("managed base draft lobbies", () => {
         )
       ).playerId,
     ).toBe(1);
+    const afterReplacement = JSON.parse(
+      (await drafts.draftById(room.id)).data as string,
+    ) as Draft;
+    expect(afterReplacement.selections).toEqual(beforeReplacement.selections);
+    expect(afterReplacement.pickOrder).toEqual(beforeReplacement.pickOrder);
+    expect(
+      afterReplacement.players.find((player) => player.id === 1)?.name,
+    ).toBe("Charlie");
     await service.mutateBaseLobby(room.id, room.admin, {
       type: "rotate",
       playerId: 1,

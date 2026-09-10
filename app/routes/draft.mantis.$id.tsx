@@ -283,21 +283,35 @@ export async function action({ request, params }: ActionFunctionArgs) {
         "Another player changed the draft. Wait for the latest state and try again.",
       );
     if (intent === "join") {
-      if (!record.room.draft.players.some((p) => p.id === playerId))
-        throw new Error("Choose an available lobby slot.");
-      if (record.room.claims[playerId])
-        throw new Error(
-          "That slot has already been taken. Use your UUID to rejoin it.",
-        );
-      if (Object.values(record.room.claims).includes(hash))
-        throw new Error("You already have a slot in this lobby.");
-      const name = playerName(form.get("name"));
-      const token = newMantisToken();
-      record.room.claims[playerId] = mantisTokenHash(token);
-      record.room.lobby.seatKeys[playerId] = token;
-      renamePlayer(record.room, playerId, name);
-      issuedPlayerToken = token;
-    } else if (intent === "pick") {
+      issuedPlayerToken = db.transaction(
+        () => {
+          const current = getMantisRoom(record.id);
+          if (Object.values(current.room.claims).includes(hash))
+            throw new Error("You already have a slot in this lobby.");
+          const player = [...current.room.draft.players]
+            .sort((a, b) => a.id - b.id)
+            .find((p) => !current.room.claims[p.id]);
+          if (!player) throw new Error("This lobby is full.");
+          const name = playerName(form.get("name"));
+          const token = newMantisToken();
+          current.room.claims[player.id] = mantisTokenHash(token);
+          current.room.lobby.seatKeys[player.id] = token;
+          renamePlayer(current.room, player.id, name);
+          saveMantisRoom(current.id, current.revision, current.room);
+          if (current.room.draft.bagDraftId)
+            syncBagMapIdentity(
+              current.room.draft.bagDraftId,
+              current.id,
+              player.id,
+              { uuid: token, name },
+            );
+          return token;
+        },
+        { behavior: "immediate" },
+      );
+      return success();
+    }
+    if (intent === "pick") {
       if (!hash || record.room.claims[playerId] !== hash)
         throw new Error("Join as this player before making a pick.");
       if (!record.room.lobby.started)
@@ -420,7 +434,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
         saveMantisRoom(record.id, record.revision, record.room);
         if (
           record.room.draft.bagDraftId &&
-          ["join", "release", "rotate", "rename"].includes(intent)
+          ["release", "rotate", "rename"].includes(intent)
         ) {
           syncBagMapIdentity(
             record.room.draft.bagDraftId,

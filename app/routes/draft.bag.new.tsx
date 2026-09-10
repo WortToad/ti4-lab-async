@@ -200,8 +200,8 @@ export default function NewBagDraft() {
         <Title order={1}>Bag &amp; Franken drafts</Title>
         <Text c="dimmed" mt="xs">
           Build your own faction by choosing components from bags that pass
-          around the table. Share one lobby link; players choose their own slots
-          and save a recovery UUID before the admin starts the draft.
+          around the table. Share one lobby link; players enter their name to
+          join and save a recovery UUID before the admin starts the draft.
         </Text>
       </div>
       <Form method="post">
@@ -516,10 +516,11 @@ export default function NewBagDraft() {
           </Accordion>
           <Alert color="blue" title="Playing with friends">
             Create the lobby, save your admin recovery UUID, and share its link
-            with everyone. Join a slot yourself if you are playing. Each player
-            saves their own UUID; this browser will also remember it. Start once
-            every slot is filled. The admin can pause, restore turns or rounds,
-            and export recovery saves without revealing other players’ hands.
+            with everyone. Enter your name and join if you are playing. Each
+            player saves their own UUID; this browser will also remember it.
+            Start once everyone has joined. The admin can pause, restore turns
+            or rounds, and export recovery saves without revealing other
+            players’ hands.
           </Alert>
           <Button
             type="submit"

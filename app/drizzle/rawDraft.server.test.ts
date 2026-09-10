@@ -61,7 +61,6 @@ async function started(mode: RawSettings["mode"] = "base") {
   for (let id = 0; id < 4; id++) {
     const joined = await post(room.id, {
       intent: "join",
-      playerId: String(id),
       name: `Player ${id + 1}`,
     });
     expect(joined.data.error).toBeNull();
@@ -94,10 +93,10 @@ test("new lobbies conceal the complete draft until all players join and admin st
     (await post(id, { intent: "start", revision: "0" })).data.error,
   ).toContain("Only the admin");
   const claims = await Promise.all([
-    post(id, { intent: "join", playerId: "0", name: "Alice" }),
-    post(id, { intent: "join", playerId: "0", name: "Imposter" }),
+    post(id, { intent: "join", name: "Alice" }),
+    post(id, { intent: "join", name: "Bob" }),
   ]);
-  expect(claims.filter((r) => r.data.success)).toHaveLength(1);
+  expect(claims.map((r) => r.data.error)).toEqual([null, null]);
   const cookie = cookieHeader(
     new Headers(claims[0].init?.headers).get("Set-Cookie")!,
   );
@@ -106,13 +105,8 @@ test("new lobbies conceal the complete draft until all players join and admin st
   expect(own.ownPlayers).toEqual([0]);
   expect(own.lobby.ownUuid).toMatch(/^[a-f0-9-]{36}$/);
   expect(
-    (
-      await post(
-        id,
-        { intent: "join", playerId: "1", name: "Alice again" },
-        cookie,
-      )
-    ).data.error,
+    (await post(id, { intent: "join", name: "Alice again" }, cookie)).data
+      .error,
   ).toContain("already have a slot");
   expect(
     (
@@ -120,7 +114,7 @@ test("new lobbies conceal the complete draft until all players join and admin st
         id,
         {
           intent: "pick",
-          revision: "1",
+          revision: "2",
           playerId: "0",
           action: JSON.stringify({
             type: "chooseFaction",
@@ -150,6 +144,41 @@ test("new lobbies conceal the complete draft until all players join and admin st
     own.lobby.ownUuid,
   );
   expect((await view(id)).data.lobby.slots[0].uuid).toBeUndefined();
+});
+
+test("name-only joins assign distinct players until the lobby is full", async () => {
+  const { id } = service.createRawRoom(settings);
+  expect((await post(id, { intent: "join", name: " " })).data.error).toContain(
+    "Enter a name",
+  );
+  expect(service.getRawRoom(id).revision).toBe(0);
+  const names = ["Alice", "Bob", "Carol", "Dan", "Eve"];
+  const results = await Promise.all(
+    names.map((name) => post(id, { intent: "join", name, revision: "0" })),
+  );
+  expect(results.map((result) => result.data.error)).toEqual([
+    null,
+    null,
+    null,
+    null,
+    "This lobby is full.",
+  ]);
+  const record = service.getRawRoom(id);
+  expect(record.revision).toBe(4);
+  expect(
+    record.room.draft.settings.players.map((player) => player.name),
+  ).toEqual(names.slice(0, 4));
+  expect(new Set(Object.values(record.room.claims)).size).toBe(4);
+  for (const [playerId, result] of results.slice(0, 4).entries()) {
+    const cookie = cookieHeader(
+      new Headers(result.init?.headers).get("Set-Cookie")!,
+    );
+    expect((await view(id, cookie)).data.ownPlayers).toEqual([playerId]);
+    expect(
+      (await post(id, { intent: "join", name: "Again" }, cookie)).data.error,
+    ).toContain("already have a slot");
+  }
+  expect(service.getRawRoom(id).revision).toBe(4);
 });
 
 test("player and admin cookies coexist and admin never receives other hidden hands", async () => {
@@ -256,19 +285,19 @@ test("admin saves are encrypted, restore paused, preserve identities and reject 
 
 test("releasing and rotating a UUID revoke former device access and never undo identity changes", async () => {
   const room = await started();
-  const before = (await view(room.id, room.cookies[0])).data.lobby.ownUuid!;
+  const before = (await view(room.id, room.cookies[2])).data.lobby.ownUuid!;
   expect(
     (
       await post(
         room.id,
-        { intent: "rotate", playerId: "0", revision: "5" },
+        { intent: "rotate", playerId: "2", revision: "5" },
         room.admin,
       )
     ).data.error,
   ).toBeNull();
   expect(service.findRawRecovery(before)).toBeUndefined();
-  expect((await view(room.id, room.cookies[0])).data.ownPlayers).toEqual([]);
-  const after = (await view(room.id, room.admin)).data.lobby.slots[0].uuid!;
+  expect((await view(room.id, room.cookies[2])).data.ownPlayers).toEqual([]);
+  const after = (await view(room.id, room.admin)).data.lobby.slots[2].uuid!;
   expect(after).not.toBe(before);
   expect(
     (await post(room.id, { intent: "recover", uuid: before })).data.error,
@@ -277,7 +306,7 @@ test("releasing and rotating a UUID revoke former device access and never undo i
     (
       await post(
         room.id,
-        { intent: "release", playerId: "0", revision: "6" },
+        { intent: "release", playerId: "2", revision: "6" },
         room.admin,
       )
     ).data.error,
@@ -291,11 +320,14 @@ test("releasing and rotating a UUID revoke former device access and never undo i
     (
       await post(room.id, {
         intent: "join",
-        playerId: "0",
         name: "Replacement",
       })
     ).data.error,
   ).toBeNull();
+  expect((await view(room.id, room.admin)).data.lobby.slots[2]).toMatchObject({
+    name: "Replacement",
+    claimed: true,
+  });
   expect(
     (await post(room.id, { intent: "resume", revision: "8" }, room.admin)).data
       .error,

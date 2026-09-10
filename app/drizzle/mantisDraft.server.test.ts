@@ -75,7 +75,6 @@ async function joinAll(id: string) {
   for (let playerId = 0; playerId < 4; playerId++) {
     const joined = await post(id, {
       intent: "join",
-      playerId: String(playerId),
       name: `Player ${playerId}`,
     });
     expect(joined.data.error).toBeNull();
@@ -95,14 +94,13 @@ test("new rooms conceal all draft data until every slot joins and the admin star
   expect((await post(id, { intent: "start" }, admin)).data.error).toContain(
     "Every slot",
   );
-  expect(
-    (await post(id, { intent: "join", playerId: "0", name: " " })).data.error,
-  ).toContain("Enter a name");
+  expect((await post(id, { intent: "join", name: " " })).data.error).toContain(
+    "Enter a name",
+  );
   const keys = await joinAll(id);
   expect(
-    (await post(id, { intent: "join", playerId: "0", name: "Intruder" })).data
-      .error,
-  ).toContain("taken");
+    (await post(id, { intent: "join", name: "Intruder" })).data.error,
+  ).toContain("full");
   expect((await post(id, { intent: "start" })).data.error).toContain(
     "Only the draft host",
   );
@@ -120,7 +118,7 @@ test("UUID restores a player on a new device and admin can also own their separa
   const legacyHost = await cookies(id, token);
   const joined = await post(
     id,
-    { intent: "join", playerId: "0", name: "Admin player" },
+    { intent: "join", name: "Admin player" },
     legacyHost,
   );
   expect(joined.data.error).toBeNull();
@@ -134,6 +132,16 @@ test("UUID restores a player on a new device and admin can also own their separa
   expect(own.ownPlayers).toEqual([0]);
   expect(own.isHost).toBe(true);
   expect(own.lobby.ownUuid).toBe(uuid);
+  expect(
+    (
+      await post(
+        id,
+        { intent: "join", name: "Admin again" },
+        await cookies(id, uuid, token),
+      )
+    ).data.error,
+  ).toContain("already have a slot");
+  expect(service.getMantisRoom(id).revision).toBe(1);
   expect(service.findMantisRecovery(uuid)).toMatchObject({
     id,
     playerId: 0,
@@ -385,8 +393,7 @@ test("replacing an active player preserves picks, pauses play and needs a full l
     "Fill every released slot",
   );
   expect(
-    (await post(id, { intent: "join", playerId: "0", name: "Replacement" }))
-      .data.error,
+    (await post(id, { intent: "join", name: "Replacement" })).data.error,
   ).toBeNull();
   const replacement = service.getMantisRoom(id).room.lobby.seatKeys[0];
   expect(replacement).not.toBe(keys[0]);
@@ -406,9 +413,7 @@ test("map UUID and name repairs stay synchronized with the original bag lobby", 
   });
   const seatKeys: Record<number, string> = {};
   for (const player of settings.players)
-    seatKeys[player.id] = (
-      await bag.joinBagDraft(parent.id, player.id, player.name)
-    ).uuid;
+    seatKeys[player.id] = (await bag.joinBagDraft(parent.id, player.name)).uuid;
   const initial = service.createMantisRoom(settings);
   const draft = service.getMantisRoom(initial.id).room.draft;
   draft.bagDraftId = parent.id;
@@ -457,42 +462,69 @@ test("map UUID and name repairs stay synchronized with the original bag lobby", 
     JSON.parse(renamed.data).seats.find((p: { id: number }) => p.id === 0).name,
   ).toBe("Map player");
   expect(
-    (await post(map.id, { intent: "release", playerId: "0" }, admin)).data
+    (await post(map.id, { intent: "release", playerId: "2" }, admin)).data
       .error,
   ).toBeNull();
-  expect(bag.findBagLobby(uuid)).toBeUndefined();
+  expect(bag.findBagLobby(seatKeys[2])).toBeUndefined();
   expect(
-    (await post(map.id, { intent: "join", playerId: "0", name: "Replacement" }))
-      .data.error,
+    (await post(map.id, { intent: "join", name: "Replacement" })).data.error,
   ).toBeNull();
+  const replacement = service.getMantisRoom(map.id).room.lobby.seatKeys[2];
+  expect(bag.findBagLobby(replacement)).toMatchObject({
+    id: parent.id,
+    role: "player",
+  });
+  expect((await bag.getBagMapAccess(parent.id, replacement))?.token).toBe(
+    replacement,
+  );
+  const replaced = database
+    .prepare("SELECT data FROM bagDrafts WHERE id = ?")
+    .get(parent.id) as { data: string };
   expect(
-    bag.findBagLobby(service.getMantisRoom(map.id).room.lobby.seatKeys[0]),
-  ).toMatchObject({ id: parent.id, role: "player" });
+    JSON.parse(replaced.data).seats.find((p: { id: number }) => p.id === 2)
+      .name,
+  ).toBe("Replacement");
+  expect(service.getMantisRoom(map.id).room.lobby.seatKeys[0]).toBe(uuid);
 });
 
-test("players can claim different slots from the same original lobby revision", async () => {
+test("name-only joins assign different players from the same original lobby revision", async () => {
   const { id, token } = service.createMantisRoom(settings);
-  const results = await Promise.all([
-    post(id, { intent: "join", playerId: "0", name: "First", revision: "0" }),
-    post(id, { intent: "join", playerId: "1", name: "Second", revision: "0" }),
+  const names = ["First", "Second", "Third", "Fourth", "Fifth"];
+  const results = await Promise.all(
+    names.map((name) => post(id, { intent: "join", name, revision: "0" })),
+  );
+  expect(results.map((result) => result.data.error)).toEqual([
+    null,
+    null,
+    null,
+    null,
+    "This lobby is full.",
   ]);
-  expect(results.map((result) => result.data.error)).toEqual([null, null]);
   const room = service.getMantisRoom(id);
-  expect(room.revision).toBe(2);
-  expect(Object.keys(room.room.claims)).toEqual(["0", "1"]);
+  expect(room.revision).toBe(4);
+  expect(Object.keys(room.room.claims)).toEqual(["0", "1", "2", "3"]);
+  expect(new Set(Object.values(room.room.claims)).size).toBe(4);
   expect(
-    room.room.draft.players.slice(0, 2).map((player) => player.name),
-  ).toEqual(["First", "Second"]);
+    [...room.room.draft.players]
+      .sort((a, b) => a.id - b.id)
+      .map((player) => player.name),
+  ).toEqual(names.slice(0, 4));
+  for (const [playerId, result] of results.slice(0, 4).entries()) {
+    const cookie = new Headers(result.init?.headers)
+      .get("Set-Cookie")!
+      .split(";")[0];
+    expect((await get(id, cookie)).data.ownPlayers).toEqual([playerId]);
+  }
   expect(
     (
-      await post(id, {
-        intent: "join",
-        playerId: "0",
-        name: "Intruder",
-        revision: "0",
-      })
+      await post(
+        id,
+        { intent: "join", name: "First again", revision: "0" },
+        await cookies(id, room.room.lobby.seatKeys[0]),
+      )
     ).data.error,
-  ).toContain("taken");
+  ).toContain("already have a slot");
+  expect(service.getMantisRoom(id).revision).toBe(4);
   expect(
     (
       await post(

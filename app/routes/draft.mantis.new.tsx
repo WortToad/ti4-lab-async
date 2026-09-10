@@ -101,10 +101,9 @@ export default function MantisNew() {
           </Text>
           {result?.error && <Alert color="red">{result.error}</Alert>}
           <Alert color="blue" title="Create a shared lobby">
-            Everyone uses the same link, chooses a free slot, and enters their
-            own name. Each player receives a recovery UUID. Draft order, seats,
-            and choices stay hidden until everyone has joined and you start the
-            draft.
+            Everyone uses the same link and enters their name to join. Each
+            player receives a recovery UUID. Draft order, seats, and choices
+            stay hidden until everyone has joined and you start the draft.
           </Alert>
           <NumberInput
             name="playerCount"
@@ -121,7 +120,7 @@ export default function MantisNew() {
           />
           <Checkbox
             name="staticOrder"
-            label="Use lobby slot order for the snake draft"
+            label="Use join order for the snake draft"
             description="Otherwise the initial draft order is shuffled. Speaker positions are chosen during the draft."
           />
           <Group>

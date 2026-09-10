@@ -48,7 +48,7 @@ describe("persistent private bag drafts", () => {
         room.adminToken,
       ),
     ).rejects.toThrow(/Every slot/);
-    const { uuid } = await service.joinBagDraft(room.id, 0, " Alice ");
+    const { uuid } = await service.joinBagDraft(room.id, " Alice ");
     expect(uuid).toMatch(/^[a-f0-9-]{36}$/);
     expect(await service.recoverBagDraft(room.id, uuid)).toEqual({
       role: "player",
@@ -62,11 +62,8 @@ describe("persistent private bag drafts", () => {
     expect(waiting.lobby.ownUuid).toBe(uuid);
     expect(waiting.lobby.slots[0].name).toBe("Alice");
     expect(JSON.stringify(waiting)).not.toContain("TECH:");
-    await expect(service.joinBagDraft(room.id, 0, "Eve")).rejects.toThrow(
-      /taken/,
-    );
     await expect(
-      service.joinBagDraft(room.id, 1, "Alice again", uuid),
+      service.joinBagDraft(room.id, "Alice again", uuid),
     ).rejects.toThrow(/already have a slot/);
     await expect(
       service.mutateBagDraft(room.id, uuid, {
@@ -75,7 +72,10 @@ describe("persistent private bag drafts", () => {
         itemIds: [],
       }),
     ).rejects.toThrow(/admin to start/);
-    await service.joinBagDraft(room.id, 1, "Bob");
+    await service.joinBagDraft(room.id, "Bob");
+    await expect(service.joinBagDraft(room.id, "Eve")).rejects.toThrow(
+      /lobby is full/,
+    );
     const full = await service.getBagDraftView(room.id, uuid, room.adminToken);
     const started = await service.mutateBagDraft(
       room.id,
@@ -109,20 +109,31 @@ describe("persistent private bag drafts", () => {
     ).rejects.toMatchObject({ status: 403 });
   });
 
-  it("claims a contested slot once, exchanges recovery UUIDs into role cookies, and clears revoked access", async () => {
+  it("assigns concurrent joins to different seats, exchanges recovery UUIDs into role cookies, and clears revoked access", async () => {
     const room = await service.createBagDraft({
       variant: "inaugural_splice",
       players: ["Slot 1", "Slot 2"],
     });
     const attempts = await Promise.allSettled([
-      service.joinBagDraft(room.id, 0, "Alice"),
-      service.joinBagDraft(room.id, 0, "Bob"),
+      service.joinBagDraft(room.id, "Alice"),
+      service.joinBagDraft(room.id, "Bob"),
+      service.joinBagDraft(room.id, "Carol"),
     ]);
     expect(
       attempts.filter((attempt) => attempt.status === "fulfilled"),
-    ).toHaveLength(1);
-    const key = (await service.getBagDraftView(room.id, room.adminToken)).lobby
-      .slots[0].uuid!;
+    ).toHaveLength(2);
+    expect(attempts[2]).toMatchObject({
+      status: "rejected",
+      reason: new Error("This lobby is full."),
+    });
+    const joined = await service.getBagDraftView(room.id, room.adminToken);
+    expect(joined.lobby.slots.map((slot) => slot.name)).toEqual([
+      "Alice",
+      "Bob",
+    ]);
+    expect(new Set(joined.lobby.slots.map((slot) => slot.uuid)).size).toBe(2);
+    expect(joined.revision).toBe(2);
+    const key = joined.lobby.slots[0].uuid!;
     const route = await import("~/routes/draft.bag.$id");
     const result = await route.action({
       request: new Request(`http://localhost/draft/bag/${room.id}`, {
@@ -181,6 +192,73 @@ describe("persistent private bag drafts", () => {
       throw new Error("Expected credential exchange redirect");
     expect(legacy.headers.get("Location")).toBe(`/draft/bag/${room.id}`);
     expect(legacy.headers.get("Set-Cookie")).toContain(`bag-admin-${room.id}`);
+  });
+
+  it("joins through the route with only a name and saves the assigned player access", async () => {
+    const room = await service.createBagDraft({
+      variant: "inaugural_splice",
+      players: ["Slot 1", "Slot 2"],
+    });
+    const route = await import("~/routes/draft.bag.$id");
+    const result = await route.action({
+      request: new Request(`http://localhost/draft/bag/${room.id}`, {
+        method: "POST",
+        body: new URLSearchParams({
+          operation: JSON.stringify({ action: "join", name: " Alice " }),
+        }),
+      }),
+      params: { id: room.id },
+      context: {},
+      unstable_pattern: "/draft/bag/:id",
+    });
+    expect(result.data.error).toBeNull();
+    const cookie = new Headers(result.init?.headers).get("Set-Cookie")!;
+    const key = await service.readBagToken(
+      room.id,
+      new Request("http://localhost", {
+        headers: { Cookie: cookie.split(";")[0] },
+      }),
+    );
+    expect(key).toBeTruthy();
+    const view = await service.getBagDraftView(room.id, key);
+    expect(view.viewer.playerId).toBe(0);
+    expect(view.lobby.slots[0]).toMatchObject({
+      name: "Alice",
+      claimed: true,
+    });
+    expect(view.lobby.ownUuid).toBe(key);
+  });
+
+  it("automatically fills a released seat while preserving its picks and paused draft", async () => {
+    const room = await startedFixture();
+    const initial = await service.getBagDraftView(room.id, room.keys[0]);
+    const picked = await service.mutateBagDraft(room.id, room.keys[0], {
+      action: "pick",
+      round: 0,
+      itemIds: [initial.privateSeat!.draftableItemIds[0]],
+    });
+    const released = await service.mutateBagDraft(
+      room.id,
+      undefined,
+      { action: "release", playerId: 0, revision: picked.revision },
+      room.adminToken,
+    );
+    expect(released.lobby.paused).toBe(true);
+    const { uuid } = await service.joinBagDraft(room.id, "Carol");
+    const replacement = await service.getBagDraftView(room.id, uuid);
+    expect(replacement.viewer.playerId).toBe(0);
+    expect(replacement.lobby.slots[0]).toMatchObject({
+      name: "Carol",
+      claimed: true,
+    });
+    expect(replacement.privateSeat!.hand).toEqual(picked.privateSeat!.hand);
+    expect(replacement.privateSeat!.roundPicks).toEqual(
+      picked.privateSeat!.roundPicks,
+    );
+    expect(replacement.lobby.paused).toBe(true);
+    await expect(
+      service.getBagDraftView(room.id, room.keys[0]),
+    ).rejects.toMatchObject({ status: 403 });
   });
 
   it("restores encrypted checkpoints and last actions without exposing private picks", async () => {
@@ -557,8 +635,8 @@ async function startedFixture(
     shufflePlayers: false,
   });
   const keys: string[] = [];
-  for (const [index, name] of players.entries())
-    keys.push((await service.joinBagDraft(room.id, index, name)).uuid);
+  for (const name of players)
+    keys.push((await service.joinBagDraft(room.id, name)).uuid);
   const lobby = await service.getBagDraftView(room.id);
   await service.mutateBagDraft(
     room.id,

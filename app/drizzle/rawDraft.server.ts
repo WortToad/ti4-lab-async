@@ -366,18 +366,16 @@ export async function actRawRoom({ request, params }: ActionFunctionArgs) {
             throw new Error(
               "You already have a slot. Rejoin with your saved UUID.",
             );
-          const player = room.draft.players.find((p) => p.id === playerId);
-          if (!player) throw new Error("Choose an available slot.");
-          if (room.claims[playerId])
-            throw new Error(
-              "That slot has already been taken. Rejoin with your UUID or choose another slot.",
-            );
+          const player = [...room.draft.players]
+            .sort((a, b) => a.id - b.id)
+            .find((p) => !room.claims[p.id]);
+          if (!player) throw new Error("This lobby is full.");
           player.name = playerName(form.get("name"));
-          room.draft.settings.players.find((p) => p.id === playerId)!.name =
+          room.draft.settings.players.find((p) => p.id === player.id)!.name =
             player.name;
           token = newRawToken();
-          room.claims[playerId] = rawTokenHash(token);
-          room.lobby.seatKeys[playerId] = token;
+          room.claims[player.id] = rawTokenHash(token);
+          room.lobby.seatKeys[player.id] = token;
         } else if (intent === "pick") {
           if (!hash || room.claims[playerId] !== hash)
             throw new Error("Join as this player before making a pick.");

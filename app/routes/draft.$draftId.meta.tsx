@@ -20,7 +20,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     return data(
       {
         title: `${draftId} - TI4Toad lobby`,
-        description: "Join a slot and wait for the admin to start.",
+        description: "Enter your name to join and wait for the admin to start.",
         url: appUrl(`/draft/${draftId}`),
         type: "website",
         siteName: "TI4Toad",

@@ -28,9 +28,9 @@ The inaugural splice deals three abilities, two unit upgrades, and two genomes p
 
 ## Shared rooms and results
 
-Share the same lobby link with everyone. Each player chooses an available slot, enters their name, and receives a recovery UUID to copy or download. Slots identify players; the draft and seating remain hidden until everyone has joined and the admin starts. The browser remembers player and admin access separately through HTTP-only cookies and local storage. A saved UUID restores the same role from the lobby link or the main page on another device.
+Share the same lobby link with everyone. Each player enters their name to join and receives a recovery UUID to copy or download. An available player slot is assigned automatically; the draft and seating remain hidden until everyone has joined and the admin starts. The browser remembers player and admin access separately through HTTP-only cookies and local storage. A saved UUID restores the same role from the lobby link or the main page on another device.
 
-Each player sees their own private hands. Spectators and the admin see public choices and the map; admin access does not reveal other players' system tiles, reference cards, or unrevealed splice choices. An admin who is also playing joins their own slot.
+Each player sees their own private hands. Spectators and the admin see public choices and the map; admin access does not reveal other players' system tiles, reference cards, or unrevealed splice choices. An admin who is also playing enters their name and joins as a player.
 
 The admin can retrieve or replace player UUIDs, rename players, release slots for replacements, pause play, undo actions, and restore earlier checkpoints. Releasing an active slot pauses the draft until a replacement joins. Restored games pause for review and preserve current player names and recovery UUIDs. Save files are encrypted so the admin can export and import state without revealing private hands; a file can be imported into the same lobby that exported it. Updates check the room revision, and private responses disable caching.
 

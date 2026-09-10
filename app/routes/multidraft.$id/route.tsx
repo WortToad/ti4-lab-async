@@ -62,8 +62,8 @@ export default function MultidraftRoute() {
                 <SectionTitle title={urlName} />
               </a>
               <Text>
-                Open this lobby to claim a slot. Draft details will appear after
-                the admin starts.
+                Open this lobby and enter your name to join. Draft details will
+                appear after the admin starts.
               </Text>
             </Stack>
           );

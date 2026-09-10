@@ -134,11 +134,11 @@ export async function action({ params, request }: ActionFunctionArgs) {
     const form = await request.formData();
     const input = JSON.parse(String(form.get("operation") ?? "")) as
       | BagDraftAction
-      | { action: "join"; playerId: number; name: string }
+      | { action: "join"; name: string }
       | { action: "recover"; uuid: string }
       | { action: "exportState"; checkpointId?: string };
     if (input.action === "join") {
-      const { uuid } = await joinBagDraft(id, input.playerId, input.name, key);
+      const { uuid } = await joinBagDraft(id, input.name, key);
       headers.append("Set-Cookie", await bagCookie(id).serialize(uuid));
     } else if (input.action === "recover") {
       const uuid = input.uuid.trim().toLowerCase();
@@ -741,7 +741,7 @@ export default function BagDraftPage() {
   function submit(
     operation:
       | BagDraftAction
-      | { action: "join"; playerId: number; name: string }
+      | { action: "join"; name: string }
       | { action: "recover"; uuid: string }
       | { action: "exportState"; checkpointId?: string },
   ) {
@@ -757,7 +757,6 @@ export default function BagDraftPage() {
       case "join":
         submit({
           action: "join",
-          playerId: operation.playerId,
           name: operation.name,
         });
         break;
@@ -921,7 +920,7 @@ export default function BagDraftPage() {
               }
             >
               {view.viewer.isAdmin
-                ? "Join an open slot or recover your own UUID above if you are also playing. You can manage the draft here while other players’ hands stay private."
+                ? "Join the lobby or rejoin with your UUID above if you are also playing. You can manage the draft here while other players’ hands stay private."
                 : "This page updates automatically. Rejoin with your saved UUID above to see your own bag and make picks."}
             </Alert>
           )}

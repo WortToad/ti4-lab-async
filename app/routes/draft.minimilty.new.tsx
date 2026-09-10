@@ -70,7 +70,7 @@ export default function MiniMiltySetup() {
         {error && <Alert color="red">{error}</Alert>}
         <NumberInput
           label="Player slots"
-          description="Players choose a free slot and set their name in the shared lobby. The admin starts once everyone has joined."
+          description="Players enter their name to join the shared lobby. The admin starts once everyone has joined."
           value={playerCount}
           onChange={(value) =>
             setPlayerCount(typeof value === "number" ? value : 0)

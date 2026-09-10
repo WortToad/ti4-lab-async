@@ -93,7 +93,7 @@ async function fixture(start = true) {
     const result = await lobby.mutateBaseLobby(
       id,
       new Request("http://localhost"),
-      { type: "join", playerId: player.id, name: player.name },
+      { type: "join", name: player.name },
     );
     cookies.push(
       (await lobby.baseCookie(id).serialize(result.issued!.uuid)).split(";")[0],

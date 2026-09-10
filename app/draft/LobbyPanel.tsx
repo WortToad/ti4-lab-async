@@ -20,7 +20,7 @@ import type { LobbyView } from "./lobby";
 import { appUrl } from "~/utils/appUrl";
 
 export type LobbyOperation =
-  | { type: "join"; playerId: number; name: string }
+  | { type: "join"; name: string }
   | { type: "recover"; uuid: string }
   | { type: "start" | "pause" | "resume" | "undo" | "checkpoint" }
   | { type: "rename"; playerId: number; name: string }
@@ -109,7 +109,6 @@ export function LobbyPanel({
   exportState,
   onOperation,
 }: LobbyPanelProps) {
-  const [slot, setSlot] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [uuid, setUuid] = useState("");
   const [checkpointId, setCheckpointId] = useState<string | null>(null);
@@ -207,9 +206,8 @@ export function LobbyPanel({
         </Group>
         {!lobby.started && (
           <Alert title="Everyone joins here" color="blue">
-            Choose an available slot and enter your name. Slots identify
-            players; they do not reveal seating or draft order. Save your
-            recovery UUID, then wait for the admin to start.
+            Enter your name and join. Save your recovery UUID, then wait for the
+            admin to start. Seating and draft order stay hidden until then.
           </Alert>
         )}
         {lobby.paused && (
@@ -244,18 +242,17 @@ export function LobbyPanel({
             {lobby.slots.map((s) => (
               <Paper key={s.id} withBorder p="sm">
                 <Group justify="space-between">
-                  <Text fw={600}>{slotLabel(s.id)}</Text>
+                  <Text fw={600}>
+                    {s.claimed ? s.name : "Waiting for a player"}
+                  </Text>
                   <Badge color={s.claimed ? "green" : "gray"} variant="light">
                     {s.id === ownPlayerId
-                      ? "Your slot"
+                      ? "You"
                       : s.claimed
                         ? "Joined"
                         : "Available"}
                   </Badge>
                 </Group>
-                <Text size="sm">
-                  {s.claimed ? s.name : "Waiting for a player"}
-                </Text>
               </Paper>
             ))}
           </SimpleGrid>
@@ -264,36 +261,18 @@ export function LobbyPanel({
           <form
             onSubmit={(event) => {
               event.preventDefault();
-              if (slot !== null && name.trim())
+              if (!busy && !allJoined && name.trim())
                 onOperation({
                   type: "join",
-                  playerId: Number(slot),
                   name: name.trim(),
                 });
             }}
           >
             <Stack gap="sm">
               <Text fw={600}>
-                {isAdmin
-                  ? "Playing too? Join your own slot"
-                  : "Claim your slot"}
+                {isAdmin ? "Playing too? Join the lobby" : "Join the lobby"}
               </Text>
               <Group align="end">
-                <Select
-                  label="Available slot"
-                  placeholder="Choose a slot"
-                  data={lobby.slots
-                    .filter((s) => !s.claimed)
-                    .map((s) => ({
-                      value: String(s.id),
-                      label: slotLabel(s.id),
-                    }))}
-                  value={slot}
-                  onChange={setSlot}
-                  required
-                  style={{ flex: "1 1 180px" }}
-                  disabled={busy || allJoined}
-                />
                 <TextInput
                   label="Your name"
                   value={name}
@@ -306,7 +285,7 @@ export function LobbyPanel({
                 />
                 <Button
                   type="submit"
-                  disabled={busy || slot === null || !name.trim() || allJoined}
+                  disabled={busy || !name.trim() || allJoined}
                 >
                   Join lobby
                 </Button>
@@ -323,7 +302,7 @@ export function LobbyPanel({
               <Text size="sm">
                 {lobby.started
                   ? "Your player view appears below."
-                  : "You are ready. The admin can start once every slot is filled."}
+                  : "You are ready. The admin can start once everyone has joined."}
               </Text>
               {lobby.ownUuid && (
                 <RecoveryKey
@@ -402,8 +381,8 @@ export function LobbyPanel({
                   <Stack gap="md">
                     <Text size="sm">
                       Manage the lobby and repair mistakes here. These controls
-                      do not reveal private hands or unrevealed picks. Join your
-                      own slot above if you are also playing.
+                      do not reveal private hands or unrevealed picks. Join
+                      above if you are also playing.
                     </Text>
                     {lobby.adminUuid && (
                       <RecoveryKey
@@ -476,7 +455,7 @@ export function LobbyPanel({
                                   onClick={() =>
                                     confirm(
                                       "Release this slot?",
-                                      `${s.name}'s UUID will stop working and another player can claim this slot. An active draft pauses until the replacement is ready.`,
+                                      `${s.name}'s UUID will stop working and another player can join in their place. An active draft pauses until the replacement is ready.`,
                                       { type: "release", playerId: s.id },
                                     )
                                   }

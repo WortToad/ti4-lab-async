@@ -381,7 +381,6 @@ export async function getBagDraftView(
 }
 export async function joinBagDraft(
   id: string,
-  slotId: number,
   name: string,
   key?: string,
 ) {
@@ -392,19 +391,17 @@ export async function joinBagDraft(
         throw new Error(
           "You already have a slot in this lobby. Use your saved UUID to rejoin it.",
         );
-      const seat = state.seats.find((seat) => seat.id === slotId);
-      if (!seat) throw new Error("Choose an available slot.");
-      if (credentials.seatKeys[slotId])
-        throw new Error(
-          "That slot has already been taken. Choose another slot or rejoin with your UUID.",
-        );
+      const seat = [...state.seats]
+        .sort((a, b) => a.id - b.id)
+        .find((seat) => !credentials.seatKeys[seat.id]);
+      if (!seat) throw new Error("This lobby is full.");
       seat.name = playerName(name);
       const uuid = randomUUID();
-      credentials.seatKeys[slotId] = uuid;
+      credentials.seatKeys[seat.id] = uuid;
       for (const round of state.history)
         for (const player of round.seats)
-          if (player.id === slotId) player.name = seat.name;
-      syncMapIdentity(state, credentials, slotId, seat.name);
+          if (player.id === seat.id) player.name = seat.name;
+      syncMapIdentity(state, credentials, seat.id, seat.name);
       state.revision++;
       saveBagDraft(id, state, credentials);
       return { uuid };
@@ -565,7 +562,7 @@ export async function mutateBagDraft(
           );
       } else if (viewer.playerId === undefined)
         throw new Response(
-          "Join a slot or recover it with your UUID before drafting.",
+          "Join the lobby or rejoin with your UUID before drafting.",
           { status: 403 },
         );
       if (action.action === "start") {

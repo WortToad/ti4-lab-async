@@ -344,12 +344,14 @@ export async function mutateBaseLobby(
         );
     } else if (operation.type === "join") {
       if (viewer.playerId !== undefined)
-        throw new Error("You already have a slot in this lobby.");
-      if (!slot || slot.uuid)
-        throw new Error("That slot has been taken. Choose an available slot.");
-      slot.name = playerName(operation.name);
-      slot.uuid = randomUUID();
-      issued = { uuid: slot.uuid, role: "player" };
+        throw new Error("You have already joined this lobby.");
+      const availableSlot = [...lobby.slots]
+        .sort((a, b) => a.id - b.id)
+        .find((candidate) => !candidate.uuid);
+      if (!availableSlot) throw new Error("This lobby is full.");
+      availableSlot.name = playerName(operation.name);
+      availableSlot.uuid = randomUUID();
+      issued = { uuid: availableSlot.uuid, role: "player" };
     } else {
       if (!viewer.isAdmin)
         throw new Response("Only the admin can manage this lobby.", {
