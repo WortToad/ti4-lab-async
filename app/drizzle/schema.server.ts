@@ -32,6 +32,16 @@ export const mantisDrafts = sqliteTable("mantisDrafts", {
     .default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const rawDrafts = sqliteTable("rawDrafts", {
+  id: text("id").primaryKey(),
+  data: text("data").notNull(),
+  revision: integer("revision").notNull().default(0),
+  hostTokenHash: text("hostTokenHash").notNull(),
+  createdAt: text("createdAt")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
 // Define a function to generate UUIDs for default values
 export const drafts = sqliteTable(
   "drafts",

@@ -162,14 +162,14 @@ export const rawSystems: Record<string, RawSystem> = {
     wormholes: [],
     anomalies: [],
   },
-  // 17: {
-  //   id: "17",
-  //   planets: [],
-  //   type: "GREEN",
-  //   faction: "creuss",
-  //   wormholes: ["DELTA"],
-  //   anomalies: [],
-  // },
+  17: {
+    id: "17",
+    planets: [],
+    type: "GREEN",
+    faction: "creuss",
+    wormholes: ["DELTA"],
+    anomalies: [],
+  },
   18: {
     id: "18",
     planets: [
@@ -1328,6 +1328,14 @@ export const rawSystems: Record<string, RawSystem> = {
     wormholes: [],
     anomalies: [],
   },
+  94: {
+    id: "94",
+    planets: [],
+    type: "GREEN",
+    faction: "crimson",
+    wormholes: ["EPSILON"],
+    anomalies: [],
+  },
   95: {
     id: "95",
     planets: [
@@ -1722,7 +1730,7 @@ export const rawSystems: Record<string, RawSystem> = {
     id: "119",
     planets: [],
     type: "HYPERLANE",
-    hyperlanes: [[4, 5]],
+    hyperlanes: [[1, 4]],
     wormholes: [],
     anomalies: [],
   },
@@ -1730,7 +1738,7 @@ export const rawSystems: Record<string, RawSystem> = {
     id: "120",
     planets: [],
     type: "HYPERLANE",
-    hyperlanes: [[1, 2]],
+    hyperlanes: [[2, 5]],
     wormholes: [],
     anomalies: [],
   },

@@ -33,6 +33,8 @@ Open `http://localhost:3000/` in your browser and you're good to go.
 
 ## Draft formats
 
+Use **Rules as written (RAW)** on the setup page (or **Build a RAW galaxy** in the map generator) for official TI4 or Twilight's Fall setup. Players receive private tile hands and build the galaxy in snake order using the rulebook's layouts, tile counts, ring order, and placement restrictions. Normal TI4 chooses a random speaker and lets players choose factions. Twilight's Fall includes the starting reference-card draft, simultaneous priority reveal, home-system and king choices, and inaugural splice. The host can manage seats and undo actions; completed setups export map strings and JSON results. See [the RAW setup notes](docs/raw-setup.md).
+
 The draft setup includes Milty (3–8 players), Milty-EQ, Nucleus (3–8 players), Texas, and Twilight's Fall reference packs. Twilight's Fall supports king bans/priorities and custom or faction-filtered reference packs.
 
 Use **Bag / Franken / Twilight’s Fall** on the setup page for standard bag drafts, Franken, Powered, One-pick, Overdraft, their combinations, FrankenDraz, Twilight's Fall bags, or Inaugural Splice. The host receives private player links; bags pass when everyone confirms. Players assemble their final factions using the selected variant's keep limits, then export the results.

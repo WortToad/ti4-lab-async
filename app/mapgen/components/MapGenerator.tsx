@@ -719,6 +719,9 @@ function MapGeneratorContent() {
                     <Button variant="light" color="blue" size="xs" onClick={handleCreateDraft} disabled={!isMapComplete}>
                       Slice Draft
                     </Button>
+                    <Button variant="light" size="xs" onClick={() => navigate("/draft/raw/new")}>
+                      Build a RAW galaxy
+                    </Button>
                     <Button leftSection={<IconWand size={14} />} variant="filled" color="blue" size="xs" onClick={handleCreatePresetDraft} disabled={!isMapComplete}>
                       Preset Draft
                     </Button>

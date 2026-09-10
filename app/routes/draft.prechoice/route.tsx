@@ -376,9 +376,12 @@ export default function DraftPrechoice() {
         <div className={classes.col12}>
           <Group justify="space-between" gap="sm" mb="sm">
             <Text size="sm" c="dimmed">
-              Draft faction components in passing bags, or draft individual tiles and build your galaxy.
+              Choose a draft format or build the galaxy using the official setup rules.
             </Text>
             <Group gap="xs">
+              <Button component={Link} to={`/draft/raw/new?mode=${draftMode === "twilightFalls" ? "twilightsFall" : "base"}`} variant="light">
+                Rules as written (RAW)
+              </Button>
               <Button component={Link} to="/draft/bag/new" variant="light">
                 Bag / Franken / Twilight’s Fall
               </Button>
@@ -497,6 +500,9 @@ export default function DraftPrechoice() {
 
               <Tabs.Panel value="twilightFalls">
                 <Stack gap="sm">
+                  <Button component={Link} to="/draft/raw/new?mode=twilightsFall" variant="light">
+                    Official starting draft and map building (RAW)
+                  </Button>
                   <Alert
                     color="blue"
                     title="Simplified Configuration"
