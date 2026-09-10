@@ -212,8 +212,9 @@ function DraftPicking({
           {seat.ready ? (
             <>
               <Text>
-                Your picks are submitted. The bags will pass when everyone is
-                ready.
+                {seat.roundPicks.length > 0
+                  ? "Your picks have been added to your collection. The bags will pass when everyone is ready."
+                  : "You have no available picks from this bag. It will pass automatically when everyone is ready."}
               </Text>
               {seat.roundPicks.length > 0 && (
                 <Text size="sm" c="dimmed">
@@ -239,16 +240,20 @@ function DraftPicking({
             <>
               <Text>
                 Choose {seat.picksRequired}{" "}
-                {seat.picksRequired === 1 ? "component" : "components"}. You can
-                take one of each category from this bag
+                {seat.picksRequired === 1 ? "component" : "components"} in total
+                from this bag. Take at most one per category on this pass
                 {view.settings.variant === "frankendraz"
                   ? ", with multiple faction packages allowed"
                   : ""}
                 .
               </Text>
               <Text size="sm" c="dimmed">
-                Unavailable components have reached your draft limit. You will
-                choose your final faction after the bags finish passing.
+                Submit your picks to add them to your collection. The remaining
+                components pass to the next player when everyone is ready.
+              </Text>
+              <Text size="sm" fw={600} role="status">
+                Selected {selectedIds.length} of {seat.picksRequired} picks for
+                this bag
               </Text>
               <Button
                 onClick={() =>
@@ -264,10 +269,15 @@ function DraftPicking({
               >
                 {seat.picksRequired === 0
                   ? "Pass this bag"
-                  : `Submit ${selectedIds.length} / ${seat.picksRequired} picks`}
+                  : `Submit ${seat.picksRequired} ${seat.picksRequired === 1 ? "pick" : "picks"}`}
               </Button>
             </>
           )}
+          <Text size="sm" c="dimmed">
+            The collection maximum applies across all bags. Once you reach it,
+            you cannot collect more of that category. After drafting ends, you
+            choose which collected components to keep for your final faction.
+          </Text>
         </Stack>
       </Paper>
       {!seat.ready &&
@@ -275,36 +285,72 @@ function DraftPicking({
           const collected = seat.hand.filter(
             (item) => item.category === category,
           ).length;
+          const draftLimit = view.rules.draftLimits[category] ?? 0;
+          const keepLimit = view.rules.keepLimits[category] ?? 0;
+          const selectedCount = items.filter((item) =>
+            selectedIds.includes(item.id),
+          ).length;
+          const categoryTaken =
+            category !== "FACTION" && selectedCategories.has(category);
+          const categoryFull = collected + selectedCount >= draftLimit;
           return (
             <Stack key={category} gap="sm">
               <Group justify="space-between">
                 <Title order={3} size="h4">
                   {bagCategoryLabel(category, view.settings.variant)}
                 </Title>
-                <Text size="sm" c="dimmed">
-                  Collected {collected} /{" "}
-                  {view.rules.draftLimits[category] ?? 0}
-                </Text>
+                <Group gap="xs">
+                  <Badge
+                    variant="light"
+                    color={collected >= draftLimit ? "gray" : "blue"}
+                  >
+                    Collected {collected} of {draftLimit} max
+                  </Badge>
+                  {category !== "FACTION" && (
+                    <Badge variant="light" color="violet">
+                      Keep up to {keepLimit} afterward
+                    </Badge>
+                  )}
+                  {selectedCount > 0 && (
+                    <Badge variant="outline">
+                      {selectedCount} selected this pass
+                    </Badge>
+                  )}
+                </Group>
               </Group>
+              <Text size="sm" c="dimmed">
+                {collected >= draftLimit
+                  ? "Collection limit reached for this category."
+                  : `You can collect ${draftLimit - collected} more in this category across all bags.`}{" "}
+                {category === "FACTION"
+                  ? "Choose from these factions’ components when you build your final faction."
+                  : keepLimit >= draftLimit
+                    ? "You can keep everything you collect in this category."
+                    : `When drafting ends, choose up to ${keepLimit} from your collection to keep.`}
+              </Text>
               <SimpleGrid cols={{ base: 1, sm: 2 }}>
                 {items.map((item) => {
                   const selected = selectedIds.includes(item.id);
-                  const categoryTaken =
-                    category !== "FACTION" && selectedCategories.has(category);
-                  const categoryFull =
-                    collected +
-                      seat.bag.filter(
-                        (candidate) =>
-                          candidate.category === category &&
-                          selectedIds.includes(candidate.id),
-                      ).length >=
-                    (view.rules.draftLimits[category] ?? 0);
+                  const unavailableReason = selected
+                    ? undefined
+                    : collected >= draftLimit
+                      ? "Collection limit reached. You cannot collect more of this category."
+                      : categoryFull
+                        ? "Your selected picks will fill this category’s collection limit."
+                        : categoryTaken
+                          ? "Only one per category on each pass. Deselect your other choice in this category to choose this one."
+                          : selectedIds.length >= seat.picksRequired
+                            ? "All picks for this bag are selected. Deselect a component to choose this one."
+                            : !legalIds.has(item.id)
+                              ? "This component is unavailable on this pass."
+                              : undefined;
                   return (
                     <BagItemCard
                       key={item.id}
                       item={item}
                       variant={view.settings.variant}
                       selected={selected}
+                      note={unavailableReason}
                       disabled={
                         busy ||
                         (!selected &&
@@ -434,8 +480,9 @@ function FactionAssembly({
             Build your final faction
           </Title>
           <Text>
-            Choose the components to keep in each category. Categories with no
-            choices are already selected.
+            Collection is complete. Choose which components to keep for your
+            final faction from those you collected. Categories with no choices
+            are already selected.
           </Text>
           <Text size="sm" c="dimmed">
             Your completed faction becomes public when everyone has finished.
@@ -518,7 +565,7 @@ function FactionAssembly({
                 {bagCategoryLabel(category, view.settings.variant)}
               </Title>
               <Badge color={count === limit ? "green" : "blue"} variant="light">
-                Keep {count} / {limit}
+                Selected {count} of {limit} to keep
               </Badge>
             </Group>
             <SimpleGrid cols={{ base: 1, sm: 2 }}>
@@ -663,7 +710,7 @@ export default function BagDraftPage() {
           <Group justify="space-between">
             <Title order={2} size="h3">
               {view.phase === "drafting"
-                ? `Round ${view.round + 1}`
+                ? `Collect components · Round ${view.round + 1}`
                 : view.phase === "assembling"
                   ? "Final faction choices"
                   : "Draft complete"}
