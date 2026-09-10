@@ -1,3 +1,5 @@
+import { useContext } from "react";
+import { LobbyIdentityContext } from "~/draft/LobbyIdentity";
 import { appPath } from "~/utils/appUrl";
 import { ActionIcon, Box, Button, Group, Stack } from "@mantine/core";
 import { SectionTitle } from "~/components/Section";
@@ -20,12 +22,10 @@ import {
   IconArrowBackUp,
 } from "@tabler/icons-react";
 import { LabArtToggleButton } from "~/components/LabArtToggleButton";
-import {
-  isAudioAlertEnabled,
-  setAudioAlertEnabled,
-} from "~/utils/audioAlert";
+import { isAudioAlertEnabled, setAudioAlertEnabled } from "~/utils/audioAlert";
 
 export function DraftOrderSection() {
+  const managedLobby = useContext(LobbyIdentityContext)?.managed;
   const { originalArt, setOriginalArt } = useSafeOutletContext();
   const {
     adminMode,
@@ -97,9 +97,15 @@ export function DraftOrderSection() {
           variant={audioAlertEnabled ? "filled" : "default"}
           color={audioAlertEnabled ? "violet" : "gray"}
           onClick={handleAudioToggle}
-          title={audioAlertEnabled ? "Disable audio alerts" : "Enable audio alerts"}
+          title={
+            audioAlertEnabled ? "Disable audio alerts" : "Enable audio alerts"
+          }
         >
-          {audioAlertEnabled ? <IconVolume size={14} /> : <IconVolumeOff size={14} />}
+          {audioAlertEnabled ? (
+            <IconVolume size={14} />
+          ) : (
+            <IconVolumeOff size={14} />
+          )}
         </ActionIcon>
         <ActionIcon
           component={Link}
@@ -109,7 +115,9 @@ export function DraftOrderSection() {
           color="gray"
           disabled={selections.length === 0}
           title="Watch replay"
-          onClick={(e: React.MouseEvent) => selections.length === 0 && e.preventDefault()}
+          onClick={(e: React.MouseEvent) =>
+            selections.length === 0 && e.preventDefault()
+          }
         >
           <IconPlayerPlay size={14} />
         </ActionIcon>
@@ -120,15 +128,17 @@ export function DraftOrderSection() {
         <>
           <Group gap={4}>
             {/* Admin mode toggle */}
-            <Button
-              size="compact-xs"
-              variant={adminMode ? "filled" : "default"}
-              color={adminMode ? "violet" : "gray"}
-              onClick={handleAdminToggle}
-              title="Toggle admin mode"
-            >
-              Admin
-            </Button>
+            {!managedLobby && (
+              <Button
+                size="compact-xs"
+                variant={adminMode ? "filled" : "default"}
+                color={adminMode ? "violet" : "gray"}
+                onClick={handleAdminToggle}
+                title="Toggle admin mode"
+              >
+                Admin
+              </Button>
+            )}
 
             {/* Pick for anyone - only when allowed */}
             {showPickForAnyoneControl && (

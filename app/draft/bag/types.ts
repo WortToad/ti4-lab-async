@@ -1,4 +1,5 @@
 import type { BagDraftItem, BagItemCategory } from "./catalog";
+import type { LobbyView } from "../lobby";
 
 export type BagVariant =
   | "standard_bag_draft"
@@ -71,7 +72,8 @@ export type BagDraftView = {
   id: string;
   settings: BagSettings;
   rules: BagRules;
-  phase: BagDraftState["phase"];
+  phase: BagDraftState["phase"] | "lobby";
+  lobby: LobbyView;
   round: number;
   revision: number;
   players: {
@@ -96,7 +98,6 @@ export type BagDraftView = {
     picksRequired: number;
     draftableItemIds: string[];
   };
-  seatLinks?: { id: number; name: string; path: string }[];
   canUndoRound: boolean;
   mapBuildError?: string;
   mapRoomId?: string;
@@ -107,4 +108,12 @@ export type BagDraftAction =
   | { action: "undo"; round: number }
   | { action: "assemble"; itemIds: string[] }
   | { action: "reopen" }
-  | { action: "undoRound"; revision: number };
+  | { action: "undoRound"; revision: number }
+  | {
+      action: "start" | "pause" | "resume" | "undoAction" | "checkpoint";
+      revision: number;
+    }
+  | { action: "release" | "rotate"; playerId: number; revision: number }
+  | { action: "rename"; playerId: number; name: string; revision: number }
+  | { action: "restoreCheckpoint"; checkpointId: string; revision: number }
+  | { action: "importState"; state: string; revision: number };

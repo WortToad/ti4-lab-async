@@ -8,7 +8,6 @@ import {
   Group,
   Modal,
   Paper,
-  Select,
   SimpleGrid,
   Stack,
   Table,
@@ -40,6 +39,7 @@ import {
 } from "~/mapgen/utils/externalMapStringCodec";
 import { NewDraftReferenceCard } from "~/routes/draft.new/components/NewDraftReferenceCard";
 import type { FactionId } from "~/types";
+import { LobbyPanel, type LobbyOperation } from "~/draft/LobbyPanel";
 
 export const loader = loadRawRoom;
 export const action = actRawRoom;
@@ -103,39 +103,85 @@ const spliceLimits: Record<string, number> = { TECH: 3, AGENT: 2, UNIT: 2 };
 const keepLimits: Record<string, number> = { TECH: 2, AGENT: 1, UNIT: 1 };
 const factionName = (id?: FactionId) => (id ? (factions[id]?.name ?? id) : "—");
 
+type RawRoomData = Awaited<ReturnType<typeof loader>>["data"];
+
 export default function RawRoom() {
   const room = useLoaderData<typeof loader>();
+  const fetcher = useFetcher<typeof action>();
+  const revalidator = useRevalidator();
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (
+        document.visibilityState === "visible" &&
+        revalidator.state === "idle" &&
+        fetcher.state === "idle"
+      )
+        void revalidator.revalidate();
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [revalidator, fetcher.state]);
+  const operation = (op: LobbyOperation) => {
+    const { type, ...extra } = op;
+    const intent =
+      type === "restore"
+        ? "restoreCheckpoint"
+        : type === "import"
+          ? "importState"
+          : type === "undo"
+            ? "undoAction"
+            : type;
+    fetcher.submit(
+      {
+        intent,
+        revision: String(room.revision),
+        ...Object.fromEntries(
+          Object.entries(extra).map(([k, v]) => [k, String(v)]),
+        ),
+      },
+      { method: "post" },
+    );
+  };
+  return (
+    <Stack gap="lg">
+      <Container size="xl" w="100%" py="lg" className="ph-no-capture">
+        <LobbyPanel
+          lobby={room.lobby}
+          mode="raw"
+          lobbyId={room.id}
+          ownPlayerId={room.ownPlayers[0]}
+          isAdmin={room.isHost}
+          busy={fetcher.state !== "idle"}
+          error={fetcher.data?.error}
+          exportState={fetcher.data?.backup ?? undefined}
+          onOperation={operation}
+        />
+      </Container>
+      {room.draft && <RawGame room={{ ...room, draft: room.draft }} />}
+    </Stack>
+  );
+}
+
+function RawGame({
+  room,
+}: {
+  room: RawRoomData & { draft: NonNullable<RawRoomData["draft"]> };
+}) {
   const { draft } = room;
   const fetcher = useFetcher<typeof action>();
   const revalidator = useRevalidator();
-  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [selectedTile, setSelectedTile] = useState<string | null>(null);
   const [kept, setKept] = useState<string[]>([]);
   const [undoOpen, setUndoOpen] = useState(false);
   const [shareMessage, setShareMessage] = useState("");
   const activeId = rawActivePlayer(draft);
-  const pendingId = draft.players.find((player) => {
-    if (draft.phase === "factions") return !draft.factions[player.id];
-    if (draft.phase === "referenceDraft" || draft.phase === "priority")
-      return !room.referenceReady[player.id];
-    if (draft.phase === "splice" || draft.phase === "spliceKeep")
-      return !room.spliceReady[player.id];
-    return false;
-  })?.id;
-  const playerId =
-    selectedPlayer !== null
-      ? Number(selectedPlayer)
-      : room.isHost
-        ? (activeId ?? pendingId)
-        : room.ownPlayers[0];
+  const playerId = room.ownPlayers[0];
   const player = draft.players.find((entry) => entry.id === playerId);
-  const controlled =
-    playerId !== undefined &&
-    (room.isHost || room.ownPlayers.includes(playerId));
+  const controlled = playerId !== undefined;
   const busy = fetcher.state !== "idle";
   const canAct =
     controlled &&
     !busy &&
+    !room.lobby.paused &&
     (activeId === undefined || activeId === playerId) &&
     draft.phase !== "complete";
   const hand =
@@ -198,7 +244,7 @@ export default function RawRoom() {
   useEffect(() => {
     setSelectedTile(null);
     setKept([]);
-  }, [playerId, draft.phase]);
+  }, [playerId, draft.phase, room.revision]);
 
   const submit = (intent: string, extra: Record<string, string> = {}) => {
     fetcher.submit(
@@ -300,56 +346,10 @@ export default function RawRoom() {
             )}
           </Stack>
         </Paper>
-        {draft.phase !== "complete" && (
-          <Group align="end">
-            <Select
-              label={room.isHost ? "Host: act for player" : "Your player"}
-              placeholder={
-                room.isHost
-                  ? `Follow turn${player ? `: ${player.name}` : ""}`
-                  : "Choose your name"
-              }
-              value={selectedPlayer}
-              onChange={setSelectedPlayer}
-              clearable
-              data={draft.players.map((entry) => ({
-                value: String(entry.id),
-                label: `${entry.name}${room.claimedPlayers.includes(entry.id) && !room.ownPlayers.includes(entry.id) ? " (joined)" : ""}`,
-              }))}
-            />
-            {!controlled && playerId !== undefined && (
-              <Button
-                disabled={busy || room.claimedPlayers.includes(playerId)}
-                onClick={() => submit("join")}
-              >
-                Join as {player?.name}
-              </Button>
-            )}
-            {room.isHost &&
-              playerId !== undefined &&
-              room.claimedPlayers.includes(playerId) && (
-                <Button
-                  variant="subtle"
-                  color="red"
-                  disabled={busy}
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        "Release this player slot so someone else can join?",
-                      )
-                    )
-                      submit("release");
-                  }}
-                >
-                  Release player slot
-                </Button>
-              )}
-          </Group>
-        )}
         {!controlled && draft.phase !== "complete" && (
           <Text size="sm" c="dimmed">
-            Choose your name and join to see your private hand and make choices.
-            Spectators can watch the shared map.
+            Join an available slot above, or rejoin with your UUID, to see your
+            private hand and make choices. Spectators can watch the shared map.
           </Text>
         )}
         <Table.ScrollContainer minWidth={650}>

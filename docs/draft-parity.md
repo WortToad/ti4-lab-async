@@ -20,22 +20,22 @@ Refresh the bundled templates with `python3 scripts/import-draft-layouts.py TI4_
 
 The application now has a dedicated bag draft flow for these bot variants:
 
-| Variant | Bag selection | Final faction |
-| --- | --- | --- |
-| Franken | Three first picks, then two per bag | Standard component limits |
-| Powered Franken | Four abilities and three faction technologies per bag | Keep four abilities and three faction technologies |
-| One-pick Franken | One selection per bag | Standard component limits |
-| Powered one-pick Franken | One selection per bag with powered counts | Powered component limits |
-| Overdraft Franken | Standard Franken selection | Keep the drafted component counts |
-| Powered overdraft Franken | Powered Franken selection | Keep the drafted component counts |
-| FrankenDraz | Whole faction packages; two first picks, then one | Assemble from the drafted factions' legal components |
-| Twilight's Fall | Abilities, genomes, unit upgrades, kings, fleets, homes, tiles, and order | Two abilities, one genome, one unit upgrade, and one king |
-| Inaugural Splice | Three abilities, two genomes, and two unit upgrades per bag; one pick per pass | Two abilities, one genome, and one unit upgrade |
-| Standard bag draft | Three blue tiles, two red tiles, one home system, and speaker order | Keep all seven items |
+| Variant                   | Bag selection                                                                  | Final faction                                             |
+| ------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| Franken                   | Three first picks, then two per bag                                            | Standard component limits                                 |
+| Powered Franken           | Four abilities and three faction technologies per bag                          | Keep four abilities and three faction technologies        |
+| One-pick Franken          | One selection per bag                                                          | Standard component limits                                 |
+| Powered one-pick Franken  | One selection per bag with powered counts                                      | Powered component limits                                  |
+| Overdraft Franken         | Standard Franken selection                                                     | Keep the drafted component counts                         |
+| Powered overdraft Franken | Powered Franken selection                                                      | Keep the drafted component counts                         |
+| FrankenDraz               | Whole faction packages; two first picks, then one                              | Assemble from the drafted factions' legal components      |
+| Twilight's Fall           | Abilities, genomes, unit upgrades, kings, fleets, homes, tiles, and order      | Two abilities, one genome, one unit upgrade, and one king |
+| Inaugural Splice          | Three abilities, two genomes, and two unit upgrades per bag; one pick per pass | Two abilities, one genome, and one unit upgrade           |
+| Standard bag draft        | Three blue tiles, two red tiles, one home system, and speaker order            | Keep all seven items                                      |
 
-Shared controls include player shuffling, category draft/keep counts, first and later pick counts, individual component and faction bans, priority factions for FrankenDraz, optional tiles/order, and expansion pools. The Weak Components and OP Components ban presets use the bot's lists. Bags pass once all players finish their selections; private player links protect choices, and the host can undo a round before map building starts. Component assembly applies errata additions and offers legal optional swaps. Twilight's Fall supports Wavelength and Antimatter substitutions.
+Shared controls include player shuffling, category draft/keep counts, first and later pick counts, individual component and faction bans, priority factions for FrankenDraz, optional tiles/order, and expansion pools. The Weak Components and OP Components ban presets use the bot's lists. Bags pass once all players finish their selections; claimed slots and recovery UUIDs protect choices, and the host can undo actions or restore saved rounds. Component assembly applies errata additions and offers legal optional swaps. Twilight's Fall supports Wavelength and Antimatter substitutions.
 
-When tiles are included, blue and red tiles are drafted alongside faction components using the same pick allowance. A player may take at most one blue and one red tile on a pass, within their total picks for that bag. Across all bags, the default collection and keep limits are three blue and two red tiles per player. Picking a tile reserves it for that player's later map section; it does not place the tile yet. After bag picking, players confirm their final faction components and kept tiles. Once everyone confirms, compatible drafts automatically enter map building with those same tiles. The setup page and every draft phase explain this sequence using the selected limits, with separate map setup guidance for drafts without tiles, unsupported player counts, or incompatible keep limits.
+When tiles are included, blue and red tiles are drafted alongside faction components using the same pick allowance. A player may take at most one blue and one red tile on a pass, within their total picks for that bag. Across all bags, the default collection and keep limits are three blue and two red tiles per player. Picking a tile reserves it for that player's later map section; it does not place the tile yet. After bag picking, players confirm their final faction components and kept tiles. Once everyone confirms, compatible drafts create a map room with those same tiles, accessible from the shared lobby. The setup page and every draft phase explain this sequence using the selected limits, with separate map setup guidance for drafts without tiles, unsupported player counts, or incompatible keep limits.
 
 The bot's **Use Bag Draft of Everything** button (`TEOptionService.startTFDraft`) starts `TwilightsFallFrankenDraft`, matching the web's **Twilight’s Fall · Bag Draft of Everything** option. Default bags contain 18 cards: three abilities, two genomes, two unit upgrades, two fleets, two homes, three blue tiles, two red tiles, one Mahact king, and one speaker position. Players take three cards from their first bag and two on later passes. Assembly keeps two abilities, one genome, one unit upgrade, one fleet, one home, the king, all five tiles, and speaker position. Either or both generic technologies can replace an ability, genome, or unit-upgrade slot. This differs from Inaugural Splice, which drafts only the seven ability/genome/unit cards and assumes map setup is handled separately.
 

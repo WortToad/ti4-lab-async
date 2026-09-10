@@ -20,30 +20,83 @@ beforeAll(async () => {
 afterAll(() => rmSync(directory, { recursive: true, force: true }));
 
 describe("persistent private bag drafts", () => {
-  it("migrates a fresh database and exposes only the viewer's private hand", async () => {
+  it("keeps the lobby hidden until everyone claims a slot and the admin starts", async () => {
     const room = await service.createBagDraft({
       variant: "inaugural_splice",
-      players: ["Alice", "Bob"],
+      players: ["Slot 1", "Slot 2"],
     });
     const spectator = await service.getBagDraftView(room.id);
+    expect(spectator.phase).toBe("lobby");
     expect(spectator.privateSeat).toBeUndefined();
-    expect(spectator.seatLinks).toBeUndefined();
+    expect(
+      spectator.lobby.slots.every((slot) => !slot.claimed && !slot.uuid),
+    ).toBe(true);
     expect(JSON.stringify(spectator)).not.toContain("TECH:");
-    const host = await service.getBagDraftView(room.id, room.adminToken);
+    const host = await service.getBagDraftView(
+      room.id,
+      undefined,
+      room.adminToken,
+    );
     expect(host.viewer.isAdmin).toBe(true);
     expect(host.privateSeat).toBeUndefined();
-    expect(host.seatLinks).toHaveLength(2);
-    const key = new URL(
-      host.seatLinks![0].path,
-      "http://localhost",
-    ).searchParams.get("key")!;
-    const player = await service.getBagDraftView(room.id, key);
-    expect(player.privateSeat?.bag).toHaveLength(7);
-    expect(player.seatLinks).toBeUndefined();
+    expect(host.lobby.adminUuid).toBe(room.adminToken);
+    await expect(
+      service.mutateBagDraft(
+        room.id,
+        undefined,
+        { action: "start", revision: host.revision },
+        room.adminToken,
+      ),
+    ).rejects.toThrow(/Every slot/);
+    const { uuid } = await service.joinBagDraft(room.id, 0, " Alice ");
+    expect(uuid).toMatch(/^[a-f0-9-]{36}$/);
+    expect(await service.recoverBagDraft(room.id, uuid)).toEqual({
+      role: "player",
+    });
+    expect(await service.recoverBagDraft(room.id, room.adminToken)).toEqual({
+      role: "admin",
+    });
+    expect(service.findBagLobby(uuid)).toEqual({ id: room.id, role: "player" });
+    const waiting = await service.getBagDraftView(room.id, uuid);
+    expect(waiting.privateSeat).toBeUndefined();
+    expect(waiting.lobby.ownUuid).toBe(uuid);
+    expect(waiting.lobby.slots[0].name).toBe("Alice");
+    expect(JSON.stringify(waiting)).not.toContain("TECH:");
+    await expect(service.joinBagDraft(room.id, 0, "Eve")).rejects.toThrow(
+      /taken/,
+    );
+    await expect(
+      service.joinBagDraft(room.id, 1, "Alice again", uuid),
+    ).rejects.toThrow(/already have a slot/);
+    await expect(
+      service.mutateBagDraft(room.id, uuid, {
+        action: "pick",
+        round: 0,
+        itemIds: [],
+      }),
+    ).rejects.toThrow(/admin to start/);
+    await service.joinBagDraft(room.id, 1, "Bob");
+    const full = await service.getBagDraftView(room.id, uuid, room.adminToken);
+    const started = await service.mutateBagDraft(
+      room.id,
+      uuid,
+      { action: "start", revision: full.revision },
+      room.adminToken,
+    );
+    expect(started.phase).toBe("drafting");
+    expect(started.viewer).toEqual({ isAdmin: true, playerId: 0 });
+    expect(started.privateSeat?.bag).toHaveLength(7);
+    expect(started.lobby.slots.every((slot) => !!slot.uuid)).toBe(true);
+    const player = await service.getBagDraftView(room.id, uuid);
+    expect(player.lobby.slots.every((slot) => !slot.uuid)).toBe(true);
     expect(player.players.every((seat) => seat.keptItems === undefined)).toBe(
       true,
     );
     expect(JSON.stringify(player)).not.toContain(room.adminToken);
+    expect(
+      (await service.getBagDraftView(room.id, undefined, room.adminToken))
+        .privateSeat,
+    ).toBeUndefined();
     await expect(
       service.getBagDraftView(room.id, "wrong-key"),
     ).rejects.toMatchObject({ status: 403 });
@@ -56,15 +109,173 @@ describe("persistent private bag drafts", () => {
     ).rejects.toMatchObject({ status: 403 });
   });
 
-  it("preserves simultaneous confirmations and rejects stale repeats", async () => {
+  it("claims a contested slot once, exchanges recovery UUIDs into role cookies, and clears revoked access", async () => {
     const room = await service.createBagDraft({
       variant: "inaugural_splice",
-      players: ["Alice", "Bob"],
+      players: ["Slot 1", "Slot 2"],
     });
+    const attempts = await Promise.allSettled([
+      service.joinBagDraft(room.id, 0, "Alice"),
+      service.joinBagDraft(room.id, 0, "Bob"),
+    ]);
+    expect(
+      attempts.filter((attempt) => attempt.status === "fulfilled"),
+    ).toHaveLength(1);
+    const key = (await service.getBagDraftView(room.id, room.adminToken)).lobby
+      .slots[0].uuid!;
+    const route = await import("~/routes/draft.bag.$id");
+    const result = await route.action({
+      request: new Request(`http://localhost/draft/bag/${room.id}`, {
+        method: "POST",
+        body: new URLSearchParams({
+          operation: JSON.stringify({ action: "recover", uuid: key }),
+        }),
+      }),
+      params: { id: room.id },
+      context: {},
+      unstable_pattern: "/draft/bag/:id",
+    });
+    const cookie = new Headers(result.init?.headers).get("Set-Cookie")!;
+    expect(cookie).toContain("HttpOnly");
+    expect(cookie).toContain("SameSite=Lax");
+    expect(
+      await service.readBagToken(
+        room.id,
+        new Request("http://localhost", {
+          headers: { Cookie: cookie.split(";")[0] },
+        }),
+      ),
+    ).toBe(key);
     const host = await service.getBagDraftView(room.id, room.adminToken);
-    const keys = host.seatLinks!.map(
-      (link) => new URL(link.path, "http://localhost").searchParams.get("key")!,
+    await service.mutateBagDraft(
+      room.id,
+      undefined,
+      { action: "rotate", playerId: 0, revision: host.revision },
+      room.adminToken,
     );
+    const revoked = await route.loader({
+      request: new Request(`http://localhost/draft/bag/${room.id}`, {
+        headers: { Cookie: cookie.split(";")[0] },
+      }),
+      params: { id: room.id },
+      context: {},
+      unstable_pattern: "/draft/bag/:id",
+    });
+    if (revoked instanceof Response)
+      throw new Error("Expected recovered lobby data");
+    expect(revoked.data.viewer.playerId).toBeUndefined();
+    expect(revoked.data.accessError).toContain("UUID has changed");
+    expect(new Headers(revoked.init?.headers).get("Set-Cookie")).toContain(
+      "Max-Age=0",
+    );
+    const legacy = await route.loader({
+      request: new Request(
+        `http://localhost/draft/bag/${room.id}?key=${room.adminToken}`,
+      ),
+      params: { id: room.id },
+      context: {},
+      unstable_pattern: "/draft/bag/:id",
+    });
+    expect(legacy).toBeInstanceOf(Response);
+    if (!(legacy instanceof Response))
+      throw new Error("Expected credential exchange redirect");
+    expect(legacy.headers.get("Location")).toBe(`/draft/bag/${room.id}`);
+    expect(legacy.headers.get("Set-Cookie")).toContain(`bag-admin-${room.id}`);
+  });
+
+  it("restores encrypted checkpoints and last actions without exposing private picks", async () => {
+    const room = await startedFixture();
+    const player = await service.getBagDraftView(room.id, room.keys[0]);
+    const save = await service.exportBagDraft(
+      room.id,
+      undefined,
+      room.adminToken,
+    );
+    expect(JSON.parse(save)).toMatchObject({
+      format: "ti4-lobby-save",
+      mode: "bag",
+      roomId: room.id,
+    });
+    expect(save).not.toContain(player.privateSeat!.bag[0].id);
+    expect(save).not.toContain(room.keys[0]);
+    await expect(
+      service.exportBagDraft(room.id, room.keys[0]),
+    ).rejects.toMatchObject({ status: 403 });
+    const picked = await service.mutateBagDraft(room.id, room.keys[0], {
+      action: "pick",
+      round: 0,
+      itemIds: [player.privateSeat!.draftableItemIds[0]],
+    });
+    const reverted = await service.mutateBagDraft(
+      room.id,
+      undefined,
+      { action: "undoAction", revision: picked.revision },
+      room.adminToken,
+    );
+    expect(reverted.players.every((player) => player.draftedCount === 0)).toBe(
+      true,
+    );
+    expect(reverted.lobby.paused).toBe(true);
+    const resumed = await service.mutateBagDraft(
+      room.id,
+      undefined,
+      { action: "resume", revision: reverted.revision },
+      room.adminToken,
+    );
+    await service.mutateBagDraft(room.id, room.keys[0], {
+      action: "pick",
+      round: resumed.round,
+      itemIds: [player.privateSeat!.draftableItemIds[0]],
+    });
+    const current = await service.getBagDraftView(room.id, room.adminToken);
+    const restored = await service.mutateBagDraft(
+      room.id,
+      undefined,
+      { action: "importState", state: save, revision: current.revision },
+      room.adminToken,
+    );
+    expect(restored.players.every((player) => player.draftedCount === 0)).toBe(
+      true,
+    );
+    expect(restored.lobby.paused).toBe(true);
+    expect(
+      restored.lobby.checkpoints!.some((point) =>
+        point.label.includes("before restoring"),
+      ),
+    ).toBe(true);
+    const tampered = JSON.parse(save);
+    tampered.data = "damaged";
+    await expect(
+      service.mutateBagDraft(
+        room.id,
+        undefined,
+        {
+          action: "importState",
+          state: JSON.stringify(tampered),
+          revision: restored.revision,
+        },
+        room.adminToken,
+      ),
+    ).rejects.toThrow(/damaged/);
+    const other = await startedFixture();
+    await expect(
+      service.mutateBagDraft(
+        other.id,
+        undefined,
+        {
+          action: "importState",
+          state: save,
+          revision: (await service.getBagDraftView(other.id)).revision,
+        },
+        other.adminToken,
+      ),
+    ).rejects.toThrow(/another lobby/);
+  });
+
+  it("preserves simultaneous confirmations and rejects stale repeats", async () => {
+    const room = await startedFixture();
+    const keys = room.keys;
+    const initialRevision = (await service.getBagDraftView(room.id)).revision;
     const views = await Promise.all(
       keys.map((key) => service.getBagDraftView(room.id, key)),
     );
@@ -89,10 +300,10 @@ describe("persistent private bag drafts", () => {
     ).rejects.toThrow(/passed/);
     const reloaded = await service.getBagDraftView(room.id, keys[0]);
     expect(reloaded.privateSeat!.hand).toHaveLength(1);
-    expect(reloaded.revision).toBe(2);
+    expect(reloaded.revision).toBe(initialRevision + 2);
   });
 
-  it("starts on the last confirmation and redirects every viewer with their own access", async () => {
+  it("creates the map on the last confirmation and opens it explicitly with each viewer’s access", async () => {
     const fixture = await assemblyFixture();
     const bagRoute = await import("~/routes/draft.bag.$id");
     const mantisRoute = await import("~/routes/draft.mantis.$id");
@@ -133,8 +344,8 @@ describe("persistent private bag drafts", () => {
       ),
     );
     expect(
-      confirmations.some(
-        (result) => result instanceof Response && result.status === 302,
+      confirmations.every(
+        (result) => !(result instanceof Response) && result.data.error === null,
       ),
     ).toBe(true);
     const view = await service.getBagDraftView(fixture.id);
@@ -151,17 +362,22 @@ describe("persistent private bag drafts", () => {
       fixture.id,
       fixture.adminToken,
     ))!;
-    expect(mantisTokenHash(hostAccess.token!)).toBe(map.hostTokenHash);
+    expect(mantisTokenHash(hostAccess.adminToken!)).toBe(map.hostTokenHash);
     const viewers = [
       { key: undefined, host: false, players: [] },
       ...fixture.keys.map((key, id) => ({ key, host: false, players: [id] })),
       { key: fixture.adminToken, host: true, players: [] },
     ];
     for (const viewer of viewers) {
-      const search = viewer.key ? `?key=${viewer.key}` : "";
+      const cookie = viewer.key
+        ? await service
+            .bagCookie(fixture.id, viewer.host ? "admin" : "player")
+            .serialize(viewer.key)
+        : "";
       const redirected = await bagRoute.loader({
         request: new Request(
-          `http://localhost/draft/bag/${fixture.id}.data${search}`,
+          `http://localhost/draft/bag/${fixture.id}.data?map=1`,
+          { headers: { Cookie: cookie.split(";")[0] } },
         ),
         params: { id: fixture.id },
         context: {},
@@ -173,11 +389,11 @@ describe("persistent private bag drafts", () => {
       expect(redirected.headers.get("Location")).toBe(
         `/draft/mantis/${map.id}`,
       );
-      const cookie = redirected.headers.get("Set-Cookie");
-      if (!viewer.key) expect(cookie).toBeNull();
+      const mapCookie = redirected.headers.get("Set-Cookie");
+      if (!viewer.key) expect(mapCookie).toBeNull();
       const mapView = await mantisRoute.loader({
         request: new Request(`http://localhost/draft/mantis/${map.id}.data`, {
-          headers: { Cookie: cookie?.split(";")[0] ?? "" },
+          headers: { Cookie: mapCookie?.split(";")[0] ?? "" },
         }),
         params: { id: map.id },
         context: {},
@@ -188,8 +404,10 @@ describe("persistent private bag drafts", () => {
       const bagView = await service.getBagDraftView(fixture.id, viewer.key);
       expect(bagView.mapRoomId).toBe(map.id);
       expect(bagView.canUndoRound).toBe(false);
-      expect(JSON.stringify(bagView)).not.toContain(hostAccess.token);
-      expect(JSON.stringify(mapView)).not.toContain(hostAccess.token);
+      if (!viewer.host) {
+        expect(JSON.stringify(bagView)).not.toContain(hostAccess.adminToken);
+        expect(JSON.stringify(mapView)).not.toContain(hostAccess.adminToken);
+      }
     }
     expect(db.select().from(mantisDrafts).all()).toHaveLength(roomCount + 1);
     const summary = await bagRoute.loader({
@@ -293,14 +511,8 @@ describe("persistent private bag drafts", () => {
 });
 
 async function assemblyFixture(variant: BagVariant = "twilights_fall") {
-  const room = await service.createBagDraft({
-    variant,
-    players: ["Alice", "Bob", "Carol"],
-  });
-  const host = await service.getBagDraftView(room.id, room.adminToken);
-  const keys = host.seatLinks!.map(
-    (link) => new URL(link.path, "http://localhost").searchParams.get("key")!,
-  );
+  const room = await startedFixture(variant, ["Alice", "Bob", "Carol"]);
+  const keys = room.keys;
   const { db } = await import("~/drizzle/config.server");
   const { bagDrafts } = await import("~/drizzle/schema.server");
   const row = db
@@ -333,4 +545,26 @@ async function assemblyFixture(variant: BagVariant = "twilights_fall") {
     .where(eq(bagDrafts.id, room.id))
     .run();
   return { ...room, keys, selections, state };
+}
+
+async function startedFixture(
+  variant: BagVariant = "inaugural_splice",
+  players = ["Alice", "Bob"],
+) {
+  const room = await service.createBagDraft({
+    variant,
+    players: players.map((_, index) => `Slot ${index + 1}`),
+    shufflePlayers: false,
+  });
+  const keys: string[] = [];
+  for (const [index, name] of players.entries())
+    keys.push((await service.joinBagDraft(room.id, index, name)).uuid);
+  const lobby = await service.getBagDraftView(room.id);
+  await service.mutateBagDraft(
+    room.id,
+    undefined,
+    { action: "start", revision: lobby.revision },
+    room.adminToken,
+  );
+  return { ...room, keys };
 }

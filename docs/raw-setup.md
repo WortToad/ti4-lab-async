@@ -1,6 +1,6 @@
 # Rules-as-written setup
 
-`/draft/raw/new` starts the official setup flow for normal TI4 or Twilight's Fall. It is available from the draft setup page and map generator. Choose the game mode, expansions, players in their initial clockwise seating order, and an applicable official map layout.
+`/draft/raw/new` creates a shared lobby for the official setup flow for normal TI4 or Twilight's Fall. It is available from the draft setup page and map generator. Choose the game mode, expansions, number of player slots, and an applicable official map layout. Players enter their own names when they join.
 
 ## Sources
 
@@ -28,6 +28,10 @@ The inaugural splice deals three abilities, two unit upgrades, and two genomes p
 
 ## Shared rooms and results
 
-Share the room link so players can claim their seats. Each player sees their own private hands; spectators see public choices and the map. The host can inspect hands, act for any player, release seats, and undo the latest action. Room credentials use HTTP-only cookies, updates check the room revision, and private responses disable caching.
+Share the same lobby link with everyone. Each player chooses an available slot, enters their name, and receives a recovery UUID to copy or download. Slots identify players; the draft and seating remain hidden until everyone has joined and the admin starts. The browser remembers player and admin access separately through HTTP-only cookies and local storage. A saved UUID restores the same role from the lobby link or the main page on another device.
+
+Each player sees their own private hands. Spectators and the admin see public choices and the map; admin access does not reveal other players' system tiles, reference cards, or unrevealed splice choices. An admin who is also playing joins their own slot.
+
+The admin can retrieve or replace player UUIDs, rename players, release slots for replacements, pause play, undo actions, and restore earlier checkpoints. Releasing an active slot pauses the draft until a replacement joins. Restored games pause for review and preserve current player names and recovery UUIDs. Save files are encrypted so the admin can export and import state without revealing private hands; a file can be imported into the same lobby that exported it. Updates check the room revision, and private responses disable caching.
 
 Drafts persist in SQLite through the standard startup migrations. Completed setups provide Async Discord and Tabletop Playground map strings and downloadable setup results. Board-game components such as plastic units, off-board systems, tokens, common decks, and objectives are arranged at the table using the rulebooks and setup results.

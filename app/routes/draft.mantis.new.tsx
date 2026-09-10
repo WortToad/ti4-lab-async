@@ -8,7 +8,6 @@ import {
   NumberInput,
   Stack,
   Text,
-  Textarea,
   Title,
 } from "@mantine/core";
 import { useState } from "react";
@@ -21,17 +20,20 @@ import {
   type ActionFunctionArgs,
 } from "react-router";
 import { factions as allFactions } from "~/data/factionData";
-import { createMantisRoom, mantisCookie } from "~/drizzle/mantisDraft.server";
+import {
+  createMantisRoom,
+  mantisAdminCookie,
+} from "~/drizzle/mantisDraft.server";
 import type { MantisSettings } from "~/draft/mantis/engine";
 import type { FactionId, GameSet } from "~/types";
 
 export async function action({ request }: ActionFunctionArgs) {
   try {
     const form = await request.formData();
-    const names = String(form.get("players") ?? "")
-      .split("\n")
-      .map((name) => name.trim())
-      .filter(Boolean);
+    const count = Number(form.get("playerCount") ?? 6);
+    if (!Number.isInteger(count) || count < 4 || count > 8)
+      throw new Error("Choose between 4 and 8 player slots.");
+    const names = Array.from({ length: count }, (_, i) => `Player ${i + 1}`);
     const sets: GameSet[] = ["base"];
     if (form.has("pok")) sets.push("pok");
     if (form.has("te")) sets.push("te");
@@ -57,7 +59,7 @@ export async function action({ request }: ActionFunctionArgs) {
     };
     const { id, token } = createMantisRoom(settings);
     return redirect(`/draft/mantis/${id}`, {
-      headers: { "Set-Cookie": await mantisCookie(id).serialize(token) },
+      headers: { "Set-Cookie": await mantisAdminCookie(id).serialize(token) },
     });
   } catch (error) {
     return data(
@@ -91,21 +93,26 @@ export default function MantisNew() {
             build their own slice from the center outward.
           </Text>
           {result?.error && <Alert color="red">{result.error}</Alert>}
-          <Textarea
-            name="players"
-            label="Players, one name per line"
-            description="4–8 players"
-            defaultValue={Array.from(
-              { length: 6 },
-              (_, i) => `Player ${i + 1}`,
-            ).join("\n")}
-            minRows={6}
+          <Alert color="blue" title="Create a shared lobby">
+            Everyone uses the same link, chooses a free slot, and enters their
+            own name. Each player receives a recovery UUID. Draft order, seats,
+            and choices stay hidden until everyone has joined and you start the
+            draft.
+          </Alert>
+          <NumberInput
+            name="playerCount"
+            label="Player slots"
+            description="4–8 players; names are entered when joining."
+            defaultValue={6}
+            min={4}
+            max={8}
+            allowDecimal={false}
             required
           />
           <Checkbox
             name="staticOrder"
-            label="Use the listed player order for the snake draft"
-            description="Otherwise the initial draft order is shuffled."
+            label="Use lobby slot order for the snake draft"
+            description="Otherwise the initial draft order is shuffled. Speaker positions are chosen during the draft."
           />
           <Group>
             <Checkbox name="pok" label="Prophecy of Kings" defaultChecked />
@@ -176,7 +183,7 @@ export default function MantisNew() {
             allowDecimal={false}
           />
           <Button type="submit" loading={navigation.state !== "idle"}>
-            Create Mantis draft
+            Create Mantis lobby
           </Button>
         </Stack>
       </Form>

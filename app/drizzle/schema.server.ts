@@ -138,6 +138,15 @@ export const draftStagedSelections = sqliteTable(
   }),
 );
 
+// Recovery credentials and private restore points must never enter Draft JSON.
+export const baseDraftLobbies = sqliteTable("baseDraftLobbies", {
+  id: text("id")
+    .primaryKey()
+    .references(() => drafts.id, { onDelete: "cascade" }),
+  data: text("data").notNull(),
+  revision: integer("revision").notNull().default(0),
+});
+
 export const multiDrafts = sqliteTable(
   "multiDrafts",
   {

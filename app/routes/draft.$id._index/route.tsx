@@ -1,12 +1,12 @@
 import { appPath, appUrl } from "~/utils/appUrl";
 import { Button, Grid, Stack, Text } from "@mantine/core";
+import { ActionFunctionArgs, data, redirect, MetaFunction } from "react-router";
 import {
-  ActionFunctionArgs,
-  data,
-  redirect,
-  MetaFunction,
+  useFetcher,
+  useLoaderData,
+  useRevalidator,
+  type LoaderFunctionArgs,
 } from "react-router";
-import { useLoaderData } from "react-router";
 import { eq } from "drizzle-orm";
 import { useEffect } from "react";
 import { useDraft } from "~/draftStore";
@@ -54,10 +54,113 @@ import { TexasFactionSelectionPhase } from "../draft.$id/sections/TexasFactionSe
 import { TexasTileDraftPhase } from "../draft.$id/sections/TexasTileDraftPhase";
 import { TexasMapBuildPhase } from "../draft.$id/sections/TexasMapBuildPhase";
 
+import { LobbyPanel, type LobbyOperation } from "~/draft/LobbyPanel";
+import { LobbyIdentityContext } from "~/draft/LobbyIdentity";
+import {
+  baseCookie,
+  baseLobbyView,
+  getBaseLobby,
+  mutateBaseLobby,
+  projectBaseDraft,
+  readBaseViewer,
+  requireBasePlayer,
+} from "~/drizzle/baseDraftLobby.server";
+import { applyBaseSelection } from "~/drizzle/baseDraftSync.server";
+import { broadcastDraftUpdate } from "~/websocket/broadcast.server";
+import { withBaseDraftLock } from "~/draft/baseDraftLock.server";
+
+export function headers() {
+  return { "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" };
+}
+
 export default function RunningDraft() {
+  const result = useLoaderData<typeof loader>();
+  const fetcher = useFetcher<typeof action>();
+  const revalidator = useRevalidator();
+  useEffect(() => {
+    if (!result.lobby) return;
+    const timer = setInterval(() => {
+      if (
+        document.visibilityState === "visible" &&
+        revalidator.state === "idle" &&
+        fetcher.state === "idle"
+      )
+        void revalidator.revalidate();
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [result.lobby, revalidator, fetcher.state]);
+  const operation = (operation: LobbyOperation) =>
+    fetcher.submit(
+      {
+        operation: JSON.stringify(operation),
+        revision: String(result.lobbyRevision),
+      },
+      { method: "post" },
+    );
+  const error =
+    fetcher.data && typeof fetcher.data === "object" && "error" in fetcher.data
+      ? fetcher.data.error
+      : undefined;
+  const backup =
+    fetcher.data && typeof fetcher.data === "object" && "backup" in fetcher.data
+      ? fetcher.data.backup
+      : undefined;
+  return (
+    <LobbyIdentityContext.Provider
+      value={
+        result.lobby
+          ? {
+              managed: true,
+              isAdmin: result.isAdmin,
+              paused: result.lobby.paused,
+            }
+          : null
+      }
+    >
+      <Stack>
+        {result.lobby && (
+          <LobbyPanel
+            lobby={result.lobby}
+            mode="base"
+            lobbyId={result.id}
+            ownPlayerId={result.ownPlayerId}
+            isAdmin={result.isAdmin}
+            busy={fetcher.state !== "idle"}
+            error={typeof error === "string" ? error : undefined}
+            exportState={typeof backup === "string" ? backup : undefined}
+            onOperation={operation}
+          />
+        )}
+        {result.data && (
+          <div inert={result.lobby?.paused || undefined}>
+            <DraftBoard
+              result={{
+                id: result.id,
+                urlName: result.urlName,
+                data: result.data,
+              }}
+              managed={!!result.lobby}
+              ownPlayerId={result.ownPlayerId}
+            />
+          </div>
+        )}
+      </Stack>
+    </LobbyIdentityContext.Provider>
+  );
+}
+
+function DraftBoard({
+  result,
+  managed,
+  ownPlayerId,
+}: {
+  result: { id: string; urlName: string | null; data: Draft };
+  managed: boolean;
+  ownPlayerId?: number;
+}) {
   const { adminMode } = useSafeOutletContext();
   useNotifyActivePlayer();
-  const result = useLoaderData<typeof loader>();
+  const revalidator = useRevalidator();
   const {
     syncDraft,
     syncing,
@@ -83,27 +186,47 @@ export default function RunningDraft() {
     });
   useEffect(() => {
     if (!socket) return;
-    socket.on("syncDraft", (data) => {
-      const draft = JSON.parse(data) as Draft;
-
-      draftStore.draftActions.update(result.id!, draft);
-    });
-  }, [socket]);
+    const changed = () => {
+      void revalidator.revalidate();
+    };
+    socket.on("draftChanged", changed);
+    return () => {
+      socket.off("draftChanged", changed);
+    };
+  }, [socket, revalidator]);
 
   // pre-seed store with loaded persisted draft
   useEffect(() => {
     draftStore.draftActions.hydrate(result.id!, result.urlName!, result.data);
     draftStore.replayActions.disableReplayMode();
 
-    const storedSelectedPlayer = localStorage.getItem(
-      `draft:player:${result.id}`,
-    );
-    if (storedSelectedPlayer) {
-      draftActions.setSelectedPlayer(parseInt(storedSelectedPlayer));
+    if (managed) draftActions.setSelectedPlayer(ownPlayerId ?? -1);
+    else {
+      try {
+        const selected = localStorage.getItem(`draft:player:${result.id}`);
+        if (selected) draftActions.setSelectedPlayer(parseInt(selected));
+      } catch {
+        /* Browsers may disable local storage. */
+      }
     }
-  }, []);
+  }, [
+    result.data,
+    result.id,
+    result.urlName,
+    managed,
+    ownPlayerId,
+    draftActions,
+    draftStore.draftActions,
+    draftStore.replayActions,
+  ]);
 
-  if (!draftStore.hydrated) return <LoadingOverlay />;
+  useEffect(() => {
+    if (managed && selectedPlayer !== (ownPlayerId ?? -1))
+      draftActions.setSelectedPlayer(ownPlayerId ?? -1);
+  }, [managed, ownPlayerId, selectedPlayer, draftActions]);
+
+  if (!draftStore.hydrated || draftStore.draftId !== result.id)
+    return <LoadingOverlay />;
 
   const syncDraftContextValue = {
     syncDraft,
@@ -302,7 +425,8 @@ export default function RunningDraft() {
         {!isPresetMapDraft && (
           <Grid.Col
             span={
-              settings.draftGameMode === "twilightsFall" && !settings.nucleusStyle
+              settings.draftGameMode === "twilightsFall" &&
+              !settings.nucleusStyle
                 ? 12
                 : { base: 12, lg: 6 }
             }
@@ -339,49 +463,133 @@ export default function RunningDraft() {
   );
 }
 
-export async function action({ request }: ActionFunctionArgs) {
-  const { id, draft } = (await request.json()) as {
-    id: string;
-    draft: Draft;
-    turnPassed: boolean;
-  };
+export async function action(args: ActionFunctionArgs) {
+  const row = validateUUID(args.params.id ?? "")
+    ? await draftById(args.params.id!)
+    : await draftByPrettyUrl(args.params.id!);
+  if (!row)
+    return data(
+      { success: false, error: "Draft not found" },
+      { status: 404, headers: headers() },
+    );
+  return withBaseDraftLock(row.id, () => runBaseAction(args));
+}
 
-  // if this draft data is the old legacy draft data,
-  // force a page reload instead
-  if (
-    Object.prototype.hasOwnProperty.call(
-      draft as unknown as Record<string, unknown>,
-      "mapString",
-    )
-  ) {
-    throw new Error("Cannot read old draft!");
-  }
-
-  const existingDraft = await draftById(id);
-  const serverSelections = (JSON.parse(existingDraft.data as string) as Draft)
-    .selections;
-
-  const validation = validateDraftSync(serverSelections, draft.selections);
-  if (!validation.valid) {
-    return validation.response;
-  }
-
-  await updateDraft(id, draft);
-
-  // only notify if a selection was made
-  if (serverSelections.length !== draft.selections.length) {
-    const notifyResult = await notifyPick(id, existingDraft.urlName!, draft);
-    if (!notifyResult.success) {
-      return data({
-        success: true,
-        discordError: "error" in notifyResult ? notifyResult.error : undefined,
-        discordMessage:
-          "message" in notifyResult ? notifyResult.message : undefined,
-      });
+async function runBaseAction({ request, params }: ActionFunctionArgs) {
+  try {
+    const routeDraft = validateUUID(params.id ?? "")
+      ? await draftById(params.id!)
+      : await draftByPrettyUrl(params.id!);
+    if (!routeDraft) throw new Response("Draft not found", { status: 404 });
+    if (!request.headers.get("Content-Type")?.includes("application/json")) {
+      const form = await request.formData();
+      const operation = JSON.parse(
+        String(form.get("operation")),
+      ) as LobbyOperation;
+      const result = await mutateBaseLobby(
+        routeDraft.id,
+        request,
+        operation,
+        Number(form.get("revision")),
+      );
+      if (result.issued)
+        result.headers.append(
+          "Set-Cookie",
+          await baseCookie(routeDraft.id, result.issued.role).serialize(
+            result.issued.uuid,
+          ),
+        );
+      await broadcastDraftUpdate(
+        routeDraft.id,
+        JSON.parse(routeDraft.data as string),
+      );
+      return data(
+        { success: true, error: null, backup: result.backup ?? null },
+        { headers: result.headers },
+      );
     }
+    const { id, draft } = (await request.json()) as {
+      id: string;
+      draft: Draft;
+    };
+    if (id !== routeDraft.id)
+      throw new Response("This action belongs to another draft.", {
+        status: 403,
+      });
+    if (!draft || !Array.isArray(draft.selections))
+      throw new Error("Invalid draft selection.");
+    const existing = JSON.parse(routeDraft.data as string) as Draft;
+    const lobby = getBaseLobby(id);
+    const viewer = await readBaseViewer(id, request);
+    const projected = lobby
+      ? projectBaseDraft(existing, viewer.playerId)
+      : existing;
+    const validation = validateDraftSync(
+      projected.selections,
+      draft.selections,
+    );
+    if (!validation.valid) return validation.response;
+    let updated = draft;
+    if (lobby) {
+      await requireBasePlayer(id, request, viewer.playerId ?? -1);
+      if (draft.selections.length !== existing.selections.length + 1)
+        throw new Error(
+          "Choose one option on your turn. Use lobby admin controls for corrections.",
+        );
+      updated = applyBaseSelection(
+        existing,
+        draft.selections[draft.selections.length - 1],
+        viewer.playerId!,
+      );
+    }
+    db.transaction(
+      () => {
+        const currentLobby = getBaseLobby(id);
+        if (
+          currentLobby &&
+          (!currentLobby.started ||
+            currentLobby.paused ||
+            !currentLobby.slots.some(
+              (slot) =>
+                slot.id === viewer.playerId && slot.uuid === viewer.uuid,
+            ))
+        )
+          throw new Response(
+            "The lobby changed. Rejoin your slot or wait for the admin to resume.",
+            { status: 409 },
+          );
+        updateDraft(id, updated, routeDraft.data as string);
+      },
+      { behavior: "immediate" },
+    );
+    await broadcastDraftUpdate(id, updated);
+    if (existing.selections.length !== updated.selections.length) {
+      const notified = await notifyPick(id, routeDraft.urlName!, updated);
+      if (!notified.success)
+        return data({
+          success: true,
+          discordError: "error" in notified ? notified.error : undefined,
+          discordMessage: "message" in notified ? notified.message : undefined,
+        });
+    }
+    return data({ success: true }, { headers: headers() });
+  } catch (error) {
+    return data(
+      {
+        success: false,
+        error:
+          error instanceof Response
+            ? await error.text()
+            : error instanceof Error
+              ? error.message
+              : "The draft could not be updated. Try again.",
+      },
+      {
+        status: error instanceof Response ? error.status : 400,
+        headers: headers(),
+      },
+    );
   }
-
-  return { success: true };
 }
 
 // meta is placed after loader so typeof loader resolves correctly
@@ -398,14 +606,15 @@ function formatDraftType(type: string, playerCount: number): string {
   return `${baseName} (${playerCount} players)`;
 }
 
-export const loader = async ({ params }: { params: { id: string } }) => {
-  const draftId = params.id;
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+  const draftId = params.id!;
 
   // If using a legacy "UUID url", generate a pretty URL
   // and then redirect to it.
   if (validateUUID(draftId)) {
     console.log("UUID url detected, generating pretty url");
     const draft = await draftById(draftId);
+    if (!draft) throw new Response("Draft not found", { status: 404 });
     if (draft.urlName) {
       console.log(`redirecting to pretty url ${draft.urlName}`);
       return redirect(`/draft/${draft.urlName}`);
@@ -430,17 +639,35 @@ export const loader = async ({ params }: { params: { id: string } }) => {
   const stagedSelections = await getDraftStagedSelections(result.id);
   const parsedDraft = JSON.parse(result.data as string) as Draft;
 
-  return data({
-    ...result,
-    data: {
-      ...parsedDraft,
-      stagedSelections,
+  const lobby = getBaseLobby(result.id);
+  const viewer = await readBaseViewer(result.id, request);
+  return data(
+    {
+      id: result.id,
+      urlName: result.urlName,
+      imageUrl: lobby && !lobby.started ? null : result.imageUrl,
+      incompleteImageUrl:
+        lobby && !lobby.started ? null : result.incompleteImageUrl,
+      data:
+        lobby && !lobby.started
+          ? null
+          : lobby
+            ? projectBaseDraft(
+                { ...parsedDraft, stagedSelections },
+                viewer.playerId,
+              )
+            : { ...parsedDraft, stagedSelections },
+      lobby: lobby ? baseLobbyView(lobby, viewer) : null,
+      lobbyRevision: lobby?.revision,
+      isAdmin: viewer.isAdmin,
+      ownPlayerId: viewer.playerId,
     },
-  });
+    { headers: headers() },
+  );
 };
 
 type LoaderData = {
-  data: Draft;
+  data: Draft | null;
   id: string;
   urlName: string | null;
   imageUrl: string | null;
@@ -449,7 +676,11 @@ type LoaderData = {
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const typed = data as LoaderData | undefined;
-  if (!typed) return [];
+  if (!typed?.data)
+    return [
+      { title: "Draft lobby · TI4 Lab" },
+      { name: "robots", content: "noindex, nofollow" },
+    ];
 
   const draft = typed.data;
   const draftId = typed.urlName!;
@@ -465,8 +696,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const existingImageUrl = isComplete
     ? (typed.imageUrl ?? undefined)
     : (typed.incompleteImageUrl ?? undefined);
-  const imageUrl =
-    existingImageUrl || appUrl(`/draft/${draftId}.png`);
+  const imageUrl = existingImageUrl || appUrl(`/draft/${draftId}.png`);
 
   return [
     { title },

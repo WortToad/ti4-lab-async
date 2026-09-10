@@ -1,3 +1,5 @@
+import { useContext } from "react";
+import { LobbyIdentityContext } from "~/draft/LobbyIdentity";
 import { Box, Button, Group, Text, MantineColor, Tooltip } from "@mantine/core";
 import { IconArrowBackUp } from "@tabler/icons-react";
 
@@ -34,6 +36,7 @@ export function SimultaneousPhaseHeader({
   undoPhaseDisabled,
   showPickAnyWarning = false,
 }: SimultaneousPhaseHeaderProps) {
+  const managedLobby = useContext(LobbyIdentityContext)?.managed;
   return (
     <Box
       style={{
@@ -58,14 +61,16 @@ export function SimultaneousPhaseHeader({
           </Text>
         </Group>
         <Group gap={4}>
-          <Button
-            size="compact-xs"
-            variant={adminMode ? "filled" : "default"}
-            color={adminMode ? "violet" : "gray"}
-            onClick={onAdminToggle}
-          >
-            Admin
-          </Button>
+          {!managedLobby && (
+            <Button
+              size="compact-xs"
+              variant={adminMode ? "filled" : "default"}
+              color={adminMode ? "violet" : "gray"}
+              onClick={onAdminToggle}
+            >
+              Admin
+            </Button>
+          )}
           {showPickForAnyoneControl && (
             <Tooltip
               label="Reveals hidden information. Use with caution."
@@ -77,7 +82,13 @@ export function SimultaneousPhaseHeader({
               <Button
                 size="compact-xs"
                 variant={pickForAnyone ? "filled" : "default"}
-                color={pickForAnyone ? (showPickAnyWarning ? "orange" : "violet") : "gray"}
+                color={
+                  pickForAnyone
+                    ? showPickAnyWarning
+                      ? "orange"
+                      : "violet"
+                    : "gray"
+                }
                 onClick={onTogglePickForAnyone}
               >
                 Pick Any

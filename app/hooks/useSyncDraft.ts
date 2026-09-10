@@ -2,7 +2,6 @@ import { appPath } from "~/utils/appUrl";
 import { useFetcher } from "react-router";
 import { createContext, useContext, useEffect } from "react";
 import { draftStore } from "~/draftStore";
-import { useSocket } from "~/socketContext";
 import { notifications } from "@mantine/notifications";
 import { FactionId, PlayerId, SimultaneousPickType } from "~/types";
 
@@ -17,7 +16,10 @@ type SyncDraftContextValue = {
     __: PlayerId,
     ___: string,
   ) => Promise<void>;
-  undoStagedPick: (_: SimultaneousPickType, __: PlayerId) => Promise<UndoResult>;
+  undoStagedPick: (
+    _: SimultaneousPickType,
+    __: PlayerId,
+  ) => Promise<UndoResult>;
   undoSimultaneousPhase: (_: SimultaneousPickType) => Promise<UndoResult>;
   undoLastPick: () => Promise<UndoResult>;
   syncing: boolean;
@@ -33,8 +35,7 @@ export function useSyncDraft() {
     undoStagedPick,
     undoSimultaneousPhase,
     undoLastPick,
-  } =
-    useContext(SyncDraftContext);
+  } = useContext(SyncDraftContext);
   return {
     syncDraft,
     syncing,
@@ -49,7 +50,6 @@ export function useSyncDraft() {
 
 export function useSyncDraftFetcher() {
   const fetcher = useFetcher({ key: "sync-draft" });
-  const socket = useSocket();
 
   useEffect(() => {
     const data = fetcher.data as {
@@ -101,8 +101,6 @@ export function useSyncDraftFetcher() {
     const { draftId, draftActions } = draftStore.getState();
     if (!draftId) return;
 
-    draftActions.stageSimultaneousPick(phase, playerId, value);
-
     const response = await fetch(appPath(`/api/draft/${draftId}/stage`), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -135,7 +133,6 @@ export function useSyncDraftFetcher() {
         { id: draftId, draft },
         { method: "POST", encType: "application/json" },
       );
-      socket?.emit("syncDraft", draftId, JSON.stringify(draft));
     },
     stagePriorityValue: async (playerId: PlayerId, factionId: FactionId) => {
       await stageSimultaneousPick("priorityValue", playerId, factionId);
@@ -144,22 +141,17 @@ export function useSyncDraftFetcher() {
       await stageSimultaneousPick("homeSystem", playerId, factionId);
     },
     stageSimultaneousPick,
-    undoStagedPick: async (
-      phase: SimultaneousPickType,
-      playerId: PlayerId,
-    ) => {
+    undoStagedPick: async (phase: SimultaneousPickType, playerId: PlayerId) => {
       const { draftId, draftActions } = draftStore.getState();
       if (!draftId) return { success: false };
-
-      draftActions.clearStagedSelection(phase, playerId);
 
       const response = await fetch(
         appPath(`/api/draft/${draftId}/simultaneous-undo-pick`),
         {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phase, playerId }),
-      },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phase, playerId }),
+        },
       );
 
       if (!response.ok) {
@@ -194,13 +186,13 @@ export function useSyncDraftFetcher() {
       const response = await fetch(
         appPath(`/api/draft/${draftId}/simultaneous-undo-phase`),
         {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phase,
-          expectedSelectionCount,
-        }),
-      },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phase,
+            expectedSelectionCount,
+          }),
+        },
       );
 
       if (!response.ok) {
@@ -297,12 +289,7 @@ export const SyncDraftContext = createContext<SyncDraftContextValue>({
   stagePriorityValue: async (_: PlayerId, __: FactionId) => {},
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   stageHomeSystem: async (_: PlayerId, __: FactionId) => {},
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  stageSimultaneousPick: async (
-    _: SimultaneousPickType,
-    __: PlayerId,
-    ___: string,
-  ) => {},
+  stageSimultaneousPick: async () => {},
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   undoStagedPick: async (_: SimultaneousPickType, __: PlayerId) => ({
     success: false,

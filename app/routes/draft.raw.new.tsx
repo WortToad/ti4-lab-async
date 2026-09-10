@@ -10,7 +10,7 @@ import {
   SegmentedControl,
   Stack,
   Text,
-  Textarea,
+  NumberInput,
   Title,
 } from "@mantine/core";
 import { useState } from "react";
@@ -34,10 +34,10 @@ export async function action({ request }: ActionFunctionArgs) {
     const mode = String(form.get("mode"));
     if (mode !== "base" && mode !== "twilightsFall")
       throw new Error("Choose normal TI4 or Twilight’s Fall.");
-    const names = String(form.get("players") ?? "")
-      .split("\n")
-      .map((name) => name.trim())
-      .filter(Boolean);
+    const count = Number(form.get("playerCount"));
+    if (!Number.isInteger(count) || count < 3 || count > 8)
+      throw new Error("Choose between 3 and 8 player slots.");
+    const names = Array.from({ length: count }, (_, i) => `Slot ${i + 1}`);
     const settings: RawSettings = {
       players: names.map((name, id) => ({ id, name })),
       mode,
@@ -48,7 +48,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const { id, token } = createRawRoom(settings);
     return redirect(`/draft/raw/${id}`, {
       headers: {
-        "Set-Cookie": await rawCookie(id).serialize(token),
+        "Set-Cookie": await rawCookie(id, "admin").serialize(token),
         "Cache-Control": "no-store",
       },
     });
@@ -73,12 +73,9 @@ export default function RawNew() {
   const [pok, setPok] = useState(true);
   const [te, setTe] = useState(true);
   const [selectedLayout, setSelectedLayout] = useState<string | null>(null);
-  const [players, setPlayers] = useState(
-    "Player 1\nPlayer 2\nPlayer 3\nPlayer 4\nPlayer 5\nPlayer 6",
-  );
+  const [count, setCount] = useState(6);
   const result = useActionData<typeof action>();
   const navigation = useNavigation();
-  const count = players.split("\n").filter((name) => name.trim()).length;
   const twilight = mode === "twilightsFall";
   const layouts = getRawLayouts({
     players: Array.from({ length: count }, (_, id) => ({ id, name: "" })),
@@ -138,18 +135,17 @@ export default function RawNew() {
                 </Text>
               </Stack>
             </Paper>
-            <Textarea
-              name="players"
-              label="Players, one name per line"
-              description={
-                twilight
-                  ? "Enter the starting clockwise seating order. The priority reveal determines the final seats."
-                  : "Enter the clockwise seating order. The speaker is chosen at random."
+            <NumberInput
+              name="playerCount"
+              label="Player slots"
+              description="Share one lobby link. Each player claims a slot and sets their name before the admin starts."
+              value={count}
+              onChange={(value) =>
+                setCount(typeof value === "number" ? value : 0)
               }
-              value={players}
-              onChange={(event) => setPlayers(event.currentTarget.value)}
-              minRows={6}
-              autosize
+              min={3}
+              max={8}
+              allowDecimal={false}
               required
             />
             <Group>
@@ -192,14 +188,13 @@ export default function RawNew() {
                 "Enter 3–6 players, or enable Prophecy of Kings for 7–8 players."
               }
             />
-            <Alert
-              color="blue"
-              title="Play together or let the host manage setup"
-            >
-              Share the room link so players can join their seats and view their
-              own hands. The host can view all hands, manage every seat and undo
-              actions. The completed setup includes map strings and downloadable
-              results.
+            <Alert color="blue" title="One lobby link for everyone">
+              Share the lobby link. Players choose a free slot, enter their
+              name, and save their recovery UUID. The host starts once everyone
+              has joined. Seating and cards stay hidden until then. Admin
+              recovery controls include undo, checkpoints, and private save
+              files; only your own hidden hands are visible when you also join
+              as a player.
             </Alert>
             <Button
               type="submit"

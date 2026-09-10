@@ -128,8 +128,8 @@ export function BagMapSetup({
         {mapRoomId && mapPath ? (
           <>
             <Text size="sm">
-              Your map room is ready. Your private player link carries your seat
-              into the map automatically.
+              Your map room is ready. Open it below to continue with your
+              current player slot and admin access.
             </Text>
             <Button component={Link} to={mapPath}>
               Open map room
@@ -155,8 +155,9 @@ export function BagMapSetup({
         ) : (
           phase !== "setup" && (
             <Text size="sm">
-              Keep using your private player link. Once everyone finishes, it
-              opens the shared map room automatically with your seat retained.
+              Keep using this shared lobby link. Once everyone finishes, an
+              “Open map room” button appears here and carries your slot into the
+              map.
             </Text>
           )
         )}

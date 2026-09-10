@@ -7,7 +7,6 @@ import {
   NumberInput,
   Stack,
   Text,
-  Textarea,
   Title,
 } from "@mantine/core";
 import { useState } from "react";
@@ -25,18 +24,15 @@ const factionOptions = baseFactions.map((id) => ({
 
 export default function MiniMiltySetup() {
   const navigate = useNavigate();
-  const [names, setNames] = useState(
-    "Player 1\nPlayer 2\nPlayer 3\nPlayer 4\nPlayer 5\nPlayer 6",
-  );
+  const [playerCount, setPlayerCount] = useState(6);
   const [numFactions, setNumFactions] = useState(7);
   const [banned, setBanned] = useState<string[]>([]);
   const [required, setRequired] = useState<string[]>([]);
   const [error, setError] = useState<string>();
-  const players = names
-    .split("\n")
-    .map((name) => name.trim())
-    .filter(Boolean)
-    .map((name, id) => ({ id, name }));
+  const players = Array.from({ length: playerCount }, (_, id) => ({
+    id,
+    name: `Slot ${id + 1}`,
+  }));
 
   const preview = () => {
     try {
@@ -72,21 +68,17 @@ export default function MiniMiltySetup() {
           rounds; speaker position also determines their seat.
         </Text>
         {error && <Alert color="red">{error}</Alert>}
-        <Textarea
-          label="Players"
-          description="One name per line."
-          minRows={6}
-          value={names}
-          onChange={(event) => {
-            const value = event.currentTarget.value;
-            setNames(value);
-            const count = value
-              .split("\n")
-              .filter((name) => name.trim()).length;
-            setNumFactions(
-              Math.min(baseFactions.length - banned.length, count + 1),
-            );
-          }}
+        <NumberInput
+          label="Player slots"
+          description="Players choose a free slot and set their name in the shared lobby. The admin starts once everyone has joined."
+          value={playerCount}
+          onChange={(value) =>
+            setPlayerCount(typeof value === "number" ? value : 0)
+          }
+          min={3}
+          max={6}
+          allowDecimal={false}
+          required
         />
         <NumberInput
           label="Factions in the draft"

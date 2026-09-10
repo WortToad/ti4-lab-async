@@ -13,6 +13,7 @@ import {
 import { DiscordData, Draft, DraftSettings } from "~/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DemoMap } from "~/components/DemoMap";
+import { LobbyRecovery } from "~/draft/LobbyRecovery";
 import { SectionTitle } from "~/components/Section";
 import { PlayerInputSection } from "../draft.new/components/PlayerInputSection";
 import {
@@ -372,6 +373,7 @@ export default function DraftPrechoice() {
       />
 
       <div className={classes.grid}>
+        <div className={classes.col12}><LobbyRecovery /></div>
         {setupError && <div className={classes.col12}><Alert color="red">{setupError}</Alert></div>}
         <div className={classes.col12}>
           <Group justify="space-between" gap="sm" mb="sm">

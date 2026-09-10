@@ -29,7 +29,7 @@ import {
 } from "./sections";
 import { useDraftValidationErrors } from "~/hooks/useDraftValidationErrors";
 import { useDraftConfig } from "~/hooks/useDraftConfig";
-import { notifyPick } from "~/discord/bot.server";
+import { baseCookie } from "~/drizzle/baseDraftLobby.server";
 import { AvailableMinorFactionsSection } from "./sections/AvailableMinorFactionsSection";
 import { AvailableReferenceCardPacksSection } from "./sections/AvailableReferenceCardPacksSection";
 import { ConnectedFactionSettingsModal } from "./components/ConnectedFactionSettingsModal";
@@ -247,10 +247,6 @@ export async function action({ request }: ActionFunctionArgs) {
     }),
   };
 
-  const { prettyUrl, id } = await createDraft(draft, presetUrl);
-  if (body.integrations?.discord) {
-    await notifyPick(id, prettyUrl, draft);
-  }
-
-  return redirect(`/draft/${prettyUrl}`);
+  const { prettyUrl, id, adminUuid } = await createDraft(draft, presetUrl);
+  return redirect(`/draft/${prettyUrl}`, { headers: { "Set-Cookie": await baseCookie(id, "admin").serialize(adminUuid) } });
 }

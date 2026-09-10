@@ -1,3 +1,7 @@
+import {
+  getBaseLobby,
+  projectBaseDraft,
+} from "~/drizzle/baseDraftLobby.server";
 import { LoaderFunctionArgs, redirect } from "react-router";
 import { draftByPrettyUrl } from "~/drizzle/draft.server";
 import { Draft } from "~/types";
@@ -22,17 +26,26 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   console.log("draftId", draftId);
   const result = await draftByPrettyUrl(draftId);
+  if (!result) throw new Response("Draft not found", { status: 404 });
+  const lobby = getBaseLobby(result.id);
+  if (lobby && !lobby.started)
+    throw new Response("The admin has not started this lobby.", {
+      status: 403,
+      headers: { "Cache-Control": "no-store" },
+    });
   if (!result) {
     throw new Response("Draft not found", { status: 404 });
   }
 
   // Check if draft is complete
-  const draft = JSON.parse(result.data as string) as Draft;
+  const draft = projectBaseDraft(JSON.parse(result.data as string) as Draft);
   const isComplete = draft.selections?.length === draft.pickOrder?.length;
 
   // Production mode: if image already exists in CDN, redirect to it
-  const existingImageUrl = isComplete ? result.imageUrl : result.incompleteImageUrl;
-  if (!devMode && existingImageUrl) {
+  const existingImageUrl = isComplete
+    ? result.imageUrl
+    : result.incompleteImageUrl;
+  if (!lobby && !devMode && existingImageUrl) {
     return redirect(existingImageUrl, {
       status: 302,
       headers: {
@@ -49,11 +62,15 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       : await generateDraftSlicesImage(draft, draftId);
 
   // Without object storage, serve generated images from this same service.
-  if (devMode || process.env.R2_INTEGRATION_DISABLED === "true") {
+  if (lobby || devMode || process.env.R2_INTEGRATION_DISABLED === "true") {
     return new Response(imageBuffer, {
       headers: {
         "Content-Type": "image/png",
-        "Cache-Control": devMode ? "no-cache" : "public, max-age=60",
+        "Cache-Control": lobby
+          ? "no-store"
+          : devMode
+            ? "no-cache"
+            : "public, max-age=60",
       },
     });
   }

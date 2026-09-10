@@ -1,3 +1,7 @@
+import {
+  getBaseLobby,
+  projectBaseDraft,
+} from "~/drizzle/baseDraftLobby.server";
 import { appUrl } from "~/utils/appUrl";
 import { Grid, Stack, Text } from "@mantine/core";
 import { data, redirect } from "react-router";
@@ -12,7 +16,6 @@ import {
   draftByPrettyUrl,
   generateUniquePrettyUrl,
 } from "~/drizzle/draft.server";
-import { useHydratedDraft } from "~/hooks/useHydratedDraft";
 import {
   SlicesSection,
   SpeakerOrderSection,
@@ -121,8 +124,15 @@ export const loader = async ({ params }: { params: { id: string } }) => {
   }
 
   const result = await draftByPrettyUrl(draftId);
+  if (!result) throw new Response("Draft not found", { status: 404 });
+  const lobby = getBaseLobby(result.id);
+  if (lobby && !lobby.started)
+    throw new Response("The admin has not started this lobby.", {
+      status: 403,
+      headers: { "Cache-Control": "no-store" },
+    });
   return data({
     ...result,
-    data: JSON.parse(result.data as string) as Draft,
+    data: projectBaseDraft(JSON.parse(result.data as string) as Draft),
   });
 };

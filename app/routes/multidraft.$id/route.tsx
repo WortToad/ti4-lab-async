@@ -1,3 +1,7 @@
+import {
+  getBaseLobby,
+  projectBaseDraft,
+} from "~/drizzle/baseDraftLobby.server";
 import { appPath } from "~/utils/appUrl";
 import { Group, SimpleGrid, Stack, Text } from "@mantine/core";
 import { LoaderFunctionArgs, data } from "react-router";
@@ -21,12 +25,28 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
   const draftPromises = urlNames.map(async (urlName) => {
     const draft = await draftByPrettyUrl(urlName);
-    return { urlName, draft };
+    if (!draft) return { urlName, draft: null };
+    const lobby = getBaseLobby(draft.id);
+    return {
+      urlName,
+      draft: {
+        id: draft.id,
+        data:
+          lobby && !lobby.started
+            ? null
+            : JSON.stringify(
+                projectBaseDraft(JSON.parse(draft.data as string)),
+              ),
+      },
+    };
   });
 
   const drafts = await Promise.all(draftPromises);
 
-  return data({ multidraft, drafts });
+  return data(
+    { multidraft, drafts },
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }
 
 export default function MultidraftRoute() {
@@ -34,7 +54,19 @@ export default function MultidraftRoute() {
   return (
     <Stack p="lg" gap={50}>
       {drafts.map(({ draft, urlName }) => {
-        if (draft.data == null) return null;
+        if (!draft) return null;
+        if (draft.data == null)
+          return (
+            <Stack key={urlName}>
+              <a href={appPath(`/draft/${urlName}`)}>
+                <SectionTitle title={urlName} />
+              </a>
+              <Text>
+                Open this lobby to claim a slot. Draft details will appear after
+                the admin starts.
+              </Text>
+            </Stack>
+          );
         const data: Draft = JSON.parse(draft.data as string);
         return (
           <Stack key={urlName}>

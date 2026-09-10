@@ -6,7 +6,6 @@ import {
   Container,
   Group,
   Modal,
-  Select,
   SimpleGrid,
   Stack,
   Table,
@@ -43,93 +42,399 @@ import {
   needsMantisDiscard,
   undoMantisAction,
   type MantisAction,
+  type MantisSnapshot,
 } from "~/draft/mantis/engine";
 import {
   getMantisRoom,
   mantisCookie,
+  mantisAdminCookie,
+  readMantisAdminToken,
   mantisTokenHash,
   newMantisToken,
   readMantisToken,
   saveMantisRoom,
+  type MantisRoomData,
 } from "~/drizzle/mantisDraft.server";
+import { LobbyPanel, type LobbyOperation } from "~/draft/LobbyPanel";
+import { syncBagMapIdentity } from "~/draft/bag/bagDraft.server";
+import { db } from "~/drizzle/config.server";
+import type { LobbyView } from "~/draft/lobby";
+import {
+  openBackup,
+  playerName,
+  sealBackup,
+  validRecoveryToken,
+} from "~/draft/lobby.server";
 import {
   encodeAsyncMapString,
   encodeTtpgMapString,
 } from "~/mapgen/utils/externalMapStringCodec";
 
+const privateHeaders = {
+  "Cache-Control": "no-store",
+  "Referrer-Policy": "no-referrer",
+};
+export function headers() {
+  return privateHeaders;
+}
+
 export async function loader({ request, params }: LoaderFunctionArgs) {
+  const [cookie, adminToken] = await Promise.all([
+    readMantisToken(params.id!, request),
+    readMantisAdminToken(params.id!, request),
+  ]);
   const record = getMantisRoom(params.id!);
-  const cookie = await readMantisToken(record.id, request);
-  const hash = typeof cookie === "string" ? mantisTokenHash(cookie) : "";
-  const { history, ...draft } = record.room.draft;
+  const hash = cookie ? mantisTokenHash(cookie) : "";
+  const isHost =
+    !!adminToken && mantisTokenHash(adminToken) === record.hostTokenHash;
+  const ownPlayers = Object.entries(record.room.claims)
+    .filter(([, token]) => token === hash)
+    .map(([id]) => Number(id));
+  let upgraded = false;
+  if (isHost && !record.room.lobby.adminUuid) {
+    record.room.lobby.adminUuid = adminToken;
+    upgraded = true;
+  }
+  for (const id of ownPlayers) {
+    if (!record.room.lobby.seatKeys[id] && cookie) {
+      record.room.lobby.seatKeys[id] = cookie;
+      upgraded = true;
+    }
+  }
+  if (upgraded) {
+    saveMantisRoom(record.id, record.revision, record.room);
+    record.revision++;
+  }
+  const { history, ...snapshot } = record.room.draft;
+  // Picks and kept tiles are public in Mantis. Draw selection is private until placed.
+  const draft: MantisSnapshot | null = record.room.lobby.started
+    ? {
+        ...snapshot,
+        hands: Object.fromEntries(
+          Object.entries(snapshot.hands).map(([id, tiles]) => [
+            id,
+            [...tiles].sort(),
+          ]),
+        ),
+        drawnTile: ownPlayers.includes(mantisActivePlayer(snapshot) ?? -1)
+          ? snapshot.drawnTile
+          : undefined,
+        log: snapshot.log.map((entry) =>
+          entry.replace(
+            /mulliganed tile .* and drew .*\.$/,
+            "used a mulligan.",
+          ),
+        ),
+      }
+    : null;
+  const lobby: LobbyView = {
+    started: record.room.lobby.started,
+    paused: record.room.lobby.paused,
+    slots: snapshot.players.map((player) => ({
+      id: player.id,
+      name: player.name,
+      claimed: !!record.room.claims[player.id],
+      ...(isHost ? { uuid: record.room.lobby.seatKeys[player.id] } : {}),
+    })),
+    ownUuid: ownPlayers.length
+      ? (record.room.lobby.seatKeys[ownPlayers[0]] ?? cookie)
+      : undefined,
+    ...(isHost
+      ? {
+          adminUuid: record.room.lobby.adminUuid ?? adminToken,
+          checkpoints: [
+            ...(record.room.lobby.checkpoints ?? []).map(
+              ({ id, label, createdAt }) => ({ id, label, createdAt }),
+            ),
+            ...history.map((state, index) => ({
+              id: String(index),
+              label:
+                state.phase === "draft"
+                  ? `Round ${Math.floor(state.pickNumber / state.players.length) + 1}, before pick ${state.pickNumber + 1}`
+                  : `${state.phase === "build" ? "Map building" : "Discard extras"}: before action ${index + 1}`,
+              createdAt: `Action ${index + 1}`,
+            })),
+          ],
+        }
+      : {}),
+  };
+  const responseHeaders = new Headers(privateHeaders);
+  if (isHost)
+    responseHeaders.append(
+      "Set-Cookie",
+      await mantisAdminCookie(record.id).serialize(adminToken),
+    );
   return data(
     {
       id: record.id,
       revision: record.revision,
       draft,
+      lobby,
       canUndo: history.length > 0,
-      isHost: hash === record.hostTokenHash,
-      ownPlayers: Object.entries(record.room.claims)
-        .filter(([, token]) => token === hash)
-        .map(([id]) => Number(id)),
+      isHost,
+      ownPlayers,
       claimedPlayers: Object.keys(record.room.claims).map(Number),
     },
-    { headers: { "Cache-Control": "no-store" } },
+    { headers: responseHeaders },
   );
+}
+
+function renamePlayer(room: MantisRoomData, id: number, name: string) {
+  const rename = (draft: MantisSnapshot) => {
+    const player = draft.players.find((player) => player.id === id);
+    if (player) player.name = name;
+    const configured = draft.settings.players.find(
+      (player) => player.id === id,
+    );
+    if (configured) configured.name = name;
+  };
+  rename(room.draft);
+  room.draft.history.forEach(rename);
+}
+
+function checkpoint(room: MantisRoomData, label: string) {
+  const saved = {
+    id: newMantisToken(),
+    label,
+    createdAt: new Date().toISOString(),
+    draft: structuredClone(room.draft),
+  };
+  room.lobby.checkpoints = [saved, ...(room.lobby.checkpoints ?? [])].slice(
+    0,
+    20,
+  );
+}
+
+function checkpointDraft(room: MantisRoomData, id: string) {
+  const saved = room.lobby.checkpoints?.find((entry) => entry.id === id);
+  if (saved) return structuredClone(saved.draft);
+  const index = Number(id);
+  const state =
+    /^\d+$/.test(id) && Number.isInteger(index)
+      ? room.draft.history[index]
+      : undefined;
+  if (!state) throw new Error("Choose an available saved turn or round.");
+  return {
+    ...structuredClone(state),
+    history: structuredClone(room.draft.history.slice(0, index)),
+  };
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
   try {
     const form = await request.formData();
+    const [storedToken, adminToken] = await Promise.all([
+      readMantisToken(params.id!, request),
+      readMantisAdminToken(params.id!, request),
+    ]);
     const record = getMantisRoom(params.id!);
-    if (Number(form.get("revision")) !== record.revision)
+    const hash = storedToken ? mantisTokenHash(storedToken) : "";
+    const isHost =
+      !!adminToken && mantisTokenHash(adminToken) === record.hostTokenHash;
+    const intent = String(form.get("intent"));
+    const playerId = Number(form.get("playerId"));
+    const responseHeaders = new Headers(privateHeaders);
+    let issuedPlayerToken: string | undefined;
+    const success = async (exportState?: string) => {
+      if (isHost)
+        responseHeaders.append(
+          "Set-Cookie",
+          await mantisAdminCookie(record.id).serialize(adminToken),
+        );
+      if (issuedPlayerToken)
+        responseHeaders.append(
+          "Set-Cookie",
+          await mantisCookie(record.id).serialize(issuedPlayerToken),
+        );
+      return data(
+        { success: true, error: null, exportState },
+        { headers: responseHeaders },
+      );
+    };
+    if (intent === "recover") {
+      const uuid = String(form.get("recoveryId") ?? "")
+        .trim()
+        .toLowerCase();
+      if (!validRecoveryToken(uuid)) throw new Error("Enter your saved UUID.");
+      const recoveryHash = mantisTokenHash(uuid);
+      const hostRecovery = recoveryHash === record.hostTokenHash;
+      if (
+        !hostRecovery &&
+        !Object.values(record.room.claims).includes(recoveryHash)
+      )
+        throw new Error(
+          "This UUID does not belong to a player or admin in this lobby.",
+        );
+      responseHeaders.append(
+        "Set-Cookie",
+        await (
+          hostRecovery ? mantisAdminCookie(record.id) : mantisCookie(record.id)
+        ).serialize(uuid),
+      );
+      return success();
+    }
+    if (
+      !["join", "export"].includes(intent) &&
+      Number(form.get("revision")) !== record.revision
+    )
       throw new Error(
         "Another player changed the draft. Wait for the latest state and try again.",
       );
-    const storedToken = await readMantisToken(record.id, request);
-    const hash =
-      typeof storedToken === "string" ? mantisTokenHash(storedToken) : "";
-    const isHost = hash === record.hostTokenHash;
-    const intent = String(form.get("intent"));
-    const playerId = Number(form.get("playerId"));
     if (intent === "join") {
       if (!record.room.draft.players.some((p) => p.id === playerId))
-        throw new Error("Choose a player in the draft.");
-      if (record.room.claims[playerId] && record.room.claims[playerId] !== hash)
-        throw new Error("That player has already joined.");
-      const token =
-        typeof storedToken === "string" ? storedToken : newMantisToken();
+        throw new Error("Choose an available lobby slot.");
+      if (record.room.claims[playerId])
+        throw new Error(
+          "That slot has already been taken. Use your UUID to rejoin it.",
+        );
+      if (Object.values(record.room.claims).includes(hash))
+        throw new Error("You already have a slot in this lobby.");
+      const name = playerName(form.get("name"));
+      const token = newMantisToken();
       record.room.claims[playerId] = mantisTokenHash(token);
-      saveMantisRoom(record.id, record.revision, record.room);
-      return data(
-        { success: true, error: null },
-        {
-          headers: {
-            "Cache-Control": "no-store",
-            "Set-Cookie": await mantisCookie(record.id).serialize(token),
-          },
-        },
-      );
-    }
-    if (intent === "undo") {
-      if (!isHost) throw new Error("Only the draft host can undo actions.");
-      record.room.draft = undoMantisAction(record.room.draft);
-    } else if (intent === "release") {
-      if (!isHost) throw new Error("Only the host can release a player slot.");
-      delete record.room.claims[playerId];
+      record.room.lobby.seatKeys[playerId] = token;
+      renamePlayer(record.room, playerId, name);
+      issuedPlayerToken = token;
     } else if (intent === "pick") {
-      if (!isHost && (!hash || record.room.claims[playerId] !== hash))
+      if (!hash || record.room.claims[playerId] !== hash)
         throw new Error("Join as this player before making a pick.");
+      if (!record.room.lobby.started)
+        throw new Error("The admin must start the draft after everyone joins.");
+      if (record.room.lobby.paused)
+        throw new Error(
+          "The draft is paused. Wait for the admin to resume it.",
+        );
       const pick = JSON.parse(String(form.get("action"))) as MantisAction;
       if (!pick || typeof pick !== "object")
         throw new Error("Invalid draft action.");
       record.room.draft = applyMantisAction(record.room.draft, playerId, pick);
-    } else throw new Error("Unknown draft action.");
-    saveMantisRoom(record.id, record.revision, record.room);
-    return data(
-      { success: true, error: null },
-      { headers: { "Cache-Control": "no-store" } },
+    } else {
+      if (!isHost)
+        throw new Error(
+          "Only the draft host can manage or restore this lobby.",
+        );
+      if (intent === "start") {
+        if (record.room.lobby.started)
+          throw new Error("The draft has already started.");
+        if (record.room.draft.players.some((p) => !record.room.claims[p.id]))
+          throw new Error("Every slot must be claimed before starting.");
+        record.room.lobby.started = true;
+      } else if (intent === "pause" || intent === "resume") {
+        if (!record.room.lobby.started)
+          throw new Error("Start the draft first.");
+        if (
+          intent === "resume" &&
+          record.room.draft.players.some((p) => !record.room.claims[p.id])
+        )
+          throw new Error("Fill every released slot before resuming.");
+        record.room.lobby.paused = intent === "pause";
+      } else if (intent === "undo") {
+        if (!record.room.draft.history.length)
+          throw new Error("There is no action to undo.");
+        checkpoint(record.room, "Recovery: before undo");
+        const names = record.room.draft.players.map(({ id, name }) => ({
+          id,
+          name,
+        }));
+        record.room.draft = undoMantisAction(record.room.draft);
+        names.forEach(({ id, name }) => renamePlayer(record.room, id, name));
+        record.room.lobby.paused = true;
+      } else if (intent === "checkpoint") {
+        checkpoint(record.room, "Manual checkpoint");
+      } else if (intent === "restore") {
+        const state = checkpointDraft(
+          record.room,
+          String(form.get("checkpointId") ?? ""),
+        );
+        checkpoint(record.room, "Recovery: before restoring a checkpoint");
+        const names = record.room.draft.players.map(({ id, name }) => ({
+          id,
+          name,
+        }));
+        record.room.draft = state;
+        names.forEach(({ id, name }) => renamePlayer(record.room, id, name));
+        record.room.lobby.paused = true;
+      } else if (intent === "export") {
+        const selected = String(form.get("checkpointId") ?? "");
+        return success(
+          sealBackup("mantis", record.id, record.room.lobby.backupSecret, {
+            draft: selected
+              ? checkpointDraft(record.room, selected)
+              : record.room.draft,
+            started: record.room.lobby.started,
+          }),
+        );
+      } else if (intent === "import") {
+        const saved = openBackup<{
+          draft: MantisRoomData["draft"];
+          started: boolean;
+        }>(
+          "mantis",
+          record.id,
+          record.room.lobby.backupSecret,
+          String(form.get("state") ?? ""),
+        );
+        if (
+          !saved.draft ||
+          !Array.isArray(saved.draft.players) ||
+          saved.draft.players.length !== record.room.draft.players.length ||
+          saved.draft.players.some(
+            (p) =>
+              !record.room.draft.players.some((current) => current.id === p.id),
+          )
+        )
+          throw new Error(
+            "This saved state does not match the players in this lobby.",
+          );
+        const names = record.room.draft.players.map(({ id, name }) => ({
+          id,
+          name,
+        }));
+        checkpoint(record.room, "Recovery: before importing a save");
+        record.room.draft = saved.draft;
+        names.forEach(({ id, name }) => renamePlayer(record.room, id, name));
+        record.room.lobby.started = saved.started;
+        record.room.lobby.paused = saved.started;
+      } else if (["release", "rotate", "rename"].includes(intent)) {
+        if (!record.room.draft.players.some((p) => p.id === playerId))
+          throw new Error("Choose a player slot.");
+        if (intent === "rename")
+          renamePlayer(record.room, playerId, playerName(form.get("name")));
+        else if (intent === "release") {
+          delete record.room.claims[playerId];
+          delete record.room.lobby.seatKeys[playerId];
+          if (record.room.lobby.started) record.room.lobby.paused = true;
+        } else {
+          if (!record.room.claims[playerId])
+            throw new Error("This slot has not been claimed yet.");
+          const token = newMantisToken();
+          record.room.claims[playerId] = mantisTokenHash(token);
+          record.room.lobby.seatKeys[playerId] = token;
+        }
+      } else throw new Error("Unknown draft action.");
+    }
+    db.transaction(
+      () => {
+        saveMantisRoom(record.id, record.revision, record.room);
+        if (
+          record.room.draft.bagDraftId &&
+          ["join", "release", "rotate", "rename"].includes(intent)
+        ) {
+          syncBagMapIdentity(
+            record.room.draft.bagDraftId,
+            record.id,
+            playerId,
+            {
+              uuid: record.room.lobby.seatKeys[playerId],
+              name: record.room.draft.players.find((p) => p.id === playerId)!
+                .name,
+            },
+          );
+        }
+      },
+      { behavior: "immediate" },
     );
+    return success();
   } catch (error) {
     if (error instanceof Response) throw error;
     return data(
@@ -139,36 +444,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
           error instanceof Error
             ? error.message
             : "Could not update the draft.",
+        exportState: undefined,
       },
-      { status: 400, headers: { "Cache-Control": "no-store" } },
+      { status: 400, headers: privateHeaders },
     );
   }
 }
 
 export default function MantisRoom() {
   const room = useLoaderData<typeof loader>();
-  const { draft } = room;
   const fetcher = useFetcher<typeof action>();
   const revalidator = useRevalidator();
-  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
-  const [confirmation, setConfirmation] = useState<MantisAction | null>(null);
-  const [undoConfirmation, setUndoConfirmation] = useState(false);
-  const [shareMessage, setShareMessage] = useState("");
-  const activeId = mantisActivePlayer(draft);
-  const active = draft.players.find((p) => p.id === activeId);
-  const playerId =
-    selectedPlayer !== null
-      ? Number(selectedPlayer)
-      : (room.ownPlayers[0] ?? (room.isHost ? activeId : undefined));
-  const controlled =
-    playerId !== undefined &&
-    (room.isHost || room.ownPlayers.includes(playerId));
-  const busy = fetcher.state !== "idle";
-  const canPick =
-    controlled && !busy && (draft.phase === "discard" || playerId === activeId);
-  const buildTurn =
-    draft.phase === "build" ? mantisBuildTurn(draft) : undefined;
-
   useEffect(() => {
     const timer = window.setInterval(() => {
       if (
@@ -180,6 +466,63 @@ export default function MantisRoom() {
     }, 3000);
     return () => window.clearInterval(timer);
   }, [revalidator, fetcher.state]);
+  const lobbyOperation = (operation: LobbyOperation) => {
+    const { type, ...fields } = operation;
+    fetcher.submit(
+      {
+        intent: type,
+        revision: String(room.revision),
+        ...Object.fromEntries(
+          Object.entries(fields).map(([key, value]) => [
+            key === "uuid" ? "recoveryId" : key,
+            String(value),
+          ]),
+        ),
+      },
+      { method: "post" },
+    );
+  };
+  return (
+    <>
+      <Container size="xl" pt="lg">
+        <LobbyPanel
+          lobby={room.lobby}
+          mode="mantis"
+          lobbyId={room.id}
+          ownPlayerId={room.ownPlayers[0]}
+          isAdmin={room.isHost}
+          busy={fetcher.state !== "idle"}
+          error={fetcher.data?.error}
+          onOperation={lobbyOperation}
+          exportState={fetcher.data?.exportState}
+        />
+      </Container>
+      {room.draft && <ActiveMantisRoom room={{ ...room, draft: room.draft }} />}
+    </>
+  );
+}
+
+type LoadedMantisRoom = ReturnType<typeof useLoaderData<typeof loader>>;
+function ActiveMantisRoom({
+  room,
+}: {
+  room: Omit<LoadedMantisRoom, "draft"> & { draft: MantisSnapshot };
+}) {
+  const { draft } = room;
+  const fetcher = useFetcher<typeof action>();
+  const [confirmation, setConfirmation] = useState<MantisAction | null>(null);
+  const activeId = mantisActivePlayer(draft);
+  const active = draft.players.find((p) => p.id === activeId);
+  const playerId = room.ownPlayers[0];
+  const controlled = playerId !== undefined;
+  const busy = fetcher.state !== "idle";
+  const canPick =
+    controlled &&
+    !busy &&
+    !room.lobby.paused &&
+    (draft.phase === "discard" || playerId === activeId);
+  const buildTurn =
+    draft.phase === "build" ? mantisBuildTurn(draft) : undefined;
 
   const submit = (intent: string, extra: Record<string, string> = {}) => {
     fetcher.submit(
@@ -238,41 +581,15 @@ export default function MantisRoom() {
               </Button>
             )}
             <OriginalArtToggle />
-            <Button
-              variant="light"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(window.location.href);
-                  setShareMessage("Draft link copied");
-                } catch {
-                  setShareMessage(
-                    "Share this page's address with your players.",
-                  );
-                }
-              }}
-            >
-              Copy invite link
-            </Button>
-            {room.isHost && (
-              <Button
-                color="red"
-                variant="light"
-                disabled={!room.canUndo || busy}
-                onClick={() => setUndoConfirmation(true)}
-              >
-                Undo last action
-              </Button>
-            )}
           </Group>
         </Group>
-        {shareMessage && <Text size="sm">{shareMessage}</Text>}
         <Text>
           {draft.factionLabels
             ? "Build the map with the tiles, home systems, and speaker order from your completed bag draft. "
             : "Public snake draft → discard extras → build your own slice. "}
           Your kept tiles fill your own section of the shared map. On each
-          placement turn, the builder randomly draws from your remaining hand;
-          a mulligan draws a different tile and leaves the original in your hand
+          placement turn, the builder randomly draws from your remaining hand; a
+          mulligan draws a different tile and leaves the original in your hand
           to place later.
         </Text>
         <Group>
@@ -286,56 +603,47 @@ export default function MantisRoom() {
           </Text>
         </Group>
         {fetcher.data?.error && <Alert color="red">{fetcher.data.error}</Alert>}
-        <Group align="end">
-          <Select
-            label={room.isHost ? "Host: act for player" : "Your player"}
-            placeholder={
-              room.isHost && active
-                ? `Follow turn: ${active.name}`
-                : "Choose your name"
-            }
-            clearable
-            value={selectedPlayer}
-            onChange={setSelectedPlayer}
-            data={draft.players.map((p) => ({
-              value: String(p.id),
-              label: `${p.name}${room.claimedPlayers.includes(p.id) && !room.ownPlayers.includes(p.id) ? " (joined)" : ""}`,
-            }))}
-          />
-          {!controlled && playerId !== undefined && (
-            <Button
-              disabled={busy || room.claimedPlayers.includes(playerId)}
-              onClick={() => submit("join")}
+        <Alert
+          color={canPick ? "teal" : "blue"}
+          title={
+            room.lobby.paused
+              ? "Draft paused"
+              : canPick
+                ? "Your turn"
+                : controlled
+                  ? "Waiting for other players"
+                  : "Watching the draft"
+          }
+        >
+          {room.lobby.paused
+            ? "The admin is resolving an issue. Picks will resume when the admin resumes the draft."
+            : draft.phase === "draft"
+              ? "On each turn, choose one faction, one speaker position, or one tile. By the end, you need one faction, one speaker position, and your full quota of blue and red tiles. The order reverses each round."
+              : draft.phase === "discard"
+                ? "Keep exactly 3 blue and 2 red tiles. Everyone can remove their extras at the same time. Map building begins automatically when all hands are ready."
+                : draft.phase === "build"
+                  ? "The active player draws one tile privately, then places it in a highlighted space. Each player's five tiles become their own section of the map. A mulligan redraws without losing the previous tile."
+                  : "Your factions, speaker positions, and map are ready. Copy a map string below to set up your game."}
+        </Alert>
+        <Group gap="xs" aria-label="Mantis draft stages">
+          {[
+            "Draft faction + speaker + tiles",
+            "Discard extras",
+            "Build map",
+            "Play",
+          ].map((label, index) => (
+            <Badge
+              key={label}
+              variant={
+                ["draft", "discard", "build", "complete"][index] === draft.phase
+                  ? "filled"
+                  : "light"
+              }
             >
-              Join as {draft.players.find((p) => p.id === playerId)?.name}
-            </Button>
-          )}
-          {room.isHost &&
-            playerId !== undefined &&
-            room.claimedPlayers.includes(playerId) && (
-              <Button
-                variant="subtle"
-                color="red"
-                disabled={busy}
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      "Release this player slot so someone else can join?",
-                    )
-                  )
-                    submit("release");
-                }}
-              >
-                Release player slot
-              </Button>
-            )}
+              {index + 1}. {label}
+            </Badge>
+          ))}
         </Group>
-        {!room.isHost && !controlled && (
-          <Text size="sm" c="dimmed">
-            Choose your name and join to make picks. You can also watch the
-            draft.
-          </Text>
-        )}
         <Text size="sm">
           Draft order:{" "}
           {draft.order
@@ -548,7 +856,11 @@ export default function MantisRoom() {
         {draft.phase === "build" && (
           <Stack>
             <Group>
-              <Title order={3}>Drawn tile</Title>
+              <Title order={3}>
+                {draft.drawnTile
+                  ? "Your drawn tile"
+                  : "Waiting for the active player to place a tile"}
+              </Title>
               {draft.drawnTile && (
                 <SystemTileCard systemId={draft.drawnTile} radius={60} />
               )}
@@ -564,8 +876,8 @@ export default function MantisRoom() {
               </Button>
             </Group>
             <Text>
-              Place the drawn tile in a highlighted position in your section
-              of the map. Everyone fills their inner position near Mecatol Rex
+              Place the drawn tile in a highlighted position in your section of
+              the map. Everyone fills their inner position near Mecatol Rex
               before moving to the two middle positions, then the two outer
               positions. Within each group, the player with the most empty
               spaces places next, with ties resolved in speaker order.
@@ -670,25 +982,6 @@ export default function MantisRoom() {
               Confirm
             </Button>
           </Group>
-        </Stack>
-      </Modal>
-      <Modal
-        opened={undoConfirmation}
-        onClose={() => setUndoConfirmation(false)}
-        title="Undo last action"
-        centered
-      >
-        <Stack>
-          <Text>Restore the draft to before the most recent action?</Text>
-          <Button
-            color="red"
-            onClick={() => {
-              submit("undo");
-              setUndoConfirmation(false);
-            }}
-          >
-            Undo
-          </Button>
         </Stack>
       </Modal>
     </Container>

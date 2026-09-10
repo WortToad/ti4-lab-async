@@ -9,6 +9,7 @@ import {
   randomizeFactions,
 } from "~/draftStore";
 import { createDraft } from "~/drizzle/draft.server";
+import { baseCookie } from "~/drizzle/baseDraftLobby.server";
 import { createMultiDraft } from "~/drizzle/multiDraft.server";
 import { shuffle } from "~/draft/helpers/randomization";
 import {
@@ -47,6 +48,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const numDrafts = parseInt(formData.get("numDrafts") as string);
 
   const draftUrlNames: string[] = [];
+  const headers = new Headers();
   for (let i = 0; i < numDrafts; i++) {
     const factionPool = getFactionPool(settings.factionGameSets);
     const systemPool = getSystemPool(settings.tileGameSets);
@@ -108,13 +110,14 @@ export async function action({ request }: ActionFunctionArgs) {
         texasDraft,
       }),
     };
-    const { prettyUrl } = await createDraft(draft);
+    const { prettyUrl, id, adminUuid } = await createDraft(draft);
+    headers.append("Set-Cookie", await baseCookie(id, "admin").serialize(adminUuid));
     draftUrlNames.push(prettyUrl);
   }
 
   const multiDraftUrlName = await createMultiDraft(draftUrlNames);
 
-  return redirect(`/multidraft/${multiDraftUrlName}`);
+  return redirect(`/multidraft/${multiDraftUrlName}`, { headers });
 }
 
 export default function MultiDraft() {

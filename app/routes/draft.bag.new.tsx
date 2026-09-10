@@ -14,7 +14,6 @@ import {
   Switch,
   Table,
   Text,
-  Textarea,
   Title,
 } from "@mantine/core";
 import { useState } from "react";
@@ -37,7 +36,8 @@ import {
 } from "~/draft/bag/catalog";
 import { bagCategoryLabel } from "~/draft/bag/BagComponents";
 import { BagMapSetup } from "~/draft/bag/BagMapSetup";
-import { createBagDraft } from "~/draft/bag/bagDraft.server";
+import { BagDraftGuide } from "~/draft/bag/BagDraftGuide";
+import { bagCookie, createBagDraft } from "~/draft/bag/bagDraft.server";
 import { BAG_VARIANTS, getBagRules } from "~/draft/bag/rules";
 
 type DraftInput = Parameters<typeof createBagDraft>[0];
@@ -79,8 +79,11 @@ export async function action({ request }: ActionFunctionArgs) {
   try {
     const input = JSON.parse(String(form.get("settings") ?? "")) as DraftInput;
     const result = await createBagDraft(input);
-    return redirect(`/draft/bag/${result.id}?key=${result.adminToken}`, {
+    return redirect(`/draft/bag/${result.id}`, {
       headers: {
+        "Set-Cookie": await bagCookie(result.id, "admin").serialize(
+          result.adminToken,
+        ),
         "Cache-Control": "no-store",
         "Referrer-Policy": "no-referrer",
       },
@@ -105,9 +108,7 @@ export default function NewBagDraft() {
   const [variant, setVariant] = useState<DraftInput["variant"]>(
     options.variant,
   );
-  const [playerNames, setPlayerNames] = useState(
-    "Player 1\nPlayer 2\nPlayer 3\nPlayer 4\nPlayer 5\nPlayer 6",
-  );
+  const [playerCount, setPlayerCount] = useState(6);
   const [includeDiscordantStars, setIncludeDiscordantStars] = useState(false);
   const [includeThundersEdge, setIncludeThundersEdge] = useState(true);
   const [includeBlueReverie, setIncludeBlueReverie] = useState(false);
@@ -124,10 +125,10 @@ export default function NewBagDraft() {
   const [bannedFactions, setBannedFactions] = useState<string[]>([]);
   const [priorityFactions, setPriorityFactions] = useState<string[]>([]);
   const [banPresetIds, setBanPresetIds] = useState<string[]>([]);
-  const players = playerNames
-    .split("\n")
-    .map((name) => name.trim())
-    .filter(Boolean);
+  const players = Array.from(
+    { length: playerCount },
+    (_, index) => `Slot ${index + 1}`,
+  );
   const settings: DraftInput = {
     variant,
     players,
@@ -199,8 +200,8 @@ export default function NewBagDraft() {
         <Title order={1}>Bag &amp; Franken drafts</Title>
         <Text c="dimmed" mt="xs">
           Build your own faction by choosing components from bags that pass
-          around the table. Everyone gets a private player link and can draft
-          when they are ready.
+          around the table. Share one lobby link; players choose their own slots
+          and save a recovery UUID before the admin starts the draft.
         </Text>
       </div>
       <Form method="post">
@@ -249,22 +250,27 @@ export default function NewBagDraft() {
                 <Title order={2} size="h3">
                   Players
                 </Title>
-                <Textarea
-                  label="One player name per line"
-                  description="Names identify each private seat. Share each link only with its player."
-                  value={playerNames}
-                  onChange={(event) =>
-                    setPlayerNames(event.currentTarget.value)
+                <NumberInput
+                  label="Number of player slots"
+                  description="Everyone joins through the same lobby link and sets their own name."
+                  min={2}
+                  max={8}
+                  allowDecimal={false}
+                  value={playerCount}
+                  onChange={(value) =>
+                    setPlayerCount(typeof value === "number" ? value : 0)
                   }
-                  minRows={6}
-                  autosize
                 />
+                <Text size="sm" c="dimmed">
+                  Slots do not reveal seating positions. Bags and draft
+                  information stay hidden until the admin starts.
+                </Text>
                 <Group justify="space-between">
                   <Text size="sm" c="dimmed">
                     {players.length} players
                   </Text>
                   <Switch
-                    label="Shuffle seating order"
+                    label="Shuffle order when the draft starts"
                     checked={shufflePlayers}
                     onChange={(event) =>
                       setShufflePlayers(event.currentTarget.checked)
@@ -335,6 +341,7 @@ export default function NewBagDraft() {
               </SimpleGrid>
             </Stack>
           </Paper>
+          <BagDraftGuide rules={rules} variant={variant} />
           <BagMapSetup rules={rules} playerCount={players.length} />
           <Accordion variant="separated">
             <Accordion.Item value="limits">
@@ -506,10 +513,11 @@ export default function NewBagDraft() {
             </Accordion.Item>
           </Accordion>
           <Alert color="blue" title="Playing with friends">
-            After creating the draft, save your host link and send each player
-            their private seat link. Bags pass automatically when everyone
-            submits their picks. Then everyone confirms their final faction
-            and any map tiles to keep; see the map setup steps above.
+            Create the lobby, save your admin recovery UUID, and share its link
+            with everyone. Join a slot yourself if you are playing. Each player
+            saves their own UUID; this browser will also remember it. Start once
+            every slot is filled. The admin can pause, restore turns or rounds,
+            and export recovery saves without revealing other players’ hands.
           </Alert>
           <Button
             type="submit"
@@ -517,11 +525,11 @@ export default function NewBagDraft() {
             loading={navigation.state === "submitting"}
             disabled={players.length < 2 || players.length > 8}
           >
-            Create bag draft
+            Create shared lobby
           </Button>
           {(players.length < 2 || players.length > 8) && (
             <Text size="sm" c="red">
-              Enter between 2 and 8 players.
+              Choose between 2 and 8 player slots.
             </Text>
           )}
         </Stack>

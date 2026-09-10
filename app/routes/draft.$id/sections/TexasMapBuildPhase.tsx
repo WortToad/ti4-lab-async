@@ -1,4 +1,16 @@
-import { AppShell, Box, Button, Group, Modal, ScrollArea, Stack, Text, Tooltip } from "@mantine/core";
+import { useContext } from "react";
+import { LobbyIdentityContext } from "~/draft/LobbyIdentity";
+import {
+  AppShell,
+  Box,
+  Button,
+  Group,
+  Modal,
+  ScrollArea,
+  Stack,
+  Text,
+  Tooltip,
+} from "@mantine/core";
 import { useMemo, useState } from "react";
 import { Map, MAP_INTERACTIONS } from "~/components/Map";
 import { useMediaQuery } from "@mantine/hooks";
@@ -6,7 +18,10 @@ import { useDraft } from "~/draftStore";
 import { useHydratedDraft } from "~/hooks/useHydratedDraft";
 import { RollingDraftOrder } from "../components/RollingDraftOrder";
 import { AdminPasswordModal } from "../components/AdminPasswordModal";
-import { getCurrentPlaceableRing, getPlaceableTileIndices } from "~/utils/texasMapBuild";
+import {
+  getCurrentPlaceableRing,
+  getPlaceableTileIndices,
+} from "~/utils/texasMapBuild";
 import { useSyncDraft } from "~/hooks/useSyncDraft";
 import { systemData } from "~/data/systemData";
 import { IconArrowBackUp } from "@tabler/icons-react";
@@ -17,11 +32,17 @@ import classes from "./TexasMapBuildPhase.module.css";
 const SIDEBAR_WIDTH = 180;
 
 export function TexasMapBuildPhase() {
+  const managedLobby = useContext(LobbyIdentityContext)?.managed;
   const draft = useDraft((state) => state.draft);
   const { placeTexasTile } = useDraft((state) => state.draftActions);
   const { syncDraft, undoLastPick } = useSyncDraft();
-  const { hydratedPlayers, hydratedMap, currentPick, activePlayer, currentlyPicking } =
-    useHydratedDraft();
+  const {
+    hydratedPlayers,
+    hydratedMap,
+    currentPick,
+    activePlayer,
+    currentlyPicking,
+  } = useHydratedDraft();
   const selectedPlayer = useDraft((state) => state.selectedPlayer);
   const {
     adminMode,
@@ -52,7 +73,7 @@ export function TexasMapBuildPhase() {
 
   const playerTiles =
     activePlayer && draft.texasDraft?.playerTiles
-      ? draft.texasDraft.playerTiles[activePlayer.id] ?? []
+      ? (draft.texasDraft.playerTiles[activePlayer.id] ?? [])
       : [];
 
   const mapForRender = hydratedMap ?? draft.presetMap;
@@ -90,7 +111,8 @@ export function TexasMapBuildPhase() {
     return parseInt(a) - parseInt(b);
   });
 
-  const canSelect = pickForAnyone || (currentlyPicking && selectedPlayer !== undefined);
+  const canSelect =
+    pickForAnyone || (currentlyPicking && selectedPlayer !== undefined);
 
   const handleSelectTile = (systemId: string) => {
     if (!canSelect || !activePlayer) return;
@@ -109,7 +131,11 @@ export function TexasMapBuildPhase() {
 
   const confirmPlacement = () => {
     if (!pendingPlacement || !activePlayer) return;
-    placeTexasTile(activePlayer.id, pendingPlacement.tileIdx, pendingPlacement.systemId);
+    placeTexasTile(
+      activePlayer.id,
+      pendingPlacement.tileIdx,
+      pendingPlacement.systemId,
+    );
     syncDraft();
     setPendingPlacement(null);
     setSelectedSystemId(null);
@@ -131,12 +157,21 @@ export function TexasMapBuildPhase() {
       />
 
       <AppShell.Navbar p={0} visibleFrom="sm">
-        <Box h="calc(100vh - 60px)" style={{ display: "flex", flexDirection: "column" }}>
+        <Box
+          h="calc(100vh - 60px)"
+          style={{ display: "flex", flexDirection: "column" }}
+        >
           <Box className={classes.sidebarHeader} px="md" pt="sm" pb="xs">
             <Text size="sm" fw={700} mb="xs">
               {activePlayer?.name ?? "Waiting"}
             </Text>
-            <Text size="xs" fw={600} tt="uppercase" className={classes.mutedLabel} mb="xs">
+            <Text
+              size="xs"
+              fw={600}
+              tt="uppercase"
+              className={classes.mutedLabel}
+              mb="xs"
+            >
               Available Tiles ({sortedPlayerTiles.length}/5)
             </Text>
           </Box>
@@ -205,14 +240,16 @@ export function TexasMapBuildPhase() {
               </Text>
             </Group>
             <Group gap={4}>
-              <Button
-                size="compact-xs"
-                variant={adminMode ? "filled" : "default"}
-                color={adminMode ? "violet" : "gray"}
-                onClick={handleAdminToggle}
-              >
-                Admin
-              </Button>
+              {!managedLobby && (
+                <Button
+                  size="compact-xs"
+                  variant={adminMode ? "filled" : "default"}
+                  color={adminMode ? "violet" : "gray"}
+                  onClick={handleAdminToggle}
+                >
+                  Admin
+                </Button>
+              )}
               {showPickForAnyoneControl && (
                 <Tooltip
                   label="Reveals hidden tile information. Use with caution."
@@ -299,9 +336,7 @@ export function TexasMapBuildPhase() {
         }}
       >
         <Stack gap="md">
-          <Text size="sm">
-            Place tile {pendingPlacement?.systemId} here?
-          </Text>
+          <Text size="sm">Place tile {pendingPlacement?.systemId} here?</Text>
           <Group justify="flex-end">
             <Button variant="default" onClick={() => setPendingPlacement(null)}>
               Cancel

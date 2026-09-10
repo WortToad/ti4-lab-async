@@ -7,17 +7,15 @@ import type { RawSettings } from "~/draft/raw/types";
 const settings: RawSettings = {
   players: Array.from({ length: 4 }, (_, id) => ({
     id,
-    name: `Player ${id + 1}`,
+    name: `Slot ${id + 1}`,
   })),
   mode: "base",
   pok: false,
   te: false,
   shuffleSeats: false,
 };
-
 let database: Database.Database;
 let service: typeof import("./rawDraft.server");
-
 beforeAll(async () => {
   database = new Database(":memory:");
   database.exec(
@@ -26,274 +24,311 @@ beforeAll(async () => {
   vi.doMock("./config.server", () => ({ db: drizzle(database) }));
   service = await import("./rawDraft.server");
 });
-
 afterAll(() => database?.close());
-
-function cookieHeader(setCookie?: string) {
-  return setCookie?.split(";")[0] ?? "";
-}
-
-function view(id: string, cookie?: string, dataRequest = false) {
+const cookieHeader = (value?: string) => value?.split(";")[0] ?? "";
+function view(id: string, cookie = "") {
   return service.loadRawRoom({
-    request: new Request(
-      `http://localhost/draft/raw/${id}${dataRequest ? ".data" : ""}`,
-      { headers: { Cookie: cookieHeader(cookie) } },
-    ),
+    request: new Request(`http://localhost/draft/raw/${id}.data`, {
+      headers: { Cookie: cookie },
+    }),
     params: { id },
     context: {},
     unstable_pattern: "/draft/raw/:id",
   });
 }
-
-function post(id: string, fields: Record<string, string>, cookie?: string) {
+function post(id: string, fields: Record<string, string>, cookie = "") {
   return service.actRawRoom({
     request: new Request(`http://localhost/draft/raw/${id}.data`, {
       method: "POST",
       body: new URLSearchParams(fields),
-      headers: { Cookie: cookieHeader(cookie) },
+      headers: { Cookie: cookie },
     }),
     params: { id },
     context: {},
     unstable_pattern: "/draft/raw/:id",
   });
 }
-
-test("persists rooms using the generated migration and rejects stale writes", () => {
-  const { id, token } = service.createRawRoom(settings);
-  const first = service.getRawRoom(id);
-  const stale = service.getRawRoom(id);
-  expect(first.room.draft.settings.mode).toBe("base");
-  expect(first.hostTokenHash).toBe(service.rawTokenHash(token));
-  expect(first.data).not.toContain(token);
-  expect(first.createdAt).toBeTruthy();
-  first.room.claims[0] = "first-owner";
-  service.saveRawRoom(id, first.revision, first.room);
-  stale.room.claims[0] = "stale-owner";
-  expect(() => service.saveRawRoom(id, stale.revision, stale.room)).toThrow(
-    "Another player",
-  );
-  expect(service.getRawRoom(id).room.claims[0]).toBe("first-owner");
-  expect(service.getRawRoom(id).revision).toBe(1);
-});
-
-test("room cookies cover document and .data requests and reject malformed credentials", async () => {
-  const { id, token } = service.createRawRoom(settings);
-  const cookie = await service.rawCookie(id).serialize(token);
-  expect(cookie).toContain("Path=/draft/raw;");
-  expect(cookie).toContain("HttpOnly");
-  for (const dataRequest of [false, true]) {
-    expect((await view(id, cookie, dataRequest)).data.isHost).toBe(true);
-  }
-  for (const malformed of [
-    "",
-    "short",
-    "0".repeat(63),
-    "G".repeat(64),
-    { host: true },
-  ]) {
-    const request = new Request(`http://localhost/draft/raw/${id}`, {
-      headers: {
-        Cookie: cookieHeader(await service.rawCookie(id).serialize(malformed)),
-      },
-    });
-    expect(await service.readRawToken(id, request)).toBeUndefined();
-  }
-});
-
-test("requires claimed players, rejects actor impersonation, and restricts undo and release to host", async () => {
-  const { id, token } = service.createRawRoom(settings);
-  const actorId = service.getRawRoom(id).room.draft.order[0];
-  const otherId = settings.players.find(({ id }) => id !== actorId)!.id;
-  const pick = {
-    intent: "pick",
-    revision: "0",
-    playerId: String(actorId),
-    action: JSON.stringify({
-      type: "chooseFaction",
-      playerId: actorId,
-      factionId: "arborec",
-    }),
-  };
-  expect((await post(id, pick)).data.error).toContain("Join as this player");
-  const joined = await post(id, {
-    intent: "join",
-    revision: "0",
-    playerId: String(actorId),
+async function started(mode: RawSettings["mode"] = "base") {
+  const room = service.createRawRoom({
+    ...settings,
+    mode,
+    te: mode === "twilightsFall",
   });
-  expect(joined.data.success).toBe(true);
-  const playerCookie = new Headers(joined.init?.headers).get("Set-Cookie")!;
-  expect(
-    (
-      await post(id, {
-        intent: "join",
-        revision: "1",
-        playerId: String(actorId),
-      })
-    ).data.error,
-  ).toContain("already joined");
-  const impersonation = await post(
-    id,
-    {
-      ...pick,
-      revision: "1",
-      action: JSON.stringify({
-        type: "chooseFaction",
-        playerId: otherId,
-        factionId: "arborec",
-      }),
-    },
-    playerCookie,
+  const admin = cookieHeader(
+    await service.rawCookie(room.id, "admin").serialize(room.token),
   );
-  expect(impersonation.data.error).toContain("player you control");
-  expect(service.getRawRoom(id).revision).toBe(1);
-  const ownPick = await post(id, { ...pick, revision: "1" }, playerCookie);
-  expect(ownPick.data.error).toBeNull();
-  expect(service.getRawRoom(id).room.draft.factions[actorId]).toBe("arborec");
+  const cookies: string[] = [];
+  for (let id = 0; id < 4; id++) {
+    const joined = await post(room.id, {
+      intent: "join",
+      playerId: String(id),
+      name: `Player ${id + 1}`,
+    });
+    expect(joined.data.error).toBeNull();
+    cookies.push(
+      cookieHeader(new Headers(joined.init?.headers).get("Set-Cookie")!),
+    );
+  }
   expect(
-    (await post(id, { intent: "undo", revision: "2" }, playerCookie)).data
-      .error,
-  ).toContain("Only the draft host");
+    (await post(room.id, { intent: "start", revision: "4" }, admin)).data.error,
+  ).toBeNull();
+  return { ...room, admin, cookies };
+}
+
+test("new lobbies conceal the complete draft until all players join and admin starts", async () => {
+  const { id, token } = service.createRawRoom(settings);
+  const admin = cookieHeader(
+    await service.rawCookie(id, "admin").serialize(token),
+  );
+  for (const cookie of ["", admin]) {
+    const room = await view(id, cookie);
+    expect(room.data.draft).toBeNull();
+    expect(room.data.lobby.started).toBe(false);
+    expect(room.data.lobby.slots.every((s) => !s.claimed)).toBe(true);
+    expect(JSON.stringify(room)).not.toContain('"speaker"');
+  }
+  expect(
+    (await post(id, { intent: "start", revision: "0" }, admin)).data.error,
+  ).toContain("Every slot");
+  expect(
+    (await post(id, { intent: "start", revision: "0" })).data.error,
+  ).toContain("Only the admin");
+  const claims = await Promise.all([
+    post(id, { intent: "join", playerId: "0", name: "Alice" }),
+    post(id, { intent: "join", playerId: "0", name: "Imposter" }),
+  ]);
+  expect(claims.filter((r) => r.data.success)).toHaveLength(1);
+  const cookie = cookieHeader(
+    new Headers(claims[0].init?.headers).get("Set-Cookie")!,
+  );
+  const own = (await view(id, cookie)).data;
+  expect(own.draft).toBeNull();
+  expect(own.ownPlayers).toEqual([0]);
+  expect(own.lobby.ownUuid).toMatch(/^[a-f0-9-]{36}$/);
   expect(
     (
       await post(
         id,
-        { intent: "release", revision: "2", playerId: String(actorId) },
-        playerCookie,
+        { intent: "join", playerId: "1", name: "Alice again" },
+        cookie,
       )
     ).data.error,
-  ).toContain("Only the host");
-
-  const hostCookie = await service.rawCookie(id).serialize(token);
-  const undone = await post(id, { intent: "undo", revision: "2" }, hostCookie);
-  expect(undone.data.success).toBe(true);
-  expect(service.getRawRoom(id).room.draft.factions[actorId]).toBeUndefined();
-  expect((await view(id, playerCookie)).data.ownPlayers).toEqual([actorId]);
-  const released = await post(
-    id,
-    { intent: "release", revision: "3", playerId: String(actorId) },
-    hostCookie,
-  );
-  expect(released.data.success).toBe(true);
+  ).toContain("already have a slot");
   expect(
-    (await post(id, { ...pick, revision: "4" }, playerCookie)).data.error,
-  ).toContain("Join as this player");
-});
-
-test("does not mutate state for malformed requests or stale revisions", async () => {
-  const { id, token } = service.createRawRoom(settings);
-  const hostCookie = await service.rawCookie(id).serialize(token);
-  for (const fields of [
-    { intent: "join", playerId: "0" },
-    { intent: "join", revision: "0" },
-    { intent: "join", revision: "1", playerId: "0" },
-    { intent: "join", revision: "0", playerId: "999" },
-    { intent: "pick", revision: "0", playerId: "0", action: "{" },
-    { intent: "pick", revision: "0", playerId: "0", action: "[]" },
-  ]) {
-    const result = await post(id, fields as Record<string, string>, hostCookie);
-    expect(result.data.success).toBe(false);
-    expect(result.init?.status).toBe(400);
-    expect(new Headers(result.init?.headers).get("Cache-Control")).toBe(
-      "no-store",
-    );
-    expect(service.getRawRoom(id).revision).toBe(0);
-  }
-});
-
-test("redacts all private hands, undealt cards, history, and future fields from spectators", async () => {
-  const { id, token } = service.createRawRoom({
-    ...settings,
-    mode: "twilightsFall",
-    pok: true,
-    te: true,
+    (
+      await post(
+        id,
+        {
+          intent: "pick",
+          revision: "1",
+          playerId: "0",
+          action: JSON.stringify({
+            type: "chooseFaction",
+            playerId: 0,
+            factionId: "sol",
+          }),
+        },
+        cookie,
+      )
+    ).data.error,
+  ).toContain("start");
+  const recover = await post(id, {
+    intent: "recover",
+    uuid: own.lobby.ownUuid!,
   });
-  const ownerToken = service.newRawToken();
-  const ownerCookie = await service.rawCookie(id).serialize(ownerToken);
-  const record = service.getRawRoom(id);
-  record.room.claims[0] = service.rawTokenHash(ownerToken);
-  Object.assign(record.room.draft, { futureSecret: "future-private-value" });
-  record.room.draft.hands = { 0: ["private-map-0"], 1: ["private-map-1"] };
-  record.room.draft.speaker = 1;
-  record.room.draft.preplace = ["private-preplace"];
-  record.room.draft.referenceDeck = ["barony"];
-  record.room.draft.references = {
-    0: { hand: ["arborec"], drafted: ["saar"], ready: true, priority: "saar" },
-    1: { hand: ["muaat"], drafted: ["sardakk"], ready: false },
-  };
-  record.room.draft.splice = {
-    0: { hand: ["private-splice-0"], drafted: ["private-pick-0"], ready: true },
-    1: {
-      hand: ["private-splice-1"],
-      drafted: ["private-pick-1"],
-      ready: false,
-    },
-  };
-  const { history, ...snapshot } = record.room.draft;
-  history.push({
-    ...snapshot,
-    hands: { 0: ["historical-private-value"] },
-  });
-  service.saveRawRoom(id, record.revision, record.room);
-
-  const spectator = await view(id);
-  expect(spectator.data.draft.hands).toEqual({});
-  expect(spectator.data.draft.references).toEqual({});
-  expect(spectator.data.draft.splice).toEqual({});
-  expect(spectator.data.draft.preplace).toEqual([]);
-  expect(spectator.data.handCounts).toEqual({ 0: 1, 1: 1, 2: 0, 3: 0 });
-  expect(spectator.data.spliceHandCounts).toEqual({ 0: 1, 1: 1, 2: 0, 3: 0 });
-  expect(spectator.data.referenceReady[0]).toBe(true);
-  expect(spectator.data.canUndo).toBe(true);
-  const owner = await view(id, ownerCookie);
-  expect(owner.data.draft.hands).toEqual({ 0: ["private-map-0"] });
-  expect(owner.data.draft.references[0]).toEqual(
-    record.room.draft.references[0],
+  expect(recover.data.error).toBeNull();
+  const recovered = cookieHeader(
+    new Headers(recover.init?.headers).get("Set-Cookie")!,
   );
-  expect(owner.data.draft.references[1]).toBeUndefined();
-  expect(owner.data.draft.splice[1]).toBeUndefined();
-  expect(owner.data.draft.preplace).toEqual([]);
-  const host = await view(id, await service.rawCookie(id).serialize(token));
-  expect(host.data.draft.hands).toEqual(record.room.draft.hands);
-  expect(host.data.draft.preplace).toEqual(["private-preplace"]);
-  expect(host.data.draft.references).toEqual(record.room.draft.references);
-  expect(host.data.draft.splice).toEqual(record.room.draft.splice);
-  for (const result of [spectator, owner, host]) {
-    expect(result.data.draft).not.toHaveProperty("history");
-    expect(result.data.draft).not.toHaveProperty("referenceDeck");
-    expect(JSON.stringify(result)).not.toContain("historical-private-value");
-    expect(JSON.stringify(result)).not.toContain("future-private-value");
-    expect(JSON.stringify(result)).not.toContain(token);
-    expect(JSON.stringify(result)).not.toContain(
-      service.rawTokenHash(ownerToken),
-    );
-    expect(new Headers(result.init?.headers).get("Cache-Control")).toBe(
-      "no-store",
-    );
-  }
-  expect(JSON.stringify(spectator)).not.toContain("private-");
-  expect(JSON.stringify(owner)).not.toContain("private-map-1");
-  expect(JSON.stringify(owner)).not.toContain("private-splice-1");
-  expect(JSON.stringify(owner)).not.toContain("private-pick-1");
+  expect((await view(id, recovered)).data.ownPlayers).toEqual([0]);
+  expect(service.findRawRecovery(own.lobby.ownUuid!)).toEqual({
+    id,
+    role: "player",
+  });
+  expect(service.findRawRecovery(token)).toEqual({ id, role: "admin" });
+  expect((await view(id, admin)).data.lobby.slots[0].uuid).toBe(
+    own.lobby.ownUuid,
+  );
+  expect((await view(id)).data.lobby.slots[0].uuid).toBeUndefined();
 });
 
-test("reveals only kept splice cards when the draft completes", async () => {
-  const { id } = service.createRawRoom(settings);
-  const record = service.getRawRoom(id);
-  record.room.draft.splice = {
-    0: {
-      hand: ["undealt-private-card"],
-      drafted: ["discarded-private-card", "kept-card"],
-      kept: ["kept-card"],
-      ready: true,
-    },
+test("player and admin cookies coexist and admin never receives other hidden hands", async () => {
+  const room = await started("twilightsFall");
+  const record = service.getRawRoom(room.id);
+  record.room.draft.hands = { 0: ["private-map-0"], 1: ["private-map-1"] };
+  Object.assign(record.room.draft, { futureSecret: "future-secret" });
+  service.saveRawRoom(room.id, record.revision, record.room);
+  const spectator = (await view(room.id)).data;
+  const host = (await view(room.id, room.admin)).data;
+  const own = (await view(room.id, `${room.admin}; ${room.cookies[0]}`)).data;
+  expect(host.isHost).toBe(true);
+  expect(host.ownPlayers).toEqual([]);
+  expect(host.draft!.hands).toEqual({});
+  expect(host.draft!.references).toEqual({});
+  expect(spectator.draft!.hands).toEqual({});
+  expect(own.draft!.hands).toEqual({ 0: ["private-map-0"] });
+  expect(Object.keys(own.draft!.references)).toEqual(["0"]);
+  expect(own.isHost).toBe(true);
+  expect(own.ownPlayers).toEqual([0]);
+  for (const result of [spectator, host, own]) {
+    expect(JSON.stringify(result)).not.toContain("private-map-1");
+    expect(JSON.stringify(result)).not.toContain("future-secret");
+    expect(result.draft).not.toHaveProperty("history");
+    expect(JSON.stringify(result)).not.toContain(
+      record.room.lobby.backupSecret,
+    );
+  }
+});
+
+test("admin saves are encrypted, restore paused, preserve identities and reject tampering", async () => {
+  const room = await started();
+  const actor = {
+    intent: "pick",
+    revision: "5",
+    playerId: "0",
+    action: JSON.stringify({
+      type: "chooseFaction",
+      playerId: 0,
+      factionId: "sol",
+    }),
   };
-  record.room.draft.phase = "spliceKeep";
-  service.saveRawRoom(id, record.revision, record.room);
-  expect((await view(id)).data.draft.splice).toEqual({});
-  const completed = service.getRawRoom(id);
-  completed.room.draft.phase = "complete";
-  service.saveRawRoom(id, completed.revision, completed.room);
-  const revealed = await view(id);
-  expect(revealed.data.draft.splice[0].kept).toEqual(["kept-card"]);
-  expect(JSON.stringify(revealed)).not.toContain("private-card");
+  expect((await post(room.id, actor)).data.error).toContain("Join as");
+  expect((await post(room.id, actor, room.cookies[1])).data.error).toContain(
+    "Join as",
+  );
+  expect((await post(room.id, actor, room.cookies[0])).data.error).toBeNull();
+  expect(
+    (
+      await post(
+        room.id,
+        { intent: "undoAction", revision: "6" },
+        room.cookies[0],
+      )
+    ).data.error,
+  ).toContain("Only the admin");
+  const saved = await post(room.id, { intent: "export" }, room.admin);
+  expect(saved.data.backup).toBeTruthy();
+  expect(saved.data.backup).not.toContain('"factions"');
+  expect(
+    (await post(room.id, { intent: "export" }, room.cookies[0])).data.error,
+  ).toContain("Only the admin");
+  expect(
+    (await post(room.id, { intent: "undoAction", revision: "6" }, room.admin))
+      .data.error,
+  ).toBeNull();
+  const undone = (await view(room.id, room.cookies[0])).data;
+  expect(undone.draft!.factions[0]).toBeUndefined();
+  expect(undone.lobby.paused).toBe(true);
+  expect(
+    (await post(room.id, { ...actor, revision: "7" }, room.cookies[0])).data
+      .error,
+  ).toContain("paused");
+  expect(
+    (
+      await post(
+        room.id,
+        { intent: "importState", revision: "7", state: saved.data.backup! },
+        room.admin,
+      )
+    ).data.error,
+  ).toBeNull();
+  const restored = (await view(room.id, room.cookies[0])).data;
+  expect(restored.draft!.factions[0]).toBe("sol");
+  expect(restored.ownPlayers).toEqual([0]);
+  expect(restored.lobby.paused).toBe(true);
+  const forged = JSON.parse(saved.data.backup!);
+  forged.data = "AAAA" + forged.data.slice(4);
+  expect(
+    (
+      await post(
+        room.id,
+        { intent: "importState", revision: "8", state: JSON.stringify(forged) },
+        room.admin,
+      )
+    ).data.error,
+  ).toContain("damaged");
+  expect(service.getRawRoom(room.id).revision).toBe(8);
+  expect(
+    (await post(room.id, { intent: "resume", revision: "8" }, room.admin)).data
+      .error,
+  ).toBeNull();
+});
+
+test("releasing and rotating a UUID revoke former device access and never undo identity changes", async () => {
+  const room = await started();
+  const before = (await view(room.id, room.cookies[0])).data.lobby.ownUuid!;
+  expect(
+    (
+      await post(
+        room.id,
+        { intent: "rotate", playerId: "0", revision: "5" },
+        room.admin,
+      )
+    ).data.error,
+  ).toBeNull();
+  expect(service.findRawRecovery(before)).toBeUndefined();
+  expect((await view(room.id, room.cookies[0])).data.ownPlayers).toEqual([]);
+  const after = (await view(room.id, room.admin)).data.lobby.slots[0].uuid!;
+  expect(after).not.toBe(before);
+  expect(
+    (await post(room.id, { intent: "recover", uuid: before })).data.error,
+  ).toContain("does not belong");
+  expect(
+    (
+      await post(
+        room.id,
+        { intent: "release", playerId: "0", revision: "6" },
+        room.admin,
+      )
+    ).data.error,
+  ).toBeNull();
+  expect((await view(room.id)).data.lobby.paused).toBe(true);
+  expect(
+    (await post(room.id, { intent: "resume", revision: "7" }, room.admin)).data
+      .error,
+  ).toContain("Fill every");
+  expect(
+    (
+      await post(room.id, {
+        intent: "join",
+        playerId: "0",
+        name: "Replacement",
+      })
+    ).data.error,
+  ).toBeNull();
+  expect(
+    (await post(room.id, { intent: "resume", revision: "8" }, room.admin)).data
+      .error,
+  ).toBeNull();
+  expect(
+    (await post(room.id, { intent: "pause", revision: "8" }, room.admin)).data
+      .error,
+  ).toContain("Another player");
+});
+
+test("cookie scope covers data requests and atomic saves reject stale updates", async () => {
+  const room = service.createRawRoom(settings);
+  const cookie = await service
+    .rawCookie(room.id, "admin")
+    .serialize(room.token);
+  expect(cookie).toContain("Path=/draft/raw;");
+  expect(cookie).toContain("HttpOnly");
+  expect((await view(room.id, cookieHeader(cookie))).data.isHost).toBe(true);
+  for (const token of ["short", "G".repeat(64), { host: true }]) {
+    const request = new Request(`http://localhost/draft/raw/${room.id}`, {
+      headers: {
+        Cookie: cookieHeader(await service.rawCookie(room.id).serialize(token)),
+      },
+    });
+    expect(await service.readRawToken(room.id, request)).toBeUndefined();
+  }
+  const first = service.getRawRoom(room.id),
+    stale = service.getRawRoom(room.id);
+  first.room.claims[0] = "first-owner";
+  service.saveRawRoom(room.id, first.revision, first.room);
+  stale.room.claims[0] = "stale-owner";
+  expect(() =>
+    service.saveRawRoom(room.id, stale.revision, stale.room),
+  ).toThrow("Another player");
+  expect(service.getRawRoom(room.id).room.claims[0]).toBe("first-owner");
 });

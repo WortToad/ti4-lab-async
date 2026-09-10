@@ -5,6 +5,7 @@ import { generatePrettyUrlName } from "~/data/urlWords.server";
 import { Draft, SimultaneousPickType } from "~/types";
 import { enqueueImageJob } from "~/utils/imageJobQueue.server";
 import { v4 as uuidv4 } from "uuid";
+import { createBaseLobby, saveBaseCheckpoint } from "./baseDraftLobby.server";
 
 export async function draftById(id: string) {
   const results = await db
@@ -139,7 +140,8 @@ function deriveDraftPhase(draft: Draft, isComplete: boolean): DraftPhase {
 
   const currentPickNumber = draft.selections?.length ?? 0;
   const banModifier = draft.settings.modifiers?.banFactions;
-  const totalBansNeeded = (banModifier?.numFactions ?? 0) * draft.players.length;
+  const totalBansNeeded =
+    (banModifier?.numFactions ?? 0) * draft.players.length;
   if (banModifier && currentPickNumber < totalBansNeeded) return "ban";
 
   const currentPick = draft.pickOrder?.[currentPickNumber];
@@ -249,7 +251,8 @@ export async function findDrafts({
                   ? drafts.playerCount
                   : drafts.isComplete;
 
-  const orderFn = sortOrder === "asc" ? sql`${orderColumn} ASC` : desc(orderColumn);
+  const orderFn =
+    sortOrder === "asc" ? sql`${orderColumn} ASC` : desc(orderColumn);
   const selectDraftListFields = {
     id: drafts.id,
     urlName: drafts.urlName,
@@ -272,7 +275,9 @@ export async function findDrafts({
 
   let query = db.select(selectDraftListFields).from(drafts);
   if (allConditions.length > 0) {
-    query = query.where(sql`${sql.join(allConditions, sql` AND `)}`) as typeof query;
+    query = query.where(
+      sql`${sql.join(allConditions, sql` AND `)}`,
+    ) as typeof query;
   }
 
   const resultsWhere =
@@ -295,8 +300,14 @@ export async function findDrafts({
     phaseStats,
   ] = await Promise.all([
     query.orderBy(orderFn).limit(pageSize).offset(offset),
-    db.select({ count: sql<number>`count(*)` }).from(drafts).where(resultsWhere),
-    db.select({ count: sql<number>`count(*)` }).from(drafts).where(scopeWhere),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(drafts)
+      .where(resultsWhere),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(drafts)
+      .where(scopeWhere),
     db.select({ count: sql<number>`count(*)` }).from(drafts),
     db
       .select({ count: sql<number>`count(*)` })
@@ -349,7 +360,8 @@ export async function findDrafts({
   const draftsByType: Record<string, number> = {};
   typeStats.forEach((stat) => {
     const normalizedType = normalizeDraftType(stat.type);
-    draftsByType[normalizedType] = (draftsByType[normalizedType] || 0) + stat.count;
+    draftsByType[normalizedType] =
+      (draftsByType[normalizedType] || 0) + stat.count;
   });
 
   const draftsByMode: Record<string, number> = {};
@@ -409,19 +421,22 @@ export async function createDraft(draft: Draft, presetUrl?: string) {
   const prettyUrl = await getPrettyUrl(presetUrl);
   const metadata = deriveDraftMetadata(draft);
 
-  db.insert(drafts)
-    .values({
-      id,
-      urlName: prettyUrl,
-      data: JSON.stringify(stripEphemeralDraftFields(draft)),
-      ...metadata,
-    })
-    .run();
+  const adminUuid = db.transaction(
+    () => {
+      db.insert(drafts)
+        .values({
+          id,
+          urlName: prettyUrl,
+          data: JSON.stringify(stripEphemeralDraftFields(draft)),
+          ...metadata,
+        })
+        .run();
+      return createBaseLobby(id, draft);
+    },
+    { behavior: "immediate" },
+  );
 
-  // Enqueue incomplete image generation
-  enqueueImageJob(id, prettyUrl, false);
-
-  return { id, prettyUrl };
+  return { id, prettyUrl, adminUuid };
 }
 
 async function getPrettyUrl(presetUrl?: string): Promise<string> {
@@ -445,26 +460,45 @@ export async function updateDraftUrl(id: string, urlName: string) {
     .run();
 }
 
-export async function updateDraft(id: string, draftData: Draft) {
+export function updateDraft(
+  id: string,
+  draftData: Draft,
+  expectedData?: string,
+) {
   const metadata = deriveDraftMetadata(draftData);
-
-  // Get old completion status
-  const existingDraft = await draftById(id);
-  const oldIsComplete = existingDraft.isComplete;
-
-  db.update(drafts)
-    .set({
-      data: JSON.stringify(stripEphemeralDraftFields(draftData)),
-      ...metadata,
-      updatedAt: sql`CURRENT_TIMESTAMP`,
-    })
-    .where(eq(drafts.id, id))
-    .run();
-
-  // If draft just became complete, enqueue complete image generation
-  if (!oldIsComplete && metadata.isComplete && existingDraft.urlName) {
-    enqueueImageJob(id, existingDraft.urlName, true);
-  }
+  const completedUrl = db.transaction(
+    () => {
+      const existingDraft = db
+        .select()
+        .from(drafts)
+        .where(eq(drafts.id, id))
+        .get();
+      if (!existingDraft)
+        throw new Response("Draft not found", { status: 404 });
+      if (expectedData !== undefined && existingDraft.data !== expectedData)
+        throw new Response(
+          "The draft changed. Refresh before making your pick again.",
+          { status: 409 },
+        );
+      saveBaseCheckpoint(
+        id,
+        `Before turn ${JSON.parse(existingDraft.data as string).selections.length + 1}`,
+      );
+      db.update(drafts)
+        .set({
+          data: JSON.stringify(stripEphemeralDraftFields(draftData)),
+          ...metadata,
+          updatedAt: sql`CURRENT_TIMESTAMP`,
+        })
+        .where(eq(drafts.id, id))
+        .run();
+      return !existingDraft.isComplete && metadata.isComplete
+        ? existingDraft.urlName
+        : null;
+    },
+    { behavior: "immediate" },
+  );
+  if (completedUrl) enqueueImageJob(id, completedUrl, true);
 }
 
 export async function upsertStagedSelection(

@@ -1,4 +1,3 @@
-import { appPath } from "~/utils/appUrl";
 import {
   Accordion,
   Alert,
@@ -32,13 +31,20 @@ import {
 } from "react-router";
 import { BagItemCard, bagCategoryLabel } from "~/draft/bag/BagComponents";
 import { BagMapSetup } from "~/draft/bag/BagMapSetup";
+import { BagDraftGuide } from "~/draft/bag/BagDraftGuide";
+import { LobbyPanel, type LobbyOperation } from "~/draft/LobbyPanel";
 import { OriginalArtToggle } from "~/components/OriginalArtToggle";
 import {
+  bagCookie,
+  readBagToken,
+  joinBagDraft,
+  recoverBagDraft,
+  exportBagDraft,
   getBagDraftView,
   getBagMapAccess,
   mutateBagDraft,
 } from "~/draft/bag/bagDraft.server";
-import { mantisCookie } from "~/drizzle/mantisDraft.server";
+import { mantisCookie, mantisAdminCookie } from "~/drizzle/mantisDraft.server";
 import type { BagDraftItem, BagItemCategory } from "~/draft/bag/catalog";
 import { BAG_VARIANTS } from "~/draft/bag/rules";
 import type { BagDraftAction, BagDraftView } from "~/draft/bag/types";
@@ -61,42 +67,100 @@ export function meta() {
 }
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
-  const search = new URL(request.url).searchParams;
-  const key = search.get("key") ?? undefined;
-  const view = await getBagDraftView(params.id!, key);
-  if (view.mapRoomId && search.get("results") !== "1")
-    return redirectToMap(params.id!, key);
-  return data(view, { headers: privateHeaders });
+  const id = params.id!;
+  const url = new URL(request.url);
+  const legacyKey = url.searchParams.get("key");
+  const headers = new Headers(privateHeaders);
+  if (legacyKey) {
+    const { role } = await recoverBagDraft(id, legacyKey);
+    headers.append(
+      "Set-Cookie",
+      await bagCookie(id, role).serialize(legacyKey),
+    );
+    url.searchParams.delete("key");
+    return redirect(`/draft/bag/${id}${url.search}`, { headers });
+  }
+  const [key, adminKey] = await Promise.all([
+    readBagToken(id, request),
+    readBagToken(id, request, "admin"),
+  ]);
+  let view: BagDraftView;
+  let accessError: string | null = null;
+  try {
+    view = await getBagDraftView(id, key, adminKey);
+  } catch (error) {
+    if (!(error instanceof Response) || error.status !== 403 || !key)
+      throw error;
+    headers.append(
+      "Set-Cookie",
+      await bagCookie(id).serialize("", { maxAge: 0 }),
+    );
+    view = await getBagDraftView(id, undefined, adminKey);
+    accessError =
+      "Your saved slot UUID has changed. Ask the admin for your current UUID and rejoin below.";
+  }
+  if (view.mapRoomId && url.searchParams.get("map") === "1")
+    return redirectToMap(id, accessError ? undefined : key, adminKey);
+  return data({ ...view, accessError }, { headers });
 }
 
-async function redirectToMap(id: string, key?: string) {
-  const room = await getBagMapAccess(id, key);
+async function redirectToMap(id: string, key?: string, adminKey?: string) {
+  const room = await getBagMapAccess(id, key, adminKey);
   if (!room)
     throw new Response("The map room is not ready yet.", { status: 409 });
   const headers = new Headers(privateHeaders);
   if (room.token)
-    headers.set(
+    headers.append(
       "Set-Cookie",
       await mantisCookie(room.id).serialize(room.token),
+    );
+  if (room.adminToken)
+    headers.append(
+      "Set-Cookie",
+      await mantisAdminCookie(room.id).serialize(room.adminToken),
     );
   return redirect(`/draft/mantis/${room.id}`, { headers });
 }
 
 export async function action({ params, request }: ActionFunctionArgs) {
-  const key = new URL(request.url).searchParams.get("key") ?? undefined;
-  const form = await request.formData();
+  const id = params.id!;
+  const [cookieKey, adminKey] = await Promise.all([
+    readBagToken(id, request),
+    readBagToken(id, request, "admin"),
+  ]);
+  const key = new URL(request.url).searchParams.get("key") ?? cookieKey;
+  const headers = new Headers(privateHeaders);
   try {
-    const input = JSON.parse(
-      String(form.get("operation") ?? ""),
-    ) as BagDraftAction;
-    const view = await mutateBagDraft(params.id!, key, input);
-    if (view.mapRoomId) return redirectToMap(params.id!, key);
-    return data({ error: null }, { headers: privateHeaders });
+    const form = await request.formData();
+    const input = JSON.parse(String(form.get("operation") ?? "")) as
+      | BagDraftAction
+      | { action: "join"; playerId: number; name: string }
+      | { action: "recover"; uuid: string }
+      | { action: "exportState"; checkpointId?: string };
+    if (input.action === "join") {
+      const { uuid } = await joinBagDraft(id, input.playerId, input.name, key);
+      headers.append("Set-Cookie", await bagCookie(id).serialize(uuid));
+    } else if (input.action === "recover") {
+      const uuid = input.uuid.trim().toLowerCase();
+      const { role } = await recoverBagDraft(id, uuid);
+      headers.append("Set-Cookie", await bagCookie(id, role).serialize(uuid));
+    } else if (input.action === "exportState") {
+      const backup = await exportBagDraft(
+        id,
+        key,
+        adminKey,
+        input.checkpointId,
+      );
+      return data({ error: null, backup }, { headers });
+    } else {
+      await mutateBagDraft(id, key, input, adminKey);
+    }
+    return data({ error: null, backup: null }, { headers });
   } catch (error) {
     if (error instanceof Response)
       return data(
-        { error: await error.text() },
-        { status: error.status, headers: privateHeaders },
+        { error: await error.text(), backup: null },
+        { status: error.status, headers },
       );
     return data(
       {
@@ -104,8 +168,9 @@ export async function action({ params, request }: ActionFunctionArgs) {
           error instanceof Error
             ? error.message
             : "Unable to update this draft. Refresh and try again.",
+        backup: null,
       },
-      { status: 400, headers: privateHeaders },
+      { status: 400, headers },
     );
   }
 }
@@ -118,36 +183,6 @@ function groupedItems(items: BagDraftItem[]) {
   for (const item of items)
     groups.set(item.category, [...(groups.get(item.category) ?? []), item]);
   return Array.from(groups);
-}
-
-function CopyLink({
-  path,
-  label,
-  origin,
-}: {
-  path: string;
-  label: string;
-  origin: string;
-}) {
-  return (
-    <Group justify="space-between" wrap="nowrap">
-      <Anchor
-        component={Link}
-        to={path}
-        size="sm"
-        style={{ overflowWrap: "anywhere" }}
-      >
-        {label}
-      </Anchor>
-      <CopyButton value={`${origin}${appPath(path)}`}>
-        {({ copied, copy }) => (
-          <Button size="xs" variant="light" onClick={copy} disabled={!origin}>
-            {copied ? "Copied" : "Copy link"}
-          </Button>
-        )}
-      </CopyButton>
-    </Group>
-  );
 }
 
 function CollectedItems({
@@ -214,6 +249,20 @@ function DraftPicking({
             </Title>
             <Badge variant="light">{seat.bag.length} components</Badge>
           </Group>
+          <Paper withBorder p="sm" radius="sm">
+            <Text
+              size="sm"
+              ta="center"
+              fw={600}
+              style={{ overflowWrap: "anywhere" }}
+            >
+              {receivingFrom.name} → your bag → {passingTo.name}
+            </Text>
+            <Text size="xs" c="dimmed" ta="center">
+              Keep your selected components; pass the rest when everyone is
+              ready.
+            </Text>
+          </Paper>
           <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
             <div>
               <Text size="sm" c="dimmed">
@@ -238,6 +287,14 @@ function DraftPicking({
                 {seat.roundPicks.length > 0
                   ? "Your picks have been added to your collection. The bags will pass when everyone is ready."
                   : "You have no available picks from this bag. It will pass automatically when everyone is ready."}
+              </Text>
+              <Text size="sm" c="dimmed" role="status">
+                Waiting for:{" "}
+                {view.players
+                  .filter((player) => !player.ready)
+                  .map((player) => player.name)
+                  .join(", ") || "the next bag"}
+                .
               </Text>
               {seat.roundPicks.length > 0 && (
                 <Text size="sm" c="dimmed">
@@ -278,6 +335,24 @@ function DraftPicking({
                 Selected {selectedIds.length} of {seat.picksRequired} picks for
                 this bag
               </Text>
+              {selectedIds.length > 0 && (
+                <Group align="flex-start" justify="space-between">
+                  <Text size="sm">
+                    {seat.bag
+                      .filter((item) => selectedIds.includes(item.id))
+                      .map((item) => item.name)
+                      .join(" · ")}
+                  </Text>
+                  <Button
+                    variant="subtle"
+                    size="xs"
+                    disabled={busy}
+                    onClick={() => setSelectedIds([])}
+                  >
+                    Clear selection
+                  </Button>
+                </Group>
+              )}
               <Button
                 onClick={() =>
                   submit({
@@ -636,7 +711,6 @@ export default function BagDraftPage() {
   const fetcher = useFetcher<typeof action>();
   const revalidator = useRevalidator();
   const location = useLocation();
-  const [origin, setOrigin] = useState("");
   const [confirmUndo, setConfirmUndo] = useState(false);
   const busy = fetcher.state !== "idle";
   const variant = BAG_VARIANTS.find(
@@ -647,15 +721,10 @@ export default function BagDraftPage() {
     (player) => player.id === view.viewer.playerId,
   )?.name;
   const publicPath = `/draft/bag/${view.id}`;
-  const mapSearch = new URLSearchParams(location.search);
-  mapSearch.delete("results");
   const donePlayers = view.players.filter((player) =>
     view.phase === "drafting" ? player.ready : player.finished,
   ).length;
 
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
   useEffect(() => {
     const interval = window.setInterval(() => {
       if (
@@ -668,11 +737,71 @@ export default function BagDraftPage() {
     return () => window.clearInterval(interval);
   }, [revalidator, fetcher.state]);
 
-  function submit(operation: BagDraftAction) {
+  function submit(
+    operation:
+      | BagDraftAction
+      | { action: "join"; playerId: number; name: string }
+      | { action: "recover"; uuid: string }
+      | { action: "exportState"; checkpointId?: string },
+  ) {
     void fetcher.submit(
       { operation: JSON.stringify(operation) },
       { method: "post", action: `${location.pathname}${location.search}` },
     );
+  }
+
+  function lobbyOperation(operation: LobbyOperation) {
+    const revision = view.revision;
+    switch (operation.type) {
+      case "join":
+        submit({
+          action: "join",
+          playerId: operation.playerId,
+          name: operation.name,
+        });
+        break;
+      case "recover":
+        submit({ action: "recover", uuid: operation.uuid });
+        break;
+      case "start":
+      case "pause":
+      case "resume":
+      case "checkpoint":
+        submit({ action: operation.type, revision });
+        break;
+      case "undo":
+        submit({ action: "undoAction", revision });
+        break;
+      case "release":
+      case "rotate":
+        submit({
+          action: operation.type,
+          playerId: operation.playerId,
+          revision,
+        });
+        break;
+      case "rename":
+        submit({
+          action: "rename",
+          playerId: operation.playerId,
+          name: operation.name,
+          revision,
+        });
+        break;
+      case "restore":
+        submit({
+          action: "restoreCheckpoint",
+          checkpointId: operation.checkpointId,
+          revision,
+        });
+        break;
+      case "import":
+        submit({ action: "importState", state: operation.state, revision });
+        break;
+      case "export":
+        submit({ action: "exportState", checkpointId: operation.checkpointId });
+        break;
+    }
   }
 
   const exportText = [
@@ -709,7 +838,9 @@ export default function BagDraftPage() {
         </Anchor>
         <Badge variant="light">
           {view.viewer.isAdmin
-            ? "Host"
+            ? playerName
+              ? `Admin · Playing as ${playerName}`
+              : "Admin"
             : playerName
               ? `Playing as ${playerName}`
               : "Spectator"}
@@ -724,198 +855,184 @@ export default function BagDraftPage() {
         </div>
         <OriginalArtToggle />
       </Group>
-      {fetcher.data?.error && (
-        <Alert color="red" title="Could not save your change">
-          {fetcher.data.error}
-        </Alert>
-      )}
-      <Paper withBorder p="lg" radius="md">
-        <Stack>
-          <Group justify="space-between">
-            <Title order={2} size="h3">
-              {view.phase === "drafting"
-                ? `Collect components · Round ${view.round + 1}`
-                : view.phase === "assembling"
-                  ? "Final faction choices"
-                  : "Draft complete"}
-            </Title>
-            <Text size="sm" c="dimmed">
-              {donePlayers} / {view.players.length}{" "}
-              {view.phase === "drafting" ? "ready to pass" : "finished"}
-            </Text>
-          </Group>
-          <Progress
-            value={(donePlayers / view.players.length) * 100}
-            aria-label="Players ready"
-          />
-          <Table.ScrollContainer minWidth={340}>
-            <Table>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Player</Table.Th>
-                  <Table.Th>Components</Table.Th>
-                  <Table.Th>Status</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {view.players.map((player) => (
-                  <Table.Tr key={player.id}>
-                    <Table.Td>
-                      {player.name}
-                      {player.id === view.viewer.playerId ? " (you)" : ""}
-                    </Table.Td>
-                    <Table.Td>{player.draftedCount}</Table.Td>
-                    <Table.Td>
-                      <Badge
-                        size="sm"
-                        color={
-                          (
-                            view.phase === "drafting"
-                              ? player.ready
-                              : player.finished
-                          )
-                            ? "green"
-                            : "gray"
-                        }
-                        variant="light"
-                      >
-                        {view.phase === "drafting"
-                          ? player.ready
-                            ? "Ready"
-                            : "Choosing"
-                          : player.finished
-                            ? "Finished"
-                            : "Building faction"}
-                      </Badge>
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
-          </Table.ScrollContainer>
-        </Stack>
-      </Paper>
-      <BagMapSetup
-        rules={view.rules}
-        playerCount={view.players.length}
-        phase={view.phase}
-        mapRoomId={view.mapRoomId}
-        mapBuildError={view.mapBuildError}
-        mapPath={`${publicPath}?${mapSearch}`}
+      <LobbyPanel
+        mode="bag"
+        lobbyId={view.id}
+        lobby={view.lobby}
+        ownPlayerId={view.viewer.playerId}
+        isAdmin={view.viewer.isAdmin}
+        busy={busy}
+        error={fetcher.data?.error ?? view.accessError}
+        exportState={fetcher.data?.backup}
+        onOperation={lobbyOperation}
       />
-      {view.viewer.isAdmin && (
-        <Paper withBorder p="lg" radius="md">
-          <Stack>
-            <Title order={2} size="h3">
-              Invite your players
-            </Title>
-            <Text size="sm">
-              Save your host link. Send each private seat link to its player;
-              anyone with that link can make their picks.
-            </Text>
-            <CopyLink
-              path={`${location.pathname}${location.search}`}
-              label="Your private host link"
-              origin={origin}
-            />
-            <CopyLink
-              path={publicPath}
-              label="Public spectator link"
-              origin={origin}
-            />
-            {view.seatLinks?.map((link) => (
-              <CopyLink
-                key={link.id}
-                path={link.path}
-                label={`${link.name} · private seat`}
-                origin={origin}
+      <BagDraftGuide
+        rules={view.rules}
+        variant={view.settings.variant}
+        phase={view.phase}
+      />
+      {view.phase !== "lobby" && (
+        <>
+          <Paper withBorder p="lg" radius="md">
+            <Stack>
+              <Group justify="space-between">
+                <Title order={2} size="h3">
+                  {view.phase === "drafting"
+                    ? `Collect components · Round ${view.round + 1}`
+                    : view.phase === "assembling"
+                      ? "Final faction choices"
+                      : "Draft complete"}
+                </Title>
+                <Text size="sm" c="dimmed">
+                  {donePlayers} / {view.players.length}{" "}
+                  {view.phase === "drafting" ? "ready to pass" : "finished"}
+                </Text>
+              </Group>
+              <Progress
+                value={(donePlayers / view.players.length) * 100}
+                aria-label="Players ready"
               />
-            ))}
-            <Group>
-              {view.canUndoRound && (
-                <Button
-                  color="orange"
-                  variant="light"
-                  onClick={() => setConfirmUndo(true)}
-                  disabled={busy}
-                >
-                  Rewind draft round
-                </Button>
-              )}
-            </Group>
-          </Stack>
-        </Paper>
-      )}
-      {seat && view.phase === "drafting" && (
-        <DraftPicking
-          key={`${view.id}:${seat.id}:${view.round}:${seat.ready}`}
-          view={view}
-          seat={seat}
-          busy={busy}
-          submit={submit}
-        />
-      )}
-      {seat && view.phase === "assembling" && (
-        <FactionAssembly
-          key={`${view.id}:${seat.id}:${seat.finished}`}
-          view={view}
-          seat={seat}
-          busy={busy}
-          submit={submit}
-        />
-      )}
-      {!seat && view.phase !== "complete" && (
-        <Alert
-          color="blue"
-          title={
-            view.viewer.isAdmin ? "Draft progress" : "Spectating this draft"
-          }
-        >
-          {view.viewer.isAdmin
-            ? "Open a player’s private seat link to draft for that seat. This page updates automatically as players make their picks."
-            : "This page updates automatically. Use your private player link to see your bag and make picks."}
-        </Alert>
-      )}
-      {view.phase === "complete" && (
-        <Stack gap="lg">
-          <Group justify="space-between">
-            <Title order={2}>Completed factions</Title>
-            <Group>
-              {seat && !view.mapRoomId && (
-                <Button
-                  variant="light"
-                  onClick={() => submit({ action: "reopen" })}
-                  disabled={busy}
-                >
-                  Revise your faction
-                </Button>
-              )}
-              <CopyButton value={exportText}>
-                {({ copied, copy }) => (
-                  <Button variant="light" onClick={copy}>
-                    {copied ? "Copied" : "Copy summary"}
+              <Table.ScrollContainer minWidth={340}>
+                <Table>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Player</Table.Th>
+                      <Table.Th>Components</Table.Th>
+                      <Table.Th>Status</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {view.players.map((player) => (
+                      <Table.Tr key={player.id}>
+                        <Table.Td>
+                          {player.name}
+                          {player.id === view.viewer.playerId ? " (you)" : ""}
+                        </Table.Td>
+                        <Table.Td>{player.draftedCount}</Table.Td>
+                        <Table.Td>
+                          <Badge
+                            size="sm"
+                            color={
+                              (
+                                view.phase === "drafting"
+                                  ? player.ready
+                                  : player.finished
+                              )
+                                ? "green"
+                                : "gray"
+                            }
+                            variant="light"
+                          >
+                            {view.phase === "drafting"
+                              ? player.ready
+                                ? "Ready"
+                                : "Choosing"
+                              : player.finished
+                                ? "Finished"
+                                : "Building faction"}
+                          </Badge>
+                        </Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              </Table.ScrollContainer>
+            </Stack>
+          </Paper>
+          <BagMapSetup
+            rules={view.rules}
+            playerCount={view.players.length}
+            phase={view.phase}
+            mapRoomId={view.mapRoomId}
+            mapBuildError={view.mapBuildError}
+            mapPath={`${publicPath}?map=1`}
+          />
+          {view.viewer.isAdmin && view.canUndoRound && (
+            <Button
+              color="orange"
+              variant="light"
+              onClick={() => setConfirmUndo(true)}
+              disabled={busy}
+              style={{ alignSelf: "flex-start" }}
+            >
+              Rewind draft round
+            </Button>
+          )}
+          {seat && view.phase === "drafting" && (
+            <DraftPicking
+              key={`${view.id}:${seat.id}:${view.round}:${seat.ready}:${seat.hand.map((item) => item.id).join(",")}:${seat.bag.map((item) => item.id).join(",")}`}
+              view={view}
+              seat={seat}
+              busy={busy || view.lobby.paused}
+              submit={submit}
+            />
+          )}
+          {seat && view.phase === "assembling" && (
+            <FactionAssembly
+              key={`${view.id}:${seat.id}:${seat.finished}:${seat.keptItemIds.join(",")}:${seat.assemblyOptions.map((item) => item.id).join(",")}`}
+              view={view}
+              seat={seat}
+              busy={busy || view.lobby.paused}
+              submit={submit}
+            />
+          )}
+          {!seat && view.phase !== "complete" && (
+            <Alert
+              color="blue"
+              title={
+                view.viewer.isAdmin ? "Draft progress" : "Spectating this draft"
+              }
+            >
+              {view.viewer.isAdmin
+                ? "Join an open slot or recover your own UUID above if you are also playing. You can manage the draft here while other players’ hands stay private."
+                : "This page updates automatically. Rejoin with your saved UUID above to see your own bag and make picks."}
+            </Alert>
+          )}
+          {view.phase === "complete" && (
+            <Stack gap="lg">
+              <Group justify="space-between">
+                <Title order={2}>Completed factions</Title>
+                <Group>
+                  {seat && !view.mapRoomId && (
+                    <Button
+                      variant="light"
+                      onClick={() => submit({ action: "reopen" })}
+                      disabled={busy}
+                    >
+                      Revise your faction
+                    </Button>
+                  )}
+                  <CopyButton value={exportText}>
+                    {({ copied, copy }) => (
+                      <Button variant="light" onClick={copy}>
+                        {copied ? "Copied" : "Copy summary"}
+                      </Button>
+                    )}
+                  </CopyButton>
+                  <Button
+                    component="a"
+                    href={`data:application/json;charset=utf-8,${encodeURIComponent(exportJson)}`}
+                    download={`ti4-bag-draft-${view.id}.json`}
+                    variant="light"
+                  >
+                    Download JSON
                   </Button>
-                )}
-              </CopyButton>
-              <Button
-                component="a"
-                href={`data:application/json;charset=utf-8,${encodeURIComponent(exportJson)}`}
-                download={`ti4-bag-draft-${view.id}.json`}
-                variant="light"
-              >
-                Download JSON
-              </Button>
-            </Group>
-          </Group>
-          {view.players.map((player) => (
-            <Paper key={player.id} withBorder p="lg" radius="md">
-              <Stack>
-                <Title order={3}>{player.name}</Title>
-                <CollectedItems items={player.keptItems ?? []} view={view} />
-              </Stack>
-            </Paper>
-          ))}
-        </Stack>
+                </Group>
+              </Group>
+              {view.players.map((player) => (
+                <Paper key={player.id} withBorder p="lg" radius="md">
+                  <Stack>
+                    <Title order={3}>{player.name}</Title>
+                    <CollectedItems
+                      items={player.keptItems ?? []}
+                      view={view}
+                    />
+                  </Stack>
+                </Paper>
+              ))}
+            </Stack>
+          )}
+        </>
       )}
       <Modal
         opened={confirmUndo}
@@ -958,7 +1075,7 @@ export function ErrorBoundary() {
       </Alert>
       {isRouteErrorResponse(error) && error.status === 403 && (
         <Anchor component={Link} to={location.pathname}>
-          Open the public spectator view
+          Open the shared lobby
         </Anchor>
       )}
       <Anchor component={Link} to="/draft/bag/new">

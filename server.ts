@@ -14,7 +14,10 @@ import {
   register,
   startEventLoopLagMonitor,
 } from "~/observability/metrics.server.js";
-import { setSocketIO } from "~/websocket/broadcast.server.js";
+import {
+  setSocketIO,
+  registerDraftSyncHandlers,
+} from "~/websocket/broadcast.server.js";
 
 initEnv();
 startEventLoopLagMonitor();
@@ -111,16 +114,7 @@ io.on("connection", (socket) => {
     observeSocketDisconnection();
   });
 
-  socket.on("joinDraft", (draftId) => {
-    observeSocketEvent(
-      "joinDraft",
-      (draftId) => {
-        console.log(socket.id, "joined draft", draftId);
-        socket.join("draft:" + draftId);
-      },
-      draftId,
-    );
-  });
+  registerDraftSyncHandlers(socket);
 
   socket.on("joinSoundboardSession", (sessionId) => {
     observeSocketEvent(
@@ -185,18 +179,6 @@ io.on("connection", (socket) => {
       sessionId,
       factionId,
       lineType,
-    );
-  });
-
-  socket.on("syncDraft", (draftId, data) => {
-    observeSocketEvent(
-      "syncDraft",
-      (draftId, data) => {
-        console.log(socket.id, "synced draft", draftId);
-        socket.to("draft:" + draftId).emit("syncDraft", data);
-      },
-      draftId,
-      data,
     );
   });
 });

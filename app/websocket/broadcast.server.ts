@@ -1,5 +1,5 @@
-import type { Server } from "socket.io";
-import { Draft } from "~/types";
+import type { Server, Socket } from "socket.io";
+import type { Draft } from "~/types";
 
 interface SocketState {
   instance: Server | null;
@@ -43,6 +43,7 @@ export async function broadcastDraftUpdate(
   draftId: string,
   draft: Draft,
 ): Promise<void> {
+  void draft;
   const io = getSocketIO();
 
   if (!io) {
@@ -54,9 +55,26 @@ export async function broadcastDraftUpdate(
   }
 
   try {
-    io.to(`draft:${draftId}`).emit("syncDraft", JSON.stringify(draft));
+    // Each browser reloads through its own authenticated loader. Broadcasting
+    // a shared draft payload would reveal hands or staged choices to spectators.
+    io.to(`draft:${draftId}`).emit("draftChanged");
     console.log(`Broadcasted draft update to draft:${draftId}`);
   } catch (error) {
     console.error("Error broadcasting draft update:", error);
   }
+}
+
+/** Legacy clients may still send a draft payload; none of it is trusted. */
+export function registerDraftSyncHandlers(socket: Socket): void {
+  const validId = (id: unknown): id is string =>
+    typeof id === "string" && /^[a-zA-Z0-9_-]{1,100}$/.test(id);
+  socket.on("joinDraft", (id: unknown) => {
+    if (validId(id)) void socket.join(`draft:${id}`);
+  });
+  const notify = (id: unknown) => {
+    if (validId(id) && socket.rooms.has(`draft:${id}`))
+      socket.to(`draft:${id}`).emit("draftChanged");
+  };
+  socket.on("syncDraft", notify);
+  socket.on("draftChanged", notify);
 }
