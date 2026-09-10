@@ -55,6 +55,30 @@ function finalPicks(state: BagDraftState, seat: BagSeat) {
 }
 
 describe("bag draft rules", () => {
+  it("requires the keep count, reduced only when fewer choices are available", () => {
+    const state = createBagState(input, random);
+    state.phase = "assembling";
+    state.rules.keepLimits = { ABILITY: 2 };
+    state.seats[0].hand = ["ABILITY:star_forge", "ABILITY:telepathic"];
+    expect(() =>
+      applyBagAction(state, 0, {
+        action: "assemble",
+        itemIds: ["ABILITY:telepathic"],
+      }),
+    ).toThrow("Choose 2 Faction ability before finishing.");
+
+    state.seats[0].hand = ["ABILITY:telepathic"];
+    expect(() =>
+      applyBagAction(state, 0, { action: "assemble", itemIds: [] }),
+    ).toThrow("Choose 1 Faction ability before finishing.");
+    expect(
+      applyBagAction(state, 0, {
+        action: "assemble",
+        itemIds: ["ABILITY:telepathic"],
+      }).seats[0].finished,
+    ).toBe(true);
+  });
+
   it("requires retaining the parent of an optional swap", () => {
     const state = createBagState(input, random);
     state.phase = "assembling";

@@ -5,9 +5,7 @@ import {
   Stack,
   Text,
   TextInput,
-  useMantineTheme,
 } from "@mantine/core";
-import { IconBrandDiscordFilled } from "@tabler/icons-react";
 import { playerColors } from "~/data/factionData";
 import { DiscordData, Player } from "~/types";
 
@@ -32,8 +30,6 @@ export function PlayerInputSection({
   onDecreasePlayers,
   onChangeName,
 }: Props) {
-  const { colors } = useMantineTheme();
-
   return (
     <Stack gap="xs">
       {/* Header */}
@@ -102,10 +98,6 @@ export function PlayerInputSection({
 
               {discordPlayer?.type === "identified" ? (
                 <Group gap="xs" flex={1} wrap="nowrap">
-                  <IconBrandDiscordFilled
-                    size={16}
-                    color={colors[color]?.[5] || colors.blue?.[5] || "#228be6"}
-                  />
                   <Text size="sm" truncate flex={1}>
                     {discordPlayer.nickname ?? discordPlayer.username}
                   </Text>

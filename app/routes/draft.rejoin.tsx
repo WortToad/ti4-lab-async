@@ -26,7 +26,7 @@ export function headers() {
 }
 export function meta() {
   return [
-    { title: "Rejoin a lobby · TI4 Lab" },
+    { title: "Rejoin a lobby · TI4Toad" },
     { name: "robots", content: "noindex, nofollow" },
   ];
 }

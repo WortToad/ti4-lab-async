@@ -60,7 +60,7 @@ export function headers() {
 
 export function meta() {
   return [
-    { title: "Bag draft · TI4 Lab" },
+    { title: "Bag draft · TI4Toad" },
     { name: "robots", content: "noindex, nofollow" },
     { name: "referrer", content: "no-referrer" },
   ];
@@ -407,7 +407,7 @@ function DraftPicking({
                   </Badge>
                   {category !== "FACTION" && (
                     <Badge variant="light" color="violet">
-                      Keep up to {keepLimit} afterward
+                      Keep {keepLimit} afterward
                     </Badge>
                   )}
                   {selectedCount > 0 && (
@@ -424,8 +424,12 @@ function DraftPicking({
                 {category === "FACTION"
                   ? "Choose from these factions’ components when you build your final faction."
                   : keepLimit >= draftLimit
-                    ? "You can keep everything you collect in this category."
-                    : `When drafting ends, choose up to ${keepLimit} from your collection to keep.`}
+                    ? "Keep everything you collect in this category."
+                    : `When drafting ends, keep exactly ${keepLimit} from your collection, or all available choices if you have fewer.`}
+                {(view.settings.variant === "twilights_fall" ||
+                  view.settings.variant === "inaugural_splice") &&
+                  ["TECH", "AGENT", "UNIT"].includes(category) &&
+                  " You may fill a slot with a generic technology instead."}
               </Text>
               <SimpleGrid cols={{ base: 1, sm: 2 }}>
                 {items.map((item) => {
@@ -580,8 +584,9 @@ function FactionAssembly({
           </Title>
           <Text>
             Collection is complete. Choose which components to keep for your
-            final faction and any tiles to use for the map. Categories with no
-            choices are already selected.
+            final faction and the tiles to use for the map. Keep the required
+            count in each category, or all available choices if you have fewer.
+            Categories with nothing to discard are already selected.
           </Text>
           <Text size="sm" c="dimmed">
             Your completed faction becomes public when everyone has finished.

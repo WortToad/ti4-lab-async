@@ -18,7 +18,6 @@ export function DraftOrder({ pickOrder, currentPick, players }: Props) {
         <DraftOrderChip
           key={`${entry.player.id}-${entry.idx}`}
           entry={entry}
-          showDiscord={true}
         />
       ))}
     </Group>

@@ -20,7 +20,7 @@ export function useSafeOutletContext(): DraftOrderContext {
   return {
     adminMode: false,
     pickForAnyone: false,
-    originalArt: false,
+    originalArt: true,
     accessibleColors: false,
     setOriginalArt: () => {},
     setAdminMode: () => {},

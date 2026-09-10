@@ -6,6 +6,7 @@ type Props = {
   influence: number;
   flex?: number;
   size?: "xs" | "sm" | "md" | "lg";
+  compact?: boolean;
 };
 
 export function PlanetStatsPill({
@@ -13,24 +14,25 @@ export function PlanetStatsPill({
   influence,
   flex,
   size = "sm",
+  compact = false,
 }: Props) {
   return (
-    <Group gap={2}>
-      <Box className={classes.resources} px="xs">
+    <Group gap={2} className={compact ? classes.compact : undefined}>
+      <Box className={classes.resources} px={compact ? 5 : "xs"}>
         <Text fw={600} size={size} className={classes.text}>
           {resources}
         </Text>
       </Box>
       <Box
         className={`${classes.influence} ${flex === undefined ? classes.withBorder : ""}`}
-        px="xs"
+        px={compact ? 5 : "xs"}
       >
         <Text fw={600} size={size} className={classes.text}>
           {influence}
         </Text>
       </Box>
       {flex !== undefined ? (
-        <Box className={classes.flex} px="xs">
+        <Box className={classes.flex} px={compact ? 5 : "xs"}>
           <Text fw={600} size={size} className={classes.text}>
             {flex}
           </Text>

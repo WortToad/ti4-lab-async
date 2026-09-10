@@ -64,6 +64,9 @@ describe("bundled bag draft catalog", () => {
     expect(pool.filter((item) => item.category === "TECH")).toHaveLength(87);
     expect(pool.filter((item) => item.category === "AGENT")).toHaveLength(25);
     expect(pool.filter((item) => item.category === "UNIT")).toHaveLength(31);
+    expect(pool.find((item) => item.id === "UNIT:tf-dragonfreed")?.name).toBe(
+      "The Dragon, Freed",
+    );
     expect(pool.filter((item) => item.category === "MAHACTKING")).toHaveLength(
       8,
     );

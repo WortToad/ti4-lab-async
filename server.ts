@@ -10,7 +10,6 @@ import {
   metricsMiddleware,
   observeSocketConnection,
   observeSocketDisconnection,
-  observeSocketEvent,
   register,
   startEventLoopLagMonitor,
 } from "~/observability/metrics.server.js";
@@ -116,71 +115,6 @@ io.on("connection", (socket) => {
 
   registerDraftSyncHandlers(socket);
 
-  socket.on("joinSoundboardSession", (sessionId) => {
-    observeSocketEvent(
-      "joinSoundboardSession",
-      (sessionId) => {
-        console.log(socket.id, "joined soundboard session", sessionId);
-        socket.join("soundboard:" + sessionId);
-      },
-      sessionId,
-    );
-  });
-
-  socket.on("requestSessionData", (sessionId) => {
-    observeSocketEvent(
-      "requestSessionData",
-      (sessionId) => {
-        socket.to("soundboard:" + sessionId).emit("requestSessionData");
-      },
-      sessionId,
-    );
-  });
-
-  socket.on("sendSessionData", (sessionId, data) => {
-    observeSocketEvent(
-      "sendSessionData",
-      (sessionId, data) => {
-        socket.to("soundboard:" + sessionId).emit("sendSessionData", data);
-      },
-      sessionId,
-      data,
-    );
-  });
-
-  socket.on("stopLine", (sessionId) => {
-    observeSocketEvent(
-      "stopLine",
-      (sessionId) => {
-        socket.to("soundboard:" + sessionId).emit("stopLine");
-      },
-      sessionId,
-    );
-  });
-
-  socket.on("lineFinished", (sessionId) => {
-    observeSocketEvent(
-      "lineFinished",
-      (sessionId) => {
-        socket.to("soundboard:" + sessionId).emit("lineFinished");
-      },
-      sessionId,
-    );
-  });
-
-  socket.on("playLine", (sessionId, factionId, lineType) => {
-    observeSocketEvent(
-      "playLine",
-      (sessionId, factionId, lineType) => {
-        socket
-          .to("soundboard:" + sessionId)
-          .emit("playLine", factionId, lineType);
-      },
-      sessionId,
-      factionId,
-      lineType,
-    );
-  });
 });
 
 const port = Number(process.env.PORT || 3000);

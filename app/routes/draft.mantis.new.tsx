@@ -6,6 +6,7 @@ import {
   Group,
   MultiSelect,
   NumberInput,
+  Paper,
   Stack,
   Text,
   Title,
@@ -25,6 +26,7 @@ import {
   mantisAdminCookie,
 } from "~/drizzle/mantisDraft.server";
 import type { MantisSettings } from "~/draft/mantis/engine";
+import { MapBuildDiagram } from "~/draft/mantis/MapBuildDiagram";
 import type { FactionId, GameSet } from "~/types";
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -79,6 +81,8 @@ export default function MantisNew() {
   const navigation = useNavigation();
   const [banned, setBanned] = useState<string[]>([]);
   const [required, setRequired] = useState<string[]>([]);
+  const [extraBlues, setExtraBlues] = useState(0);
+  const [extraReds, setExtraReds] = useState(0);
   const options = Object.values(allFactions)
     .filter((f) => f.set !== "twilightsFall")
     .map((f) => ({ value: f.id, label: f.name }));
@@ -88,9 +92,10 @@ export default function MantisNew() {
         <Stack gap="lg">
           <Title order={2}>Mantis draft</Title>
           <Text>
-            Snake draft factions, speaker positions, and individual tiles. Each
-            player keeps 3 blue and 2 red tiles, then draws tiles at random to
-            build their own slice from the center outward.
+            Take turns drafting a faction, a speaker position and individual map
+            tiles from a shared pool. Each player keeps exactly 3 blue and 2 red
+            tiles. In the next phase, those same five tiles fill that player’s
+            section of the shared map.
           </Text>
           {result?.error && <Alert color="red">{result.error}</Alert>}
           <Alert color="blue" title="Create a shared lobby">
@@ -156,7 +161,10 @@ export default function MantisNew() {
               label="Extra blue tiles"
               min={0}
               max={2}
-              defaultValue={0}
+              value={extraBlues}
+              onChange={(value) =>
+                setExtraBlues(typeof value === "number" ? value : 0)
+              }
               allowDecimal={false}
             />
             <NumberInput
@@ -164,15 +172,38 @@ export default function MantisNew() {
               label="Extra red tiles"
               min={0}
               max={2}
-              defaultValue={0}
+              value={extraReds}
+              onChange={(value) =>
+                setExtraReds(typeof value === "number" ? value : 0)
+              }
               allowDecimal={false}
             />
           </Group>
-          <Text size="sm" c="dimmed">
-            Extra tiles are drafted, then discarded before map building. Once
-            everyone keeps 3 blue and 2 red tiles, those five tiles fill their
-            own section of the shared map.
-          </Text>
+          <Paper withBorder p="md" radius="md">
+            <Stack gap="sm">
+              <Title order={3}>Build the map with your drafted tiles</Title>
+              <Text size="sm">
+                If you draft extra tiles, choose which to discard until you have
+                exactly 3 blue and 2 red. Once every hand is ready, map building
+                starts automatically. The app sets the layout and home systems
+                using your drafted seats and factions. On your turn, it draws
+                one of your remaining tiles at random; you choose which
+                highlighted space in your section receives it.
+              </Text>
+              <MapBuildDiagram
+                source="pool"
+                draftBlues={3 + extraBlues}
+                draftReds={2 + extraReds}
+              />
+              <Text size="sm">
+                Everyone fills their inner space near Mecatol Rex, then their
+                two middle spaces, then their two outer spaces. The player with
+                the most empty spaces in the current group places next; ties
+                follow speaker order. All five of your kept tiles are placed,
+                with your home system in a separate home position.
+              </Text>
+            </Stack>
+          </Paper>
           <NumberInput
             name="mulligans"
             label="Mulligans per player"

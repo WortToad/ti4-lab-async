@@ -6,8 +6,8 @@ import {
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "TI4 Lab" },
-    { name: "description", content: "TI4 Lab, for drafting and map creation." },
+    { title: "TI4Toad" },
+    { name: "description", content: "TI4Toad, for drafting and map creation." },
   ];
 };
 

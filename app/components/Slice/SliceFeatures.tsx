@@ -3,7 +3,7 @@ import { techSpecialtiesForSystems } from "~/utils/map";
 import { TechIcon } from "../icons/TechIcon";
 import { LegendaryIcon } from "../icons/LegendaryIcon";
 import { Wormhole } from "../features/Wormhole";
-import { Slice } from "~/types";
+import { Slice, System } from "~/types";
 import { systemsInSlice } from "~/utils/slice";
 import { TradeStationIcon } from "~/components/icons/TradeStationIcon";
 
@@ -12,7 +12,10 @@ type Props = {
 };
 
 export function SliceFeatures({ slice }: Props) {
-  const systems = systemsInSlice(slice);
+  return <SystemFeatures systems={systemsInSlice(slice)} />;
+}
+
+export function SystemFeatures({ systems }: { systems: System[] }) {
   const specialties = techSpecialtiesForSystems(systems);
   const legendarySystems = systems.filter(
     (s) => s.planets.filter((p) => p.legendary).length > 0,

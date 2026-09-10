@@ -17,9 +17,12 @@ type Props = {
 
 export function Wormhole({ wormhole, size = 60, fontSize = 18 }: Props) {
   const swirlColor = wormholeColor[wormhole];
+  const label = `${wormhole[0]}${wormhole.slice(1).toLowerCase()} wormhole`;
   if (size < 30) {
     return (
       <div
+        role="img"
+        aria-label={label}
         style={{
           borderRadius: 99,
           height: size,
@@ -40,6 +43,8 @@ export function Wormhole({ wormhole, size = 60, fontSize = 18 }: Props) {
 
   return (
     <div
+      role="img"
+      aria-label={label}
       style={{
         borderRadius: 99,
         height: size,

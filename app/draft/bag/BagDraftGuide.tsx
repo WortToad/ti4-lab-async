@@ -10,6 +10,7 @@ import {
   Title,
 } from "@mantine/core";
 import { bagCategoryLabel } from "./BagComponents";
+import { isTwilightsFallBag } from "./rules";
 import type { BagItemCategory } from "./catalog";
 import type { BagDraftView, BagRules, BagVariant } from "./types";
 
@@ -43,12 +44,12 @@ export function BagDraftGuide({
     },
     {
       title: "Choose what to keep",
-      text: "Build your final faction from your collection. Fill the keep limits shown for each category, then confirm your choices.",
+      text: "Build your final faction from your collection. Keep the required number in every category (or all available choices if you have fewer), then confirm.",
     },
     {
       title: hasTiles ? "Reveal and build the map" : "Reveal and play",
       text: hasTiles
-        ? "Final factions become public together. Eligible tile collections open a shared map room; each player places their own kept tiles there."
+        ? "Final factions become public together. With 3 blue and 2 red tiles per player, the next phase uses those same tiles to build each player’s section of one shared map. See the map guide below for requirements and placement."
         : "Final choices become public once everyone confirms. Copy or download the results, then use your separately arranged map.",
     },
   ];
@@ -97,6 +98,13 @@ export function BagDraftGuide({
             </Accordion.Control>
             <Accordion.Panel>
               <Stack gap="sm">
+                <Text size="sm">
+                  <strong>Keep counts are required.</strong> Choose exactly the
+                  number shown, or keep every available choice if you have
+                  fewer. A lower count is not an optional choice.
+                  {isTwilightsFallBag(variant) &&
+                    " In Twilight’s Fall and Inaugural Splice, you may fill an ability, genome, or unit upgrade slot with a generic technology instead."}
+                </Text>
                 <Text size="sm">
                   <strong>A bag</strong> is the set of choices currently offered
                   to you. <strong>Your collection</strong> contains everything

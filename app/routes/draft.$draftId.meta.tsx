@@ -19,11 +19,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   if (lobby && !lobby.started)
     return data(
       {
-        title: `${draftId} - TI4 Lab lobby`,
+        title: `${draftId} - TI4Toad lobby`,
         description: "Join a slot and wait for the admin to start.",
         url: appUrl(`/draft/${draftId}`),
         type: "website",
-        siteName: "TI4 Lab",
+        siteName: "TI4Toad",
+        image: appUrl("/ti4toad.png"),
       },
       { headers: { "Cache-Control": "no-store" } },
     );
@@ -34,17 +35,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   const playerCount = draft.players?.length || 0;
   const draftTypeDisplay = formatDraftType(draftType, playerCount);
 
-  // Image URL (either from CDN or the .png route that will generate it)
-  const imageUrl =
-    (!lobby && result.imageUrl) || appUrl(`/draft/${draftId}.png`);
-
   return data({
-    title: `${draftId} - TI4 Lab`,
-    description: `${draftTypeDisplay} on TI4 Lab`,
-    image: imageUrl,
+    title: `${draftId} - TI4Toad`,
+    description: `${draftTypeDisplay} on TI4Toad`,
+    image: appUrl("/ti4toad.png"),
     url: appUrl(`/draft/${draftId}`),
     type: "website",
-    siteName: "TI4 Lab",
+    siteName: "TI4Toad",
   });
 };
 

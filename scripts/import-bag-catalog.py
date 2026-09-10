@@ -50,6 +50,7 @@ excluded = {"lazax", "admins", "franken", "keleresm", "keleresx", "miltymod", "q
 legal_factions = {key: value for key, value in factions.items() if value["source"] in faction_sources and key not in excluded}
 catalog = {}
 faction_components = {}
+unit_name_corrections = {"tf-dragonfreed": "The Dragon, Freed"}
 
 
 def clean(value):
@@ -194,6 +195,7 @@ def make_item(category, alias, faction_alias=None):
                 item["twilightsFallName"] = model["tfName"]
                 item["twilightsFallDescription"] = " ".join(filter(None, [model.get("tfAbilityWindow", model.get("abilityWindow")), model.get("tfAbilityText", model.get("abilityText"))]))
         elif category in {"UNIT", "MECH", "FLAGSHIP", "MONUMENT"}:
+            item["name"] = unit_name_corrections.get(alias, item["name"])
             item["description"] = unit_text(model)
             item["unit"] = unit_visual(model)
         else:

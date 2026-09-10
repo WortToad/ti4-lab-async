@@ -1,61 +1,28 @@
-import { Box, Group, Modal, SegmentedControl, Text } from "@mantine/core";
-import { useDisclosure, useLocalStorage } from "@mantine/hooks";
+import { Box, Group, SegmentedControl } from "@mantine/core";
 import { IconPalette } from "@tabler/icons-react";
 import { useSafeOutletContext } from "~/useSafeOutletContext";
 
-type Props = {
-  showWarning?: boolean;
-};
-
-export function OriginalArtToggle({ showWarning = false }: Props) {
-  const [hasSeenOriginalArtWarning, setHasSeenOriginalArtWarning] =
-    useLocalStorage({
-      key: "hasSeenOriginalArtWarning",
-      defaultValue: false,
-    });
-  const [showWarningModal, setShowWarningModal] = useDisclosure(false);
-
+export function OriginalArtToggle() {
   const { originalArt, setOriginalArt } = useSafeOutletContext();
   return (
     <Box>
       <SegmentedControl
-        onChange={(value) => {
-          if (
-            value === "original" &&
-            showWarning &&
-            !hasSeenOriginalArtWarning
-          ) {
-            setShowWarningModal.open();
-            setHasSeenOriginalArtWarning(true);
-          }
-          setOriginalArt(value === "original");
-        }}
-        value={originalArt ? "original" : "lab"}
+        onChange={(value) => setOriginalArt(value === "original")}
+        value={originalArt ? "original" : "simplified"}
         color="blue"
         data={[
+          { label: "Originals", value: "original" },
           {
             label: (
               <Group gap="xs">
                 <IconPalette size={16} />
-                <span>Lab Art</span>
+                <span>Simplified</span>
               </Group>
             ),
-            value: "lab",
+            value: "simplified",
           },
-          { label: "Original Art", value: "original" },
         ]}
       />
-      <Modal
-        opened={showWarningModal}
-        onClose={setShowWarningModal.close}
-        title="Original Art Mode"
-      >
-        <Text>
-          Please note that editing features do not work in &apos;Original
-          Art&apos; mode. You can switch back to &apos;Lab Art&apos; mode to use
-          all editing features.
-        </Text>
-      </Modal>
     </Box>
   );
 }

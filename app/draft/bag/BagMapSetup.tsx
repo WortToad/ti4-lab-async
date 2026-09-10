@@ -9,6 +9,7 @@ import {
   Title,
 } from "@mantine/core";
 import { Link } from "react-router";
+import { MapBuildDiagram } from "~/draft/mantis/MapBuildDiagram";
 import type { BagDraftView, BagRules } from "./types";
 
 export function BagMapSetup({
@@ -54,40 +55,52 @@ export function BagMapSetup({
             ? "Continue to your map"
             : unavailableReason
               ? "Map setup"
-              : phase === "setup" || phase === "drafting"
-                ? "How your drafted tiles become the map"
-                : "Next step: build the map"}
+              : "Build the map with your drafted tiles"}
         </Title>
         {includesTiles && (
           <Text size="sm">
-            Each player can collect up to {draftBlues} blue and {draftReds} red
-            tiles across all bags, then keep {keepBlues} blue and {keepReds} red
-            tiles for the map.
+            {unavailableReason
+              ? "Map tiles are part of this bag draft, but you will need to arrange map setup separately. Collect tiles here, then use the tiles you keep when setting up that map."
+              : "The map tiles you keep fill your own section of the galaxy. Every player builds their section, and those sections form one shared map around Mecatol Rex. Your home system is separate from these blue and red tiles."}
           </Text>
+        )}
+        {includesTiles && !unavailableReason && (
+          <MapBuildDiagram draftBlues={draftBlues} draftReds={draftReds} />
         )}
         {includesTiles && (
           <List type="ordered" spacing="xs" size="sm">
             <List.Item>
-              <strong>Draft tiles alongside components.</strong> Each tile uses
-              one of your normal bag picks. Blue and red tiles are separate
-              categories, so you can take at most one of each per pass. Picking
-              a tile adds it to your collection; placement happens later.
+              <strong>
+                During the bag draft, choose which tiles you want.
+              </strong>{" "}
+              Each tile uses one of your normal bag picks. You can collect up to{" "}
+              {draftBlues} blue and {draftReds} red tiles across all bags,
+              taking at most one of each color per pass. Picking a tile adds it
+              to your collection. Tile placement happens after the bag draft.
             </List.Item>
             <List.Item>
-              <strong>Finish your faction and tile choices.</strong> Once bag
-              picking ends, confirm the components and tiles you will keep.
+              <strong>
+                After the bags stop passing, confirm what you keep.
+              </strong>{" "}
+              Keep {keepBlues} blue and {keepReds} red tiles alongside your
+              final faction components.
               {keepBlues === draftBlues && keepReds === draftReds
-                ? " All your drafted map tiles are kept."
-                : " Choose your kept tiles from your collection using the keep limits above."}
+                ? " With these settings, you keep every map tile you drafted."
+                : " Choose these tiles from your collection; the extras are discarded."}{" "}
+              You must fill each keep count when enough tiles are available.
             </List.Item>
             {!unavailableReason && (
               <List.Item>
-                <strong>Build your section of the shared map.</strong> Map
-                building starts automatically once everyone confirms their final
-                faction choices. Your kept tiles carry into the map room. On
-                your turn, the builder randomly draws one of your remaining
-                tiles. Place it in a highlighted space in your section of the
-                galaxy, working from the center outward.
+                <strong>
+                  Next phase: take turns placing those same five tiles.
+                </strong>{" "}
+                Map building starts automatically once everyone confirms their
+                final choices. The app creates the shared map layout and gives
+                each player five empty spaces in their own section. Your kept
+                tiles become your personal hand in that map room. On your turn,
+                the builder randomly draws one of your remaining tiles. You
+                choose a highlighted space in your section for that tile. Every
+                tile in your hand will be placed.
               </List.Item>
             )}
           </List>
@@ -96,29 +109,33 @@ export function BagMapSetup({
           <Accordion variant="contained" w="100%">
             <Accordion.Item value="placement">
               <Accordion.Control>
-                Placement order, home systems and mulligans
+                Which spaces can I use, and who places next?
               </Accordion.Control>
               <Accordion.Panel>
                 <Stack gap="xs">
                   <Text size="sm">
-                    Everyone fills their inner position near Mecatol Rex, then
-                    the two middle positions, then the two outer positions.
-                    Within each group, the player with the most empty spaces
-                    places next.{" "}
+                    Build from Mecatol Rex outward: everyone fills their one
+                    inner space first, then everyone fills their two middle
+                    spaces, then their two outer spaces. On your turn, the
+                    highlighted spaces show your available choices in the
+                    current group. The player with the most empty spaces in that
+                    group places next.{" "}
                     {rules.keepLimits.DRAFTORDER
                       ? "Your kept speaker position sets your seat on the map and breaks ties for placement turns."
                       : "Without a drafted speaker order, the listed player order sets seating and breaks ties for placement turns."}
                   </Text>
                   <Text size="sm">
-                    Your home system is separate from the five blue/red tiles.
-                    The builder places your chosen home when supported, or shows
-                    a home placeholder.
+                    Your home goes in the home position assigned by your seat.
+                    The builder places your chosen home system when supported,
+                    or shows a home placeholder for you to use when setting up
+                    the game.
                   </Text>
                   <Text size="sm">
-                    Each player has one mulligan for the entire map build: draw
-                    a different tile from your remaining hand. The original
-                    stays in your hand to be placed later. Once all tiles are
-                    placed, export the completed map for your game.
+                    Each player has one mulligan for the entire map build. If at
+                    least two tiles remain in your hand, you can redraw to get a
+                    different tile from that hand. The first tile stays in your
+                    hand to be placed later. Once everyone has placed all five
+                    tiles, export the completed map for your game.
                   </Text>
                 </Stack>
               </Accordion.Panel>

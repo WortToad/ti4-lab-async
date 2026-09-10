@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import { BagMapSetup } from "./BagMapSetup";
-import { getBagRules } from "./rules";
+import { BAG_VARIANTS, getBagRules } from "./rules";
 
 type Props = Parameters<typeof BagMapSetup>[0];
 
@@ -30,7 +30,7 @@ describe("the next map step after a bag draft", () => {
       mapBuildError:
         "Everyone must finish their faction before building the map.",
     });
-    expect(html).toContain("Next step: build the map");
+    expect(html).toContain("Build the map with your drafted tiles");
     expect(html).toContain("Map building starts automatically");
     expect(html).not.toContain("Waiting for the host");
     expect(html).not.toContain("Build map from drafted tiles");
@@ -46,11 +46,44 @@ describe("the next map step after a bag draft", () => {
     "explains the map before faction assembly during %s",
     (phase) => {
       const html = renderSetup({ phase });
-      expect(html).toContain("How your drafted tiles become the map");
+      expect(html).toContain("Build the map with your drafted tiles");
       expect(html).toContain("Each tile uses one of your normal bag picks");
       expect(html).toContain("Map building starts automatically");
     },
   );
+
+  it.each(BAG_VARIANTS.filter(({ id }) => id !== "inaugural_splice"))(
+    "shows the same accessible tile-to-map flow for $name",
+    ({ id }) => {
+      const html = renderSetup({
+        phase: "setup",
+        rules: getBagRules({ variant: id }),
+      });
+      expect(html).toContain(
+        'aria-label="From drafted tiles to the shared map"',
+      );
+      expect(html).toContain(
+        "These same five tiles go into your own hand for map building",
+      );
+      expect(html).toContain("Every tile in your hand will be placed");
+      expect(html).toContain("you keep every map tile you drafted");
+    },
+  );
+
+  it("explains selecting extras before the same five kept tiles enter map building", () => {
+    const html = renderSetup({
+      phase: "setup",
+      rules: getBagRules({
+        variant: "franken",
+        categoryLimits: { BLUETILE: { draft: 4, keep: 3 } },
+      }),
+    });
+    expect(html).toContain("4 blue + 2 red per player");
+    expect(html).toContain("Choose exactly 3 blue + 2 red");
+    expect(html).toContain("Discard the extras");
+    expect(html).toContain("Map building starts automatically");
+    expect(html).not.toContain("you keep every map tile you drafted");
+  });
 
   it.each([
     { variant: "inaugural_splice" as const },
@@ -66,6 +99,9 @@ describe("the next map step after a bag draft", () => {
     expect(html).toContain("does not include map tiles");
     expect(html).toContain('href="/map-generator"');
     expect(html).not.toContain("Map building starts automatically");
+    expect(html).not.toContain(
+      'aria-label="From drafted tiles to the shared map"',
+    );
   });
 
   it.each(["setup", "drafting", "assembling"] as const)(
@@ -74,6 +110,9 @@ describe("the next map step after a bag draft", () => {
       const twoPlayers = renderSetup({ phase, playerCount: 2 });
       expect(twoPlayers).toContain("supports 3–8 players");
       expect(twoPlayers).not.toContain("Map building starts automatically");
+      expect(twoPlayers).not.toContain(
+        'aria-label="From drafted tiles to the shared map"',
+      );
 
       const customTiles = renderSetup({
         phase,
@@ -85,6 +124,9 @@ describe("the next map step after a bag draft", () => {
       expect(customTiles).toContain("collect up to 4 blue and 2 red");
       expect(customTiles).toContain("keep exactly 3 blue and 2 red tiles");
       expect(customTiles).not.toContain("Map building starts automatically");
+      expect(customTiles).not.toContain(
+        'aria-label="From drafted tiles to the shared map"',
+      );
     },
   );
 

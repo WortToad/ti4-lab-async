@@ -10,6 +10,7 @@ import { OriginalArtTile } from "~/components/tiles/OriginalArtTile";
 import { systemData } from "~/data/systemData";
 import { useSafeOutletContext } from "~/useSafeOutletContext";
 import { appPath } from "~/utils/appUrl";
+import { SystemTileStats } from "~/components/SystemTileStats";
 
 type Props = {
   systemId: SystemId;
@@ -24,8 +25,9 @@ type Props = {
   faceDown?: boolean;
   faceDownColor?: "blue" | "red";
   originalArt?: boolean;
-  /** Original artwork override, also used as a fallback when Lab Art data is absent. */
+  /** Original artwork override, also used when simplified tile data is absent. */
   imagePath?: string;
+  showStats?: boolean;
   onClick?: () => void;
   style?: CSSProperties;
 };
@@ -44,6 +46,7 @@ export function SystemTileCard({
   faceDownColor = "blue",
   originalArt: originalArtOverride,
   imagePath,
+  showStats = true,
   onClick,
   style,
 }: Props) {
@@ -71,6 +74,8 @@ export function SystemTileCard({
         padding,
         borderRadius,
         display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
         justifyContent: "center",
         cursor: isInteractive ? "pointer" : "default",
         position: "relative",
@@ -120,6 +125,12 @@ export function SystemTileCard({
           disablePopover={true}
         />
       )}
+      {showStats &&
+        !hideValues &&
+        !faceDown &&
+        systemData[normalizedSystemId] && (
+          <SystemTileStats system={systemData[normalizedSystemId]} />
+        )}
       {showOverlay && (
         <SelectionOverlay
           visible={selected}

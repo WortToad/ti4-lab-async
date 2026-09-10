@@ -26,12 +26,10 @@ import {
   Link,
 } from "react-router";
 import {
-  IconBrandDiscordFilled,
   IconFile,
   IconInfoCircle,
   IconPlayerPlay,
 } from "@tabler/icons-react";
-import { DiscordBanner } from "~/components/DiscordBanner";
 import { useDisclosure } from "@mantine/hooks";
 import {
   SliceSettingsModal,
@@ -47,7 +45,6 @@ import { KingsConfigurationSection } from "./components/KingsConfigurationSectio
 import { DraftConfigurationPanel } from "./components/DraftConfigurationPanel";
 import { useDraftSettingsBuilder, useDraftNavigation } from "./hooks";
 import { buildTexasDraft } from "~/draft/texas/buildTexasDraft";
-import { DiscordIntegrationModal } from "./components/DiscordIntegrationModal";
 import { MinorFactionsInfoModal } from "./components/MinorFactionsInfoModal";
 import { SavedStateModal } from "./components/SavedStateModal";
 import { MapStyleSelector } from "./components/MapStyleSelector";
@@ -66,7 +63,7 @@ export default function DraftPrechoice() {
   const submit = useSubmit();
   const [searchParams, setSearchParams] = useSearchParams();
   const [setupError, setSetupError] = useState<string | null>(null);
-  const { discordData, discordOauthUrl, mapSlicesString, selectedDraftType } =
+  const { discordData, mapSlicesString, selectedDraftType } =
     useLoaderData<typeof loader>();
   const [hoveredMapType, setHoveredMapType] = useState<
     ChoosableDraftType | undefined
@@ -280,9 +277,6 @@ export default function DraftPrechoice() {
     }
   };
 
-  const [discordOpened, { open: openDiscord, close: closeDiscord }] =
-    useDisclosure(false);
-
   const [
     minorFactionsOpened,
     { open: openMinorFactions, close: closeMinorFactions },
@@ -366,12 +360,6 @@ export default function DraftPrechoice() {
         onClose={closeMinorFactions}
       />
 
-      <DiscordIntegrationModal
-        opened={discordOpened}
-        discordOauthUrl={discordOauthUrl}
-        onClose={closeDiscord}
-      />
-
       <div className={classes.grid}>
         <div className={classes.col12}><LobbyRecovery /></div>
         {setupError && <div className={classes.col12}><Alert color="red">{setupError}</Alert></div>}
@@ -399,11 +387,6 @@ export default function DraftPrechoice() {
         {mapSlicesString && (
           <div className={classes.col12}>
             <SeededMapBanner />
-          </div>
-        )}
-        {discordData && (
-          <div className={classes.col12}>
-            <DiscordBanner />
           </div>
         )}
         {location.state?.invalidDraftParameters && (
@@ -573,17 +556,6 @@ export default function DraftPrechoice() {
             >
               Continue from saved state
             </Button>
-            {!discordData && (
-              <Button
-                size="md"
-                variant="filled"
-                color="discordBlue.5"
-                leftSection={<IconBrandDiscordFilled />}
-                onMouseDown={openDiscord}
-              >
-                Integrate with Discord
-              </Button>
-            )}
           </Group>
         </Stack>
         </div>
@@ -612,7 +584,6 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
   return {
     discordData,
-    discordOauthUrl: global.env.discordOauthUrl,
     mapSlicesString,
     selectedDraftType,
   };

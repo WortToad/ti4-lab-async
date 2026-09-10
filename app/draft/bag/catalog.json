@@ -35332,7 +35332,7 @@
     {
       "id": "UNIT:tf-dragonfreed",
       "category": "UNIT",
-      "name": "The Dragon, Fred",
+      "name": "The Dragon, Freed",
       "description": "Cost: 12 · Combat: 3 × 3 · Move: 2 · Capacity: 6 · Sustain Damage · Bombardment: 3 × 3\nWhile you own this card, you can only have 1 war sun. When this unit uses its BOMBARDMENT ability, it uses it against every planet in its system and each adjacent system, even yours, ignoring planetary shield.",
       "source": "twilights_fall",
       "pools": [

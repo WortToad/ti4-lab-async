@@ -48,7 +48,11 @@ export function PlayerTilesSidebar() {
             </Text>
           ) : (
             systems.map((system) => (
-              <DraggableSidebarTile key={system.id} systemId={system.id} />
+              <DraggableSidebarTile
+                key={system.id}
+                systemId={system.id}
+                showStats
+              />
             ))
           )}
         </Stack>

@@ -143,7 +143,7 @@ export function drawBranding(
     ctx.fillStyle = "#BEABF0";
     ctx.textBaseline = "middle";
     ctx.textAlign = "left";
-    ctx.fillText("TI4 Lab", logoX + logoSize + 12, logoY + logoSize / 2);
+    ctx.fillText("TI4Toad", logoX + logoSize + 12, logoY + logoSize / 2);
 
     // Draw URL inline with logo (for slices view)
     if (urlText && urlPosition === "inline") {

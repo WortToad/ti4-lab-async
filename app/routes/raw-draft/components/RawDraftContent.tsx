@@ -2,6 +2,8 @@ import { AppShell, Box, Text } from "@mantine/core";
 import { useState, useMemo } from "react";
 import { Map, MAP_INTERACTIONS } from "~/components/Map";
 import { RawSystemTile } from "~/components/tiles/SystemTile";
+import { OriginalArtTile } from "~/components/tiles/OriginalArtTile";
+import { useSafeOutletContext } from "~/useSafeOutletContext";
 import { Tile } from "~/types";
 import {
   DndContext,
@@ -16,10 +18,11 @@ import { useRawDraft } from "~/rawDraftStore";
 import { PlayerTilesSidebar } from "./PlayerTilesSidebar";
 import { RawCurrentPickBanner } from "./RawCurrentPickBanner";
 import { RawDraftOrderWrapper } from "./RawDraftOrderWrapper";
-import { systemData } from "~/data/systemData";
 import { RawDraftProvider } from "~/contexts/RawDraftContext";
 
 export function RawDraftContent() {
+  const { originalArt } = useSafeOutletContext();
+  const DragTile = originalArt ? OriginalArtTile : RawSystemTile;
   const map = useRawDraft((state) => state.getMap());
   const players = useRawDraft((state) => state.state.players);
   const pickOrder = useRawDraft((state) => state.state.pickOrder);
@@ -27,7 +30,6 @@ export function RawDraftContent() {
     state.getCurrentPickNumber(),
   );
   const activePlayer = useRawDraft((state) => state.getActivePlayer());
-  const selectedPlayer = useRawDraft((state) => state.state.selectedPlayer);
   const currentRing = useRawDraft((state) => state.getCurrentPlaceableRing());
   const { placeTile } = useRawDraft((state) => state.actions);
 
@@ -193,7 +195,7 @@ export function RawDraftContent() {
         </AppShell>
         <DragOverlay dropAnimation={null}>
           {activeSystemId ? (
-            <RawSystemTile
+            <DragTile
               mapId="drag-overlay"
               tile={{
                 idx: 0,

@@ -44,59 +44,6 @@ const MECATOL_REX_ID = "18";
 
 export function MapTile(props: Props) {
   const { originalArt } = useSafeOutletContext();
-  if (originalArt) return <OriginalArtMapTile {...props} />;
-  return <AbstractArtMapTile {...props} />;
-}
-
-function OriginalArtMapTile(props: Props) {
-  const {
-    mapId,
-    tile,
-    tile: { position },
-  } = props;
-  const { hOffset, wOffset, radius, gap } = useContext(MapContext);
-  const { x, y } = getHexPosition(position.x, position.y, radius, gap);
-
-  let Tile: JSX.Element | null;
-  switch (tile.type) {
-    case "HOME":
-      Tile = (
-        <HomeTile
-          mapId={mapId}
-          tile={tile}
-          selectable={!!props.homeSelectable}
-          onSelect={props.onSelect}
-          sliceValue={props.sliceValue}
-          sliceStats={props.sliceStats}
-          coreSliceData={props.coreSliceData}
-        />
-      );
-      break;
-    case "SYSTEM":
-      Tile = <OriginalArtTile {...props} tile={tile} />;
-      break;
-    case "OPEN":
-      Tile = <EmptyTile {...props} tile={tile} />;
-      break;
-    case "CLOSED":
-      Tile = null;
-      break;
-  }
-
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: x + wOffset,
-        top: y + hOffset,
-      }}
-    >
-      {Tile}
-    </div>
-  );
-}
-
-function AbstractArtMapTile(props: Props) {
   const [hovered, setHovered] = useState(false);
   const {
     tile,
@@ -193,13 +140,24 @@ function AbstractArtMapTile(props: Props) {
       );
       break;
     case "SYSTEM":
-      Tile = <SystemTile {...props} tile={tile} disablePopover={isDragging} />;
+      Tile = originalArt ? (
+        <OriginalArtTile
+          {...props}
+          tile={tile}
+          hoverEffects={
+            hoverEffects && !modifiable && !droppable && !closeTileMode && !isDragging
+          }
+        />
+      ) : (
+        <SystemTile {...props} tile={tile} disablePopover={isDragging} />
+      );
       break;
     case "OPEN":
       Tile = (
         <EmptyTile
           {...props}
           tile={tile}
+          onSelect={closeTileMode ? undefined : onSelect}
           isOver={isOver}
           ringHighlight={ringHighlight}
           hoverEffects={hoverEffects}
@@ -217,7 +175,7 @@ function AbstractArtMapTile(props: Props) {
       break;
   }
 
-  if (tile.type === "SYSTEM" && tile.systemId === MECATOL_REX_ID) {
+  if (!originalArt && tile.type === "SYSTEM" && tile.systemId === MECATOL_REX_ID) {
     Tile = <MecatolTile {...props} tile={tile} disablePopover={isDragging} />;
   }
 
@@ -274,6 +232,16 @@ function AbstractArtMapTile(props: Props) {
         onClick={closeTileMode ? onSelect : undefined}
         {...listeners}
         {...attributes}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (closeTileMode && (event.key === "Enter" || event.key === " ")) {
+            event.preventDefault();
+            onSelect?.();
+          } else {
+            listeners?.onKeyDown?.(event);
+          }
+        }}
       >
         {Tile}
 
@@ -297,7 +265,23 @@ function AbstractArtMapTile(props: Props) {
         </div> */}
 
         {showOverlay && !isDragging && !isOver && (
-          <div className="modify-tile-overlay" onMouseUp={onSelect}>
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label={tile.type === "SYSTEM" ? "Replace system tile" : "Add system tile"}
+            className="modify-tile-overlay"
+            onClick={onSelect}
+            onKeyDown={(event) => {
+              if (
+                event.target === event.currentTarget &&
+                (event.key === "Enter" || event.key === " ")
+              ) {
+                event.preventDefault();
+                event.stopPropagation();
+                onSelect?.();
+              }
+            }}
+          >
             <Hex
               id={`${props.mapId}-${tile.idx}-overlay`}
               color={overlayColor}
@@ -315,7 +299,7 @@ function AbstractArtMapTile(props: Props) {
                     variant="filled"
                     bg="red"
                     size="xs"
-                    onMouseUp={(e) => {
+                    onClick={(e) => {
                       e.stopPropagation();
                       onDelete?.();
                     }}

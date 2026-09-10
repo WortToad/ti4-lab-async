@@ -51,7 +51,7 @@ export function openBackup<T>(
   serialized: string,
 ): T {
   if (typeof serialized !== "string" || serialized.length > 8 * 1024 * 1024)
-    throw new Error("Choose a TI4 Lab save file smaller than 8 MB.");
+    throw new Error("Choose a TI4Toad save file smaller than 8 MB.");
   try {
     const saved = JSON.parse(serialized);
     if (

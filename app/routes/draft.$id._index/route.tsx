@@ -678,7 +678,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const typed = data as LoaderData | undefined;
   if (!typed?.data)
     return [
-      { title: "Draft lobby · TI4 Lab" },
+      { title: "Draft lobby · TI4Toad" },
       { name: "robots", content: "noindex, nofollow" },
     ];
 
@@ -688,28 +688,17 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const draftType = draft.settings?.type || "Unknown";
   const playerCount = draft.players?.length || 0;
   const draftTypeDisplay = formatDraftType(draftType, playerCount);
-  const title = `${draftId} - TI4 Lab`;
-  const description = `${draftTypeDisplay} on TI4 Lab`;
-
-  // Use appropriate image URL based on completion status
-  const isComplete = draft.selections?.length === draft.pickOrder?.length;
-  const existingImageUrl = isComplete
-    ? (typed.imageUrl ?? undefined)
-    : (typed.incompleteImageUrl ?? undefined);
-  const imageUrl = existingImageUrl || appUrl(`/draft/${draftId}.png`);
+  const title = `${draftId} - TI4Toad`;
+  const description = `${draftTypeDisplay} on TI4Toad`;
 
   return [
     { title },
     { name: "description", content: description },
     { property: "og:title", content: title },
     { property: "og:description", content: description },
-    { property: "og:image", content: imageUrl },
     { property: "og:url", content: appUrl(`/draft/${draftId}`) },
     { property: "og:type", content: "website" },
-    { property: "og:site_name", content: "TI4 Lab" },
-    { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: title },
     { name: "twitter:description", content: description },
-    { name: "twitter:image", content: imageUrl },
   ];
 };

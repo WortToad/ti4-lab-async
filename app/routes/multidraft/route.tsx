@@ -1,7 +1,5 @@
-import { Button, Group, useMantineColorScheme } from "@mantine/core";
 import { ActionFunctionArgs, MetaFunction } from "react-router";
 import { Outlet, redirect } from "react-router";
-import { IconMoon, IconSun } from "@tabler/icons-react";
 import { MainAppShell } from "~/components/MainAppShell";
 import {
   initializeMap,
@@ -121,33 +119,8 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function MultiDraft() {
-  const { setColorScheme } = useMantineColorScheme();
-
   return (
-    <MainAppShell
-      headerRightSection={
-        <Group>
-          <Button
-            variant="light"
-            color="gray"
-            onMouseDown={() => setColorScheme("dark")}
-            size="compact-xs"
-            darkHidden
-          >
-            <IconMoon />
-          </Button>
-          <Button
-            variant="light"
-            color="gray"
-            onMouseDown={() => setColorScheme("light")}
-            lightHidden
-            size="compact-xs"
-          >
-            <IconSun />
-          </Button>
-        </Group>
-      }
-    >
+    <MainAppShell>
       <Outlet />
     </MainAppShell>
   );
@@ -155,7 +128,7 @@ export default function MultiDraft() {
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "TI4 Lab Multidraft" },
-    { name: "description", content: "TI4 Lab, for drafting and map creation." },
+    { title: "TI4Toad Multidraft" },
+    { name: "description", content: "TI4Toad, for drafting and map creation." },
   ];
 };

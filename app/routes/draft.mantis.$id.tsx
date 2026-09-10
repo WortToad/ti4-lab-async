@@ -1,4 +1,5 @@
 import {
+  Accordion,
   Alert,
   Badge,
   Box,
@@ -57,6 +58,7 @@ import {
 } from "~/drizzle/mantisDraft.server";
 import { LobbyPanel, type LobbyOperation } from "~/draft/LobbyPanel";
 import { syncBagMapIdentity } from "~/draft/bag/bagDraft.server";
+import { MapBuildDiagram } from "~/draft/mantis/MapBuildDiagram";
 import { db } from "~/drizzle/config.server";
 import type { LobbyView } from "~/draft/lobby";
 import {
@@ -592,6 +594,22 @@ function ActiveMantisRoom({
           mulligan draws a different tile and leaves the original in your hand
           to place later.
         </Text>
+        {draft.phase !== "complete" && (
+          <Accordion variant="contained">
+            <Accordion.Item value="tile-placement">
+              <Accordion.Control>
+                How your tiles build the shared map
+              </Accordion.Control>
+              <Accordion.Panel>
+                <MapBuildDiagram
+                  source={draft.bagDraftId ? "kept" : "pool"}
+                  draftBlues={3 + draft.settings.extraBlues}
+                  draftReds={2 + draft.settings.extraReds}
+                />
+              </Accordion.Panel>
+            </Accordion.Item>
+          </Accordion>
+        )}
         <Group>
           <Badge size="lg">{draft.phase}</Badge>
           <Text fw={600}>
@@ -905,7 +923,7 @@ function ActiveMantisRoom({
         {draft.phase === "complete" && (
           <Stack>
             <Textarea
-              label="Async Discord map string"
+              label="Async map string"
               readOnly
               value={encodeAsyncMapString(draft.map)}
               autosize

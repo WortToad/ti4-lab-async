@@ -320,7 +320,7 @@ export default function NewBagDraft() {
                 {variant !== "inaugural_splice" && (
                   <Switch
                     label="Draft map tiles and speaker order"
-                    description="Tiles use your normal bag picks and are placed after final faction choices. Turn off to arrange the map and speaker order separately."
+                    description="Use your normal bag picks to collect tiles. After everyone confirms their final choices, place your kept tiles in your own section of the shared map. Turn off to arrange the map and speaker order separately."
                     checked={includeTiles}
                     onChange={(event) => {
                       setIncludeTiles(event.currentTarget.checked);
@@ -352,10 +352,12 @@ export default function NewBagDraft() {
                 <Stack>
                   <Text size="sm" c="dimmed">
                     The draft limit controls how many components of each type a
-                    player can collect. The keep limit controls the final
-                    faction and map tiles. Automatic map building needs 3 blue
-                    and 2 red tiles kept per player. Changing the variant
-                    restores its defaults.
+                    player can collect. The keep count is required: keep exactly
+                    that many, or all available choices if you have fewer.
+                    Twilight’s Fall ability, genome and unit upgrade slots can
+                    instead be filled with generic technologies. Automatic map
+                    building needs exactly 3 blue and 2 red tiles kept per
+                    player. Changing the variant restores its defaults.
                   </Text>
                   <SimpleGrid cols={{ base: 1, sm: 2 }}>
                     <NumberInput

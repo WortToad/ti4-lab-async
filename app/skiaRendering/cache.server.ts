@@ -120,7 +120,7 @@ export async function loadAllAssets(): Promise<void> {
 
   // Load logo if not cached
   if (!logoCache) {
-    const logoPath = path.join(process.cwd(), "public", "logo.webp");
+    const logoPath = path.join(process.cwd(), "public", "ti4toad.png");
     try {
       logoCache = await loadImage(logoPath);
     } catch (error) {

@@ -161,12 +161,10 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!typed) return [];
 
   const { preset } = typed;
-  const title = `${preset.name} - TI4 Lab`;
+  const title = `${preset.name} - TI4Toad`;
   const description = preset.description
     ? `${preset.description} — by ${preset.author}`
     : `Map by ${preset.author}`;
-  const imageUrl =
-    preset.imageUrl ?? appUrl(`/map-preset/${preset.id}.png`);
   const url = appUrl(`/maps/${preset.slug}`);
 
   return [
@@ -174,19 +172,15 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     { name: "description", content: description },
     { property: "og:title", content: title },
     { property: "og:description", content: description },
-    { property: "og:image", content: imageUrl },
     { property: "og:url", content: url },
     { property: "og:type", content: "website" },
-    { property: "og:site_name", content: "TI4 Lab" },
-    { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: title },
     { name: "twitter:description", content: description },
-    { name: "twitter:image", content: imageUrl },
   ];
 };
 
 export default function MapDetail() {
-  const { preset, ip } = useLoaderData<typeof loader>();
+  const { preset } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
   const [stats, setStats] = useState({
@@ -317,10 +311,10 @@ export default function MapDetail() {
                 color="gray"
                 size="sm"
                 leftSection={<IconArrowLeft size={14} />}
-                onClick={() => navigate("/map-presets")}
+                onClick={() => navigate("/map-generator")}
                 className={classes.backButton}
               >
-                Back to Maps
+                Back to Map Generator
               </Button>
 
               <Stack gap={4}>

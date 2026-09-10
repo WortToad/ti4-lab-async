@@ -20,7 +20,6 @@ import { LoadingOverlay } from "~/components/LoadingOverlay";
 import { SectionTitle } from "~/components/Section";
 import { SlicesTable } from "../draft/SlicesTable";
 import { createDraft } from "~/drizzle/draft.server";
-import { DiscordBanner } from "~/components/DiscordBanner";
 import { PlayerInputSection } from "./components/PlayerInputSection";
 import {
   AvailableFactionsSection,
@@ -137,11 +136,6 @@ export default function DraftNew() {
   if (isPresetMapDraft) {
     return (
       <Flex py="lg" direction="column">
-        {draft.integrations.discord && (
-          <Box mb="lg">
-            <DiscordBanner />
-          </Box>
-        )}
 
         <ConnectedFactionSettingsModal />
         <PlanetFinder />
@@ -172,17 +166,12 @@ export default function DraftNew() {
 
   return (
     <Flex py="lg" direction="column">
-      {draft.integrations.discord && (
-        <Box mb="lg">
-          <DiscordBanner />
-        </Box>
-      )}
 
       <ConnectedFactionSettingsModal />
 
       <PlanetFinder />
       <Box mb="md">
-        <OriginalArtToggle showWarning={true} />
+        <OriginalArtToggle />
       </Box>
 
       <Stack>

@@ -17,10 +17,10 @@ export function LabArtToggleButton({ originalArt, onToggle }: Props) {
       }
       onClick={onToggle}
       title={
-        originalArt ? "Switch to abstract tiles" : "Switch to original art"
+        originalArt ? "Switch to simplified tiles" : "Switch to original art"
       }
     >
-      {originalArt ? "Original" : "Lab Art"}
+      {originalArt ? "Originals" : "Simplified"}
     </Button>
   );
 }

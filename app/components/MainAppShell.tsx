@@ -10,14 +10,11 @@ import {
   Text,
   UnstyledButton,
 } from "@mantine/core";
-import { IconBrandDiscordFilled } from "@tabler/icons-react";
 
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useLocation } from "react-router";
 
-const DISCORD_INVITE_URL = "https://discord.gg/2ezSTQpAVC";
 import { useState } from "react";
 import { Logo } from "~/components/Logo";
-import { trackButtonClick } from "~/lib/analytics.client";
 import classes from "./MainAppShell.module.css";
 
 type Props = {
@@ -83,22 +80,8 @@ function NavItem({
 
 export function MainAppShell({ children, headerRightSection }: Props) {
   const [mobileMenuOpened, setMobileMenuOpened] = useState(false);
-  const navigate = useNavigate();
   const location = useLocation();
-  const isMapPresetsActive = location.pathname === "/map-presets";
-  const isAboutActive = location.pathname === "/about";
-  const isSoundboardActive = location.pathname === "/voices";
   const isMapGeneratorActive = location.pathname === "/map-generator";
-
-  const handleSoundboardClick = () => {
-    trackButtonClick({
-      buttonType: "load_soundboard",
-      context: "main_app_shell",
-    });
-
-    navigate("/voices");
-    setMobileMenuOpened(false);
-  };
 
   const menuItems = [
     {
@@ -106,8 +89,6 @@ export function MainAppShell({ children, headerRightSection }: Props) {
       label: "Map Generator",
       isActive: isMapGeneratorActive,
     },
-    { to: "/map-presets", label: "Map Presets", isActive: isMapPresetsActive },
-    { to: "/about", label: "About", isActive: isAboutActive },
   ];
 
   const renderMenuItems = (mobile = false) => (
@@ -122,12 +103,6 @@ export function MainAppShell({ children, headerRightSection }: Props) {
           mobile={mobile}
         />
       ))}
-      <NavItem
-        label="Soundboard"
-        isActive={isSoundboardActive}
-        onClick={handleSoundboardClick}
-        mobile={mobile}
-      />
     </>
   );
 
@@ -151,21 +126,13 @@ export function MainAppShell({ children, headerRightSection }: Props) {
             opened={mobileMenuOpened}
             onClick={() => setMobileMenuOpened(!mobileMenuOpened)}
             size="sm"
+            aria-label="Toggle navigation"
             className={classes.burger}
           />
           <nav className={classes.desktopMenu}>
             <Group gap={0}>{renderMenuItems()}</Group>
             <div style={{ flex: 1 }} />
             <Group gap="xs">
-              <UnstyledButton
-                component="a"
-                href={DISCORD_INVITE_URL}
-                target="_blank"
-                className={classes.discordButton}
-              >
-                <IconBrandDiscordFilled size={14} />
-                <Text size="xs" fw={500}>Join Discord</Text>
-              </UnstyledButton>
               {headerRightSection}
             </Group>
           </nav>
@@ -200,25 +167,6 @@ export function MainAppShell({ children, headerRightSection }: Props) {
       >
         <Stack gap="xs">
           {renderMenuItems(true)}
-          <UnstyledButton
-            component="a"
-            href={DISCORD_INVITE_URL}
-            target="_blank"
-            onClick={() => setMobileMenuOpened(false)}
-          >
-            <Box
-              className={classes.navItem}
-              data-mobile
-            >
-              <Box className={classes.navItemIndicator} />
-              <Group gap="xs">
-                <IconBrandDiscordFilled size={16} color="var(--mantine-color-discordBlue-5)" />
-                <Text size="sm" fw={500}>
-                  Discord
-                </Text>
-              </Group>
-            </Box>
-          </UnstyledButton>
         </Stack>
         {headerRightSection && <Box mt="xl">{headerRightSection}</Box>}
       </Drawer>

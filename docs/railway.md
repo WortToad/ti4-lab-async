@@ -1,4 +1,4 @@
-# Host TI4 Lab at obsecsolutions.com/ti4
+# Host TI4Toad at obsecsolutions.com/ti4
 
 Use one Railway service running this repository's Dockerfile and one persistent
 volume for SQLite. The main domain can point directly to this service: visiting

@@ -1,4 +1,4 @@
-import { appPath } from "~/utils/appUrl";
+import { appPath, appUrl } from "~/utils/appUrl";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "./main.css";
@@ -9,7 +9,6 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  useRouteLoaderData,
 } from "react-router";
 import {
   Button,
@@ -22,7 +21,6 @@ import { useEffect, useState } from "react";
 import type { Socket } from "socket.io-client";
 import io from "socket.io-client";
 import { SocketProvider } from "./socketContext";
-import { LoaderFunctionArgs, redirect } from "react-router";
 import { Notifications } from "@mantine/notifications";
 
 const mantineTheme = createTheme({
@@ -125,6 +123,13 @@ const mantineTheme = createTheme({
   },
 });
 
+export const meta = () => [
+  { title: "TI4Toad" },
+  { name: "description", content: "TI4Toad — Twilight Imperium 4 drafting and map building." },
+  { property: "og:title", content: "TI4Toad" },
+  { property: "og:description", content: "Twilight Imperium 4 drafting and map building." },
+];
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const [socket, setSocket] = useState<Socket>();
 
@@ -159,34 +164,27 @@ export function Layout({ children }: { children: React.ReactNode }) {
     });
   }, [socket]);
 
-  const result = useRouteLoaderData<typeof loader>("root");
-
   return (
-    <html lang="en" {...mantineHtmlProps}>
+    <html lang="en" {...mantineHtmlProps} data-mantine-color-scheme="dark">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link
-          rel="apple-touch-icon"
-          sizes="76x76"
-          href={appPath("/apple-touch-icon.png")}
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="32x32"
-          href={appPath("/favicon-32x32.png")}
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="16x16"
-          href={appPath("/favicon-16x16.png")}
-        />
+        <meta name="application-name" content="TI4Toad" />
+        <link rel="apple-touch-icon" href={appPath("/ti4toad.png")} />
+        <link rel="icon" type="image/png" sizes="400x400" href={appPath("/ti4toad.png")} />
         <link rel="manifest" href={appPath("/site.webmanifest")} />
-        <link rel="mask-icon" href={appPath("/safari-pinned-tab.svg")} color="#5bbad5" />
-        <meta name="msapplication-TileColor" content="#da532c" />
-        <meta name="theme-color" content="#ffffff"></meta>
+        <meta name="theme-color" content="#1d1e30" />
+        <meta name="msapplication-TileColor" content="#1d1e30" />
+        <meta name="msapplication-TileImage" content={appPath("/ti4toad.png")} />
+        <meta property="og:site_name" content="TI4Toad" />
+        <meta property="og:image" content={appUrl("/ti4toad.png")} />
+        <meta property="og:image:type" content="image/png" />
+        <meta property="og:image:width" content="400" />
+        <meta property="og:image:height" content="400" />
+        <meta property="og:image:alt" content="TI4Toad logo" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:image" content={appUrl("/ti4toad.png")} />
+        <meta name="twitter:image:alt" content="TI4Toad logo" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -199,13 +197,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
         <Meta />
         <Links />
-        <ColorSchemeScript defaultColorScheme="auto" />
+        <ColorSchemeScript defaultColorScheme="dark" forceColorScheme="dark" />
       </head>
       <body>
         <MantineProvider
           theme={mantineTheme}
           defaultColorScheme="dark"
-          forceColorScheme={result?.forcedColorScheme ?? undefined}
+          forceColorScheme="dark"
         >
           <Notifications />
           <SocketProvider socket={socket}>{children}</SocketProvider>
@@ -217,21 +215,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
     </html>
   );
 }
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const url = new URL(request.url);
-
-  if (url.hostname === "ti4-lab.fly.dev") {
-    // Construct the new URL, preserving the path and query parameters
-    const newUrl = new URL(url.pathname + url.search, "https://tidraft.com");
-    return redirect(newUrl.toString(), 301);
-  }
-
-  const forcedColorScheme = url.searchParams.get("FORCED_COLOR_SCHEME") as
-    | "dark"
-    | "light";
-  return { forcedColorScheme };
-};
 
 export default function App() {
   return <Outlet />;

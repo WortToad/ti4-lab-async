@@ -41,7 +41,7 @@ describe("SystemTileCard artwork", () => {
     expect(renderCard({ originalArt: true })).toContain("/tiles/ST_26.png");
   });
 
-  test("uses supplied tile artwork in Original Art while preserving Lab Art", () => {
+  test("uses supplied tile artwork in Originals while preserving Simplified", () => {
     const props = { imagePath: "/draft/tiles/lodor.png" };
     expect(renderCard(props, true)).toContain("/draft/tiles/lodor.png");
     expect(renderCard(props, true)).not.toContain("/tiles/ST_26.png");
@@ -61,6 +61,19 @@ describe("SystemTileCard artwork", () => {
       const hidden = renderCard({ faceDown: true }, originalArt);
       expect(hidden).not.toContain("Lodor");
       expect(hidden).not.toContain("/tiles/ST_26.png");
+      expect(hidden).not.toContain("System value");
+      expect(hidden).not.toContain("Optimal spend");
+    }
+  });
+
+  test("shows legendary scoring and the shared feature icon in either art mode", () => {
+    for (const originalArt of [false, true]) {
+      const html = renderCard({ systemId: "66" }, originalArt);
+      expect(html).toContain('aria-label="System value 5"');
+      expect(html).toContain(
+        "Optimal spend: 3 resources, 0 influence, 0 flex; 3 total",
+      );
+      expect(html).toContain('alt="Legendary"');
     }
   });
 

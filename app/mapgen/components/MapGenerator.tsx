@@ -19,6 +19,8 @@ import { ClientOnly } from "remix-utils/client-only";
 import { Map, MAP_INTERACTIONS } from "~/components/Map";
 import { MainAppShell } from "~/components/MainAppShell";
 import { RawSystemTile } from "~/components/tiles/SystemTile";
+import { OriginalArtTile } from "~/components/tiles/OriginalArtTile";
+import { useSafeOutletContext } from "~/useSafeOutletContext";
 import { useState, useMemo, useEffect } from "react";
 import { Tile, GameSet } from "~/types";
 import {
@@ -86,6 +88,8 @@ import { DraftType } from "~/draft/types";
 import { buildPresetDraftState } from "../utils/presetDraft";
 
 function MapGeneratorContent() {
+  const { originalArt } = useSafeOutletContext();
+  const DragTile = originalArt ? OriginalArtTile : RawSystemTile;
   const navigate = useNavigate();
   const map = useMapBuilder((state) => state.state.map);
   const systemPool = useMapBuilder((state) => state.state.systemPool);
@@ -778,7 +782,7 @@ function MapGeneratorContent() {
         </AppShell>
         <DragOverlay dropAnimation={null}>
           {activeSystemId ? (
-            <RawSystemTile
+            <DragTile
               mapId="drag-overlay"
               tile={{
                 idx: 0,

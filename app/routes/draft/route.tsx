@@ -16,7 +16,7 @@ export type DraftOrderContext = {
 };
 
 export default function Draft() {
-  const [originalArt, setOriginalArt] = useState(false);
+  const [originalArt, setOriginalArt] = useState(true);
   const [accessibleColors, setAccessibleColors] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
   const [pickForAnyone, setPickForAnyone] = useState(false);
@@ -48,7 +48,7 @@ export default function Draft() {
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "TI4 Lab Draft" },
-    { name: "description", content: "TI4 Lab, for drafting and map creation." },
+    { title: "TI4Toad Draft" },
+    { name: "description", content: "TI4Toad, for drafting and map creation." },
   ];
 };

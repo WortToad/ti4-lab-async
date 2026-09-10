@@ -82,15 +82,6 @@ export function useSyncDraftFetcher() {
       }
     }
 
-    // Show Discord error notification if present
-    if (data?.discordError && data?.discordMessage) {
-      notifications.show({
-        title: "Discord Notification Failed",
-        message: data.discordMessage,
-        color: "red",
-        autoClose: 10000,
-      });
-    }
   }, [fetcher.data]);
 
   const stageSimultaneousPick = async (

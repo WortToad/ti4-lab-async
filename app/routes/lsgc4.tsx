@@ -16,7 +16,7 @@ export type DraftOrderContext = {
 };
 
 export default function LSGC4Index() {
-  const [originalArt, setOriginalArt] = useState(false);
+  const [originalArt, setOriginalArt] = useState(true);
   const [accessibleColors, setAccessibleColors] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
   const [pickForAnyone, setPickForAnyone] = useState(false);

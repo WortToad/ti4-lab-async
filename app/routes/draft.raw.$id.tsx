@@ -769,7 +769,7 @@ function RawGame({
               ))}
             </SimpleGrid>
             <Textarea
-              label="Async Discord map string"
+              label="Async map string"
               readOnly
               value={encodeAsyncMapString(draft.map)}
               autosize

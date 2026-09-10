@@ -6,17 +6,16 @@ import classes from "./Logo.module.css";
 export function Logo() {
   return (
     <Group align="center" gap="xs" className={classes.logo}>
-      <img src={appPath("/logo.webp")} style={{ width: 32 }} alt="TI4 Lab logo" />
+      <img src={appPath("/ti4toad.png")} width={36} height={36} style={{ imageRendering: "pixelated" }} alt="TI4Toad logo" />
       <Text
         fw={700}
         size="sm"
-        tt="uppercase"
         style={{
           fontFamily: "Orbitron",
           letterSpacing: "0.05em",
         }}
       >
-        TI4 Lab
+        TI4Toad
       </Text>
     </Group>
   );

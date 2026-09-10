@@ -14,7 +14,7 @@ export function MinorFactionsInfoModal({ opened, onClose }: Props) {
       title="How to run a minor factions draft"
     >
       <Text size="lg" fw="bold">
-        TI4 Lab supports minor factions (unofficially)!
+        TI4Toad supports minor factions (unofficially)!
       </Text>
 
       <Text mt="lg">To run a minor factions draft:</Text>

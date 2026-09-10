@@ -3,7 +3,7 @@ import { FactionIcon } from "~/components/icons/FactionIcon";
 import { Faction, HydratedPlayer } from "~/types";
 import { PlayerChipOrSelect } from "./PlayerChipOrSelect";
 import { factionSystems } from "~/data/systemData";
-import { RawSystemTile } from "~/components/tiles/SystemTile";
+import { SystemTileCard } from "~/components/SystemTileCard";
 
 import { playerColors } from "~/data/factionData";
 import { SelectableCard, PlayerColor } from "~/ui";
@@ -81,11 +81,12 @@ export function DraftableReferenceCard({
         <Group align="flex-start" gap="xs" wrap="nowrap">
           {homeSystem && (
             <Box>
-              <RawSystemTile
-                mapId={`reference-${faction.id}`}
-                tile={{ type: "SYSTEM", systemId: homeSystem.id, idx: 0, position: { x: 0, y: 0 } }}
+              <SystemTileCard
+                systemId={homeSystem.id}
                 radius={40}
-                disablePopover={true}
+                padding={0}
+                showStats={false}
+                style={{ background: "transparent", border: 0 }}
               />
             </Box>
           )}
