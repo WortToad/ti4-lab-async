@@ -1,4 +1,19 @@
+import { getHexPosition } from "~/utils/positioning";
 import classes from "./MapBuildDiagram.module.css";
+
+type TileColor = "blue" | "red" | "violet" | "gray" | "yellow";
+
+// Standard Milty section facing upward, matching milty.seatTilePlacement[3].
+// The builder fills slice indices [4], then [1, 3], then [0, 2].
+const sectionTiles: { q: number; r: number; label: string; color: TileColor }[] = [
+  { q: 0, r: -3, label: "M", color: "yellow" },
+  { q: 0, r: -2, label: "1", color: "violet" },
+  { q: 0, r: -1, label: "2", color: "violet" },
+  { q: -1, r: -1, label: "2", color: "violet" },
+  { q: -1, r: 0, label: "3", color: "violet" },
+  { q: 1, r: -1, label: "3", color: "violet" },
+  { q: 0, r: 0, label: "H", color: "gray" },
+];
 
 function Tile({
   x,
@@ -9,12 +24,12 @@ function Tile({
   x: number;
   y: number;
   label: string;
-  color: "blue" | "red" | "violet" | "gray";
+  color: TileColor;
 }) {
   return (
     <g transform={`translate(${x} ${y})`}>
       <polygon
-        points="0,-25 22,-12.5 22,12.5 0,25 -22,12.5 -22,-12.5"
+        points="24,0 12,-20.785 -12,-20.785 -24,0 -12,20.785 12,20.785"
         fill={`var(--mantine-color-${color}-light)`}
         stroke={`var(--mantine-color-${color}-5)`}
         strokeWidth="2"
@@ -31,10 +46,12 @@ export function MapBuildDiagram({
   draftBlues = 3,
   draftReds = 2,
   source = "bags",
+  mulligans = 1,
 }: {
   draftBlues?: number;
   draftReds?: number;
   source?: "bags" | "pool" | "kept";
+  mulligans?: number;
 }) {
   const hasExtras = draftBlues > 3 || draftReds > 2;
   return (
@@ -95,20 +112,49 @@ export function MapBuildDiagram({
             <text x="120" y="17" textAnchor="middle" fill="currentColor">
               Mecatol Rex
             </text>
-            <Tile x={120} y={52} label="1" color="violet" />
-            <Tile x={93} y={99} label="2" color="violet" />
-            <Tile x={147} y={99} label="2" color="violet" />
-            <Tile x={66} y={146} label="3" color="violet" />
-            <Tile x={174} y={146} label="3" color="violet" />
-            <Tile x={120} y={184} label="H" color="gray" />
+            {sectionTiles.map(({ q, r, label, color }) => {
+              const { x, y } = getHexPosition(q, r, 24, 2);
+              return (
+                <Tile
+                  key={`${q},${r}`}
+                  x={120 + x}
+                  y={178 + y}
+                  label={label}
+                  color={color}
+                />
+              );
+            })}
             <text x="120" y="225" textAnchor="middle" fill="currentColor">
               Your home (separate)
             </text>
           </svg>
           <span>
             Draw one of your remaining tiles at random each turn. Place it in a
-            highlighted space in your section: inner first (1), then middle (2),
-            then outer (3). Placement stages shown schematically.
+            highlighted space in your section. Everyone completes stage 1
+            before stage 2, then stage 3.
+          </span>
+          <span>
+            {mulligans > 0 ? (
+              <>
+                <strong>Optional mulligan.</strong> Each player gets {mulligans}{" "}
+                {mulligans === 1 ? "mulligan" : "mulligans"} for the entire map
+                build. Before placing your drawn tile, press <strong>Mulligan</strong>{" "}
+                to draw a different tile at random from your remaining hand.
+                The original stays in your hand to place later. You keep your
+                turn and the same highlighted spaces. You need at least two
+                unplaced tiles and a mulligan left.
+              </>
+            ) : (
+              <>
+                <strong>Mulligans are disabled for this draft.</strong> Place
+                the tile you draw each turn.
+              </>
+            )}
+          </span>
+          <span>
+            Six-player example: home → 2 → 1 → Mecatol Rex form a straight line.
+            Numbers mark placement stages. Other player counts can use a
+            different layout; follow the highlighted spaces on your map.
           </span>
         </li>
       </ol>

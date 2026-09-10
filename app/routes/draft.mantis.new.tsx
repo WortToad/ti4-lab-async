@@ -83,6 +83,7 @@ export default function MantisNew() {
   const [required, setRequired] = useState<string[]>([]);
   const [extraBlues, setExtraBlues] = useState(0);
   const [extraReds, setExtraReds] = useState(0);
+  const [mulligans, setMulligans] = useState(1);
   const options = Object.values(allFactions)
     .filter((f) => f.set !== "twilightsFall")
     .map((f) => ({ value: f.id, label: f.name }));
@@ -194,10 +195,12 @@ export default function MantisNew() {
                 source="pool"
                 draftBlues={3 + extraBlues}
                 draftReds={2 + extraReds}
+                mulligans={mulligans}
               />
               <Text size="sm">
-                Everyone fills their inner space near Mecatol Rex, then their
-                two middle spaces, then their two outer spaces. The player with
+                Everyone fills their one stage 1 space, then their two stage 2
+                spaces, then their two stage 3 spaces. The highlighted spaces
+                follow the layout for your player count. The player with
                 the most empty spaces in the current group places next; ties
                 follow speaker order. All five of your kept tiles are placed,
                 with your home system in a separate home position.
@@ -210,7 +213,8 @@ export default function MantisNew() {
             description="Total redraws per player for the whole map build. Draw a different tile from your remaining hand; the original stays to be placed later."
             min={0}
             max={3}
-            defaultValue={1}
+            value={mulligans}
+            onChange={(value) => setMulligans(Number(value) || 0)}
             allowDecimal={false}
           />
           <Button type="submit" loading={navigation.state !== "idle"}>

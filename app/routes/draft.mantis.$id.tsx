@@ -605,6 +605,7 @@ function ActiveMantisRoom({
                   source={draft.bagDraftId ? "kept" : "pool"}
                   draftBlues={3 + draft.settings.extraBlues}
                   draftReds={2 + draft.settings.extraReds}
+                  mulligans={draft.settings.mulligans}
                 />
               </Accordion.Panel>
             </Accordion.Item>
@@ -895,9 +896,10 @@ function ActiveMantisRoom({
             </Group>
             <Text>
               Place the drawn tile in a highlighted position in your section of
-              the map. Everyone fills their inner position near Mecatol Rex
-              before moving to the two middle positions, then the two outer
-              positions. Within each group, the player with the most empty
+              the map. Everyone fills their one stage 1 position before moving
+              to the two stage 2 positions, then the two stage 3 positions.
+              The highlighted spaces follow your map layout. Within each
+              group, the player with the most empty
               spaces places next, with ties resolved in speaker order.
             </Text>
           </Stack>

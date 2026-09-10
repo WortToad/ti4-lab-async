@@ -114,9 +114,11 @@ export function BagMapSetup({
               <Accordion.Panel>
                 <Stack gap="xs">
                   <Text size="sm">
-                    Build from Mecatol Rex outward: everyone fills their one
-                    inner space first, then everyone fills their two middle
-                    spaces, then their two outer spaces. On your turn, the
+                    Everyone fills their one stage 1 space first, then their
+                    two stage 2 spaces, then their two stage 3 spaces. In a
+                    standard six-player map these are the inner, middle, and
+                    outer rings. Other layouts can include hyperlanes and
+                    different tile positions. On your turn, the
                     highlighted spaces show your available choices in the
                     current group. The player with the most empty spaces in that
                     group places next.{" "}
