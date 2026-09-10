@@ -30,11 +30,15 @@ export function AvailableFactionsSection() {
     playerCount: state.draft.players.length,
   }));
 
-  const draftGameMode = useDraft(
-    (state) => state.draft.settings.draftGameMode,
-  );
+  const draftGameMode = useDraft((state) => state.draft.settings.draftGameMode);
 
   const isTwilightsFall = draftGameMode === "twilightsFall";
+  const requiredFactions = useDraft(
+    (state) => state.draft.settings.requiredFactions ?? [],
+  );
+  const allowedFactions = useDraft(
+    (state) => state.draft.settings.allowedFactions,
+  );
 
   if (hasBanPhase) {
     return (
@@ -65,8 +69,16 @@ export function AvailableFactionsSection() {
     );
   }
 
-  const minFactions = isTwilightsFall ? playerCount : 6;
-  const maxFactions = isTwilightsFall ? 8 : factionPool.length;
+  const minFactions = isTwilightsFall
+    ? Math.max(playerCount, requiredFactions.length)
+    : draftGameMode === "presetMap"
+      ? playerCount
+      : 6;
+  const maxFactions = isTwilightsFall
+    ? factionPool.filter(
+        (id) => !allowedFactions || allowedFactions.includes(id),
+      ).length
+    : factionPool.length;
 
   const isPresetMap = draftGameMode === "presetMap";
 
@@ -75,7 +87,11 @@ export function AvailableFactionsSection() {
       <SectionTitle title={isTwilightsFall ? "Kings Pool" : "Faction Pool"}>
         <Group gap="sm">
           <Group gap={4}>
-            <Tooltip label={isTwilightsFall ? "Randomize kings" : "Randomize factions"} withArrow position="top">
+            <Tooltip
+              label={isTwilightsFall ? "Randomize kings" : "Randomize factions"}
+              withArrow
+              position="top"
+            >
               <ActionIcon
                 size="sm"
                 variant="subtle"
@@ -129,7 +145,10 @@ export function AvailableFactionsSection() {
             key={`${factionId}-${idx}`}
             faction={factions[factionId]}
             onRemove={() => removeFaction(factionId)}
-            removeEnabled={availableFactions.length > minFactions}
+            removeEnabled={
+              availableFactions.length > minFactions &&
+              !(isTwilightsFall && requiredFactions.includes(factionId))
+            }
           />
         ))}
       </SimpleGrid>

@@ -17,7 +17,6 @@ import {
 } from "@dnd-kit/core";
 import { Tile } from "~/types";
 import { systemData } from "~/data/systemData";
-import { hydrateMap } from "~/utils/map";
 import { useCoreSliceValues } from "~/hooks/useCoreSliceValues";
 
 export function MapSection() {
@@ -36,7 +35,7 @@ export function MapSection() {
   } = useDraft((state) => state.actions);
   const stats = useFullMapStats();
 
-  const isHeisenDraft = draftType === "heisen" || draftType === "heisen8p";
+  const showCoreSliceStats = draftType === "heisen";
   const coreSliceData = useCoreSliceValues(map, sliceValueModifiers);
 
   const { ref, width } = useDimensions<HTMLDivElement>();
@@ -118,7 +117,7 @@ export function MapSection() {
             interactions={MAP_INTERACTIONS.draftBuild}
             onSelectSystemTile={(t) => openPlanetFinderForMap(t.idx)}
             onDeleteSystemTile={(t) => removeSystemFromMap(t.idx)}
-            coreSliceData={isHeisenDraft ? coreSliceData : undefined}
+            coreSliceData={showCoreSliceStats ? coreSliceData : undefined}
           />
         </DndContext>
       </Box>

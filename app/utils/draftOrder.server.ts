@@ -129,7 +129,7 @@ export function createDraftOrder({
     let pickOrder: DraftPick[] = [
       ...playerIds,
       ...reversedPlayerIds,
-      ...playerIds,
+      ...(settings.draftSpeaker ? playerIds : []),
     ];
 
     if (settings.modifiers?.banFactions) {

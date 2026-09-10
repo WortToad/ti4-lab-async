@@ -272,8 +272,10 @@ export type DraftSettings = {
   texasFactionHandSize?: number;
   texasAllowFactionRedraw?: boolean;
 
-  /** Number of reference card packs for Twilight's Fall (defaults to player count, max 10) */
+  /** Number of reference card packs for Twilight's Fall (defaults to player count, limited by available cards) */
   numReferenceCardPacks?: number;
+  bannedReferenceCardFactions?: FactionId[];
+  presetReferenceCardPacks?: FactionReferenceCardPack[];
 
   /** Number of kings (Mahact factions) for Twilight's Fall (defaults to 8, min = player count) */
   numKings?: number;

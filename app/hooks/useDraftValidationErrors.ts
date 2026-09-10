@@ -3,6 +3,7 @@ import { useDraftConfig } from "./useDraftConfig";
 import { hydrateMap } from "~/utils/map";
 import { PlayerSelection } from "~/types";
 import { useMemo } from "react";
+import { validateTwilightsFallDraft } from "~/draft/twilightsFall/pools";
 
 export function useDraftValidationErrors() {
   const config = useDraftConfig();
@@ -14,9 +15,21 @@ export function useDraftValidationErrors() {
   const slices = useDraft((state) => state.draft.slices);
   const players = useDraft((state) => state.draft.players);
   const draftGameMode = useDraft((state) => state.draft.settings.draftGameMode);
+  const draft = useDraft((state) => state.draft);
 
   return useMemo(() => {
     const errors: string[] = [];
+    if (draftGameMode === "twilightsFall") {
+      try {
+        validateTwilightsFallDraft(draft);
+      } catch (error) {
+        errors.push(
+          error instanceof Error
+            ? error.message
+            : "Invalid Twilight's Fall pools.",
+        );
+      }
+    }
     if (draftGameMode === "texasStyle" || draftGameMode === "presetMap") {
       return errors;
     }
@@ -58,5 +71,6 @@ export function useDraftValidationErrors() {
     slices,
     players,
     draftGameMode,
+    draft,
   ]);
 }

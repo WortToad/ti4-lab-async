@@ -16,12 +16,18 @@ import { miltyeq7p } from "./miltyeq7p";
 import { miltyeq7plarge } from "./miltyeq7plarge";
 import { miltyeq8p } from "./miltyeq8p";
 import { std4p } from "./std4p";
+import { milty3p, heisen3p, heisen4p, heisen5p, heisen7p } from "./templates";
 import { DraftConfig, DraftType } from "./types";
 
 /**
  * The configuration for each draft type.
  */
 export const draftConfig: Record<DraftType, DraftConfig> = {
+  milty3p,
+  heisen3p,
+  heisen4p,
+  heisen5p,
+  heisen7p,
   miltyeq,
   miltyeq5p,
   miltyeq4p,

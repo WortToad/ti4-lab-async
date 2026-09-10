@@ -11,6 +11,9 @@ export function AvailableReferenceCardPacksSection() {
   const randomizeReferenceCardPacks = useDraft(
     (state) => state.actions.randomizeReferenceCardPacks,
   );
+  const usesPresetPacks = useDraft(
+    (state) => !!state.draft.settings.presetReferenceCardPacks,
+  );
 
   if (!referenceCardPacks || referenceCardPacks.length === 0) {
     return null;
@@ -24,6 +27,7 @@ export function AvailableReferenceCardPacksSection() {
           onMouseDown={randomizeReferenceCardPacks}
           color="gray.7"
           variant="filled"
+          disabled={usesPresetPacks}
         >
           <IconDice6Filled size={24} />
         </Button>

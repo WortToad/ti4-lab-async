@@ -28,6 +28,7 @@ import {
 } from "./utils/slice";
 import { getSystemPool } from "./utils/system";
 import { getFactionPool } from "./utils/factions";
+import { generateReferenceCardPacks, generateTwilightsFallKings } from "./draft/twilightsFall/pools";
 import { mapStringOrder } from "./data/mapStringOrder";
 import { getUsedSystemIdsInMap } from "./hooks/useUsedSystemIds";
 import { atomWithStore } from "jotai-zustand";
@@ -704,11 +705,9 @@ export const draftStore = createStore<DraftV2State>()(
           initializePools(state, settings);
 
           if (settings.draftGameMode === "twilightsFall") {
-            // Select random subset of kings based on numKings setting
-            const numKings = settings.numKings ?? 8;
-            draft.availableFactions = shuffle([...state.factionPool], numKings);
+            draft.availableFactions = generateTwilightsFallKings(settings, players.length);
             draft.availableReferenceCardPacks = generateReferenceCardPacks(
-              settings.numReferenceCardPacks ?? players.length,
+              settings, players.length,
             );
           } else if (settings.draftGameMode === "texasStyle") {
             const draftableFactions = getDraftableFactions(
@@ -880,13 +879,17 @@ export const draftStore = createStore<DraftV2State>()(
         set(({ draft }) => {
           if (draft.settings.draftGameMode !== "twilightsFall") return;
           draft.availableReferenceCardPacks = generateReferenceCardPacks(
-            draft.settings.numReferenceCardPacks ?? draft.players.length,
+            draft.settings, draft.players.length,
           );
         }),
 
       // faction actions
       randomizeFactions: () =>
         set(({ draft, factionPool }) => {
+          if (draft.settings.draftGameMode === "twilightsFall") {
+            draft.availableFactions = generateTwilightsFallKings(draft.settings, draft.players.length);
+            return;
+          }
           const takenFactions = getTakenNonPrimaryFactions(draft);
 
           draft.availableFactions = randomizeFactions(
@@ -904,6 +907,7 @@ export const draftStore = createStore<DraftV2State>()(
       setNumFactionsToDraft: (num: number) =>
         set(({ draft }) => {
           draft.settings.numFactions = num;
+          if (draft.settings.draftGameMode === "twilightsFall") draft.settings.numKings = num;
         }),
       addRandomFaction: () =>
         set((state) => {
@@ -927,10 +931,19 @@ export const draftStore = createStore<DraftV2State>()(
           const idx = Math.floor(Math.random() * availableFactions.length);
           draft.availableFactions.push(availableFactions[idx]);
           draft.settings.numFactions += 1;
+          if (draft.settings.draftGameMode === "twilightsFall") draft.settings.numKings = draft.settings.numFactions;
         }),
 
       removeLastFaction: () =>
         set(({ draft }) => {
+          if (draft.settings.draftGameMode === "twilightsFall") {
+            const removable = [...draft.availableFactions].reverse().find(id => !draft.settings.requiredFactions?.includes(id));
+            if (!removable || draft.availableFactions.length <= draft.players.length) return;
+            draft.availableFactions = draft.availableFactions.filter(id => id !== removable);
+            draft.settings.numKings = draft.availableFactions.length;
+            draft.settings.numFactions = draft.availableFactions.length;
+            return;
+          }
           resetStratification({ draft });
 
           const availableFactions = draft.availableFactions.slice(0, -1);
@@ -940,12 +953,14 @@ export const draftStore = createStore<DraftV2State>()(
 
       removeFaction: (id: FactionId) =>
         set(({ draft }) => {
+          if (draft.settings.draftGameMode === "twilightsFall" && (draft.settings.requiredFactions?.includes(id) || draft.availableFactions.length <= draft.players.length)) return;
           resetStratification({ draft });
 
           draft.settings.numFactions = draft.availableFactions.length - 1;
           draft.availableFactions = draft.availableFactions.filter(
             (f) => f !== id,
           );
+          if (draft.settings.draftGameMode === "twilightsFall") draft.settings.numKings = draft.availableFactions.length;
         }),
 
       // planet finder actions
@@ -1355,20 +1370,4 @@ function getTakenNonPrimaryFactions(draft: Draft): FactionId[] {
   ];
 
   return takenFactions;
-}
-
-function generateReferenceCardPacks(numPlayers: number): FactionId[][] {
-  const referenceCardFactionPool = getFactionPool(["base", "pok", "te"]).filter(
-    (f) => f !== "keleres",
-  );
-  const numPacks = numPlayers;
-  const shuffledFactions = shuffle(referenceCardFactionPool, numPacks * 3);
-  const referenceCardPacks: FactionId[][] = [];
-  for (let i = 0; i < numPacks; i++) {
-    const pack = shuffledFactions.slice(i * 3, i * 3 + 3);
-    if (pack.length === 3) {
-      referenceCardPacks.push(pack);
-    }
-  }
-  return referenceCardPacks;
 }

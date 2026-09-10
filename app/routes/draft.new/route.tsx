@@ -35,6 +35,7 @@ import { AvailableReferenceCardPacksSection } from "./sections/AvailableReferenc
 import { ConnectedFactionSettingsModal } from "./components/ConnectedFactionSettingsModal";
 import { createDraftOrder } from "~/utils/draftOrder.server";
 import { OriginalArtToggle } from "~/components/OriginalArtToggle";
+import { validateTwilightsFallDraft } from "~/draft/twilightsFall/pools";
 
 export default function DraftNew() {
   const location = useLocation();
@@ -227,6 +228,10 @@ export default function DraftNew() {
 
 export async function action({ request }: ActionFunctionArgs) {
   const body = (await request.json()) as DraftInput;
+  if (body.settings.draftGameMode === "twilightsFall") {
+    try { validateTwilightsFallDraft(body); }
+    catch (error) { throw new Response(error instanceof Error ? error.message : "Invalid Twilight's Fall pools.", { status: 400 }); }
+  }
 
   const presetUrl = body.presetUrl;
   delete body.presetUrl;

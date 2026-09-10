@@ -59,6 +59,7 @@ export function buildSliceValueConfig(
 export function getEquidistantIndices(draftType: string): number[] {
   if (
     draftType === "milty" ||
+    draftType === "milty3p" ||
     draftType === "milty5p" ||
     draftType === "milty7p" ||
     draftType === "milty8p" ||

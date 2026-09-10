@@ -19,6 +19,7 @@ import {
   type FactionNotification,
 } from "./validation";
 import { filterFactionList, getMaxAvailableSlices } from "./utils";
+import { referenceCardFactionPool } from "~/draft/twilightsFall/pools";
 
 type ContentFlags = {
   // Base game
@@ -77,10 +78,18 @@ type DraftSetupStore = {
   referenceCardPacks: {
     numReferenceCardPacks: number;
     setNumReferenceCardPacks: (num: number) => void;
+    bannedFactions: FactionId[];
+    setBannedFactions: (factions: FactionId[]) => void;
+    presetPackages: string;
+    setPresetPackages: (value: string) => void;
   };
   kings: {
     numKings: number;
     setNumKings: (num: number) => void;
+    bannedKings: FactionId[];
+    prioritizedKings: FactionId[];
+    setBannedKings: (kings: FactionId[]) => void;
+    setPrioritizedKings: (kings: FactionId[]) => void;
   };
   texas: {
     factionHandSize: number;
@@ -241,18 +250,18 @@ export const useDraftSetup = create<DraftSetupStore>()(
           if (state.referenceCardPacks.numReferenceCardPacks < playerCount) {
             state.referenceCardPacks.numReferenceCardPacks = playerCount;
           }
-          // Ensure it doesn't exceed 10
-          if (state.referenceCardPacks.numReferenceCardPacks > 10) {
-            state.referenceCardPacks.numReferenceCardPacks = 10;
+          const maxReferencePacks = Math.floor((referenceCardFactionPool.length - state.referenceCardPacks.bannedFactions.length) / 3);
+          if (state.referenceCardPacks.numReferenceCardPacks > maxReferencePacks) {
+            state.referenceCardPacks.numReferenceCardPacks = Math.max(playerCount, maxReferencePacks);
           }
 
           // Update kings to at least player count
           if (state.kings.numKings < playerCount) {
             state.kings.numKings = playerCount;
           }
-          // Ensure it doesn't exceed 8
-          if (state.kings.numKings > 8) {
-            state.kings.numKings = 8;
+          const maxKings = 8 - state.kings.bannedKings.length;
+          if (state.kings.numKings > maxKings) {
+            state.kings.numKings = Math.max(playerCount, maxKings);
           }
 
           const currentMap = MAPS[state.map.selectedMapType];
@@ -267,7 +276,7 @@ export const useDraftSetup = create<DraftSetupStore>()(
             state.format.allowEmptyTiles = false;
             state.format.allowHomePlanetSearch = false;
             state.format.draftSpeaker =
-              newMapType === "heisen" || newMapType === "heisen8p";
+              newMapType.startsWith("heisen");
           }
 
           const maxSlices = Math.max(
@@ -356,7 +365,7 @@ export const useDraftSetup = create<DraftSetupStore>()(
             state.format.allowEmptyTiles = false;
             state.format.allowHomePlanetSearch = false;
             state.format.draftSpeaker =
-              mapType === "heisen" || mapType === "heisen8p";
+              mapType.startsWith("heisen");
           });
         },
       },
@@ -373,14 +382,22 @@ export const useDraftSetup = create<DraftSetupStore>()(
 
       referenceCardPacks: {
         numReferenceCardPacks: 6, // Default to player count, will be updated in validateSetup
+        bannedFactions: [],
+        presetPackages: "",
+        setBannedFactions: (factions) => setAndValidate(state => {
+          state.referenceCardPacks.bannedFactions = factions;
+        }),
+        setPresetPackages: (value) => set(state => {
+          state.referenceCardPacks.presetPackages = value;
+        }),
 
         setNumReferenceCardPacks: (num: number) => {
           set((state) => {
-            // Clamp between player count and 10
             const playerCount = state.player.players.length;
+            const maxPacks = Math.floor((referenceCardFactionPool.length - state.referenceCardPacks.bannedFactions.length) / 3);
             state.referenceCardPacks.numReferenceCardPacks = Math.max(
               playerCount,
-              Math.min(10, num),
+              Math.min(maxPacks, num),
             );
           });
         },
@@ -388,12 +405,21 @@ export const useDraftSetup = create<DraftSetupStore>()(
 
       kings: {
         numKings: 8, // Default to all 8 kings
+        bannedKings: [],
+        prioritizedKings: [],
+        setBannedKings: (kings) => setAndValidate(state => {
+          state.kings.bannedKings = kings;
+          state.kings.prioritizedKings = state.kings.prioritizedKings.filter(id => !kings.includes(id));
+        }),
+        setPrioritizedKings: (kings) => set(state => {
+          state.kings.prioritizedKings = kings;
+          state.kings.numKings = Math.max(state.kings.numKings, kings.length);
+        }),
 
         setNumKings: (num: number) => {
           set((state) => {
-            // Clamp between player count and 8
             const playerCount = state.player.players.length;
-            state.kings.numKings = Math.max(playerCount, Math.min(8, num));
+            state.kings.numKings = Math.max(playerCount, state.kings.prioritizedKings.length, Math.min(8 - state.kings.bannedKings.length, num));
           });
         },
       },

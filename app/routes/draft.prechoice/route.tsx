@@ -22,6 +22,7 @@ import {
   useSearchParams,
   useSubmit,
   LoaderFunctionArgs,
+  Link,
 } from "react-router";
 import {
   IconBrandDiscordFilled,
@@ -55,12 +56,15 @@ import { DraftFormatDescription } from "./components/DraftFormatDescription";
 import { getMaxAvailableSlices } from "./utils";
 import buttonClasses from "~/ui/buttons.module.css";
 import classes from "./prechoice.module.css";
+import { twilightsFallFactionIds } from "~/data/factionData";
+import { parseReferenceCardPacks, validateTwilightsFallSettings } from "~/draft/twilightsFall/pools";
 
 export default function DraftPrechoice() {
   const location = useLocation();
   const navigate = useNavigate();
   const submit = useSubmit();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [setupError, setSetupError] = useState<string | null>(null);
   const { discordData, discordOauthUrl, mapSlicesString, selectedDraftType } =
     useLoaderData<typeof loader>();
   const [hoveredMapType, setHoveredMapType] = useState<
@@ -198,18 +202,25 @@ export default function DraftPrechoice() {
   };
 
   const handleContinue = () => {
+    setSetupError(null);
     if (draftMode === "twilightFalls") {
+      try {
       const draftType = map.selectedMapType;
+      const presetPacks = parseReferenceCardPacks(referenceCardPacks.presetPackages);
 
       const twilightsFallSettings: DraftSettings = {
         type: draftType,
         nucleusStyle: draftType.startsWith("heisen"),
         numFactions: kings.numKings, // Configurable number of kings
         numKings: kings.numKings,
+        allowedFactions: twilightsFallFactionIds.filter(id => !kings.bannedKings.includes(id)),
+        requiredFactions: kings.prioritizedKings,
         factionGameSets: ["twilightsFall"], // Only Mahact Kings faction set
         tileGameSets: ["base", "pok", "te"],
         numSlices: Number(slices.numSlices),
-        numReferenceCardPacks: referenceCardPacks.numReferenceCardPacks,
+        numReferenceCardPacks: presetPacks?.length ?? referenceCardPacks.numReferenceCardPacks,
+        bannedReferenceCardFactions: referenceCardPacks.bannedFactions,
+        presetReferenceCardPacks: presetPacks,
         randomizeMap: true,
         randomizeSlices: true,
         draftSpeaker: false,
@@ -221,6 +232,7 @@ export default function DraftPrechoice() {
         minorFactionsMode: undefined,
         draftGameMode: "twilightsFall",
       };
+      validateTwilightsFallSettings(twilightsFallSettings, player.players.length);
 
       navigate("/draft/new", {
         state: {
@@ -229,6 +241,9 @@ export default function DraftPrechoice() {
           discordData,
         },
       });
+      } catch (error) {
+        setSetupError(error instanceof Error ? error.message : "Invalid Twilight's Fall setup.");
+      }
     } else if (draftMode === "texasStyle") {
       const baseSettings = buildDraftSettings();
       const texasSettings: DraftSettings = {
@@ -357,6 +372,25 @@ export default function DraftPrechoice() {
       />
 
       <div className={classes.grid}>
+        {setupError && <div className={classes.col12}><Alert color="red">{setupError}</Alert></div>}
+        <div className={classes.col12}>
+          <Group justify="space-between" gap="sm" mb="sm">
+            <Text size="sm" c="dimmed">
+              Draft faction components in passing bags, or draft individual tiles and build your galaxy.
+            </Text>
+            <Group gap="xs">
+              <Button component={Link} to="/draft/bag/new" variant="light">
+                Bag / Franken / Twilight’s Fall
+              </Button>
+              <Button component={Link} to="/draft/mantis/new" variant="light">
+                Mantis draft
+              </Button>
+              <Button component={Link} to="/draft/minimilty/new" variant="light">
+                Mini-Milty (base game)
+              </Button>
+            </Group>
+          </Group>
+        </div>
         {mapSlicesString && (
           <div className={classes.col12}>
             <SeededMapBanner />
@@ -437,6 +471,7 @@ export default function DraftPrechoice() {
         <div className={classes.colRight}>
         <Stack>
           <PlayerInputSection
+            minPlayers={3}
             players={player.players}
             discordData={discordData}
             onChangeName={handleChangeName}

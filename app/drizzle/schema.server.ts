@@ -9,6 +9,29 @@ import {
   real,
 } from "drizzle-orm/sqlite-core";
 
+export const bagDrafts = sqliteTable("bagDrafts", {
+  id: text("id").primaryKey(),
+  data: text("data").notNull(),
+  revision: integer("revision").notNull().default(0),
+  credentials: text("credentials").notNull(),
+  createdAt: text("createdAt")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updatedAt")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const mantisDrafts = sqliteTable("mantisDrafts", {
+  id: text("id").primaryKey(),
+  data: text("data").notNull(),
+  revision: integer("revision").notNull().default(0),
+  hostTokenHash: text("hostTokenHash").notNull(),
+  createdAt: text("createdAt")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
 // Define a function to generate UUIDs for default values
 export const drafts = sqliteTable(
   "drafts",

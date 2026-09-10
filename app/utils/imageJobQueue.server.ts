@@ -19,7 +19,7 @@ type ImageJob = {
   createdAt: number;
 };
 
-let queue: ImageJob[] = [];
+const queue: ImageJob[] = [];
 let processing = false;
 let activeJobs = 0;
 let shuttingDown = false;
@@ -28,6 +28,7 @@ const CONCURRENCY = 1;
 const MAX_RETRIES = 3;
 
 export function enqueueImageJob(draftId: string, urlName: string, isComplete: boolean) {
+  if (process.env.R2_INTEGRATION_DISABLED === "true") return;
   const job: ImageJob = {
     id: `${draftId}-${isComplete ? "complete" : "incomplete"}-${Date.now()}`,
     draftId,

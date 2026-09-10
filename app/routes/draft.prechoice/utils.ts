@@ -147,13 +147,17 @@ function getSliceCandidateUpperBound(
   hasMinorFactions: boolean,
 ) {
   const pool = countTileColors(systemPool);
+  const sharedTileCount = draftConfig[mapType].modifiableMapTiles.length;
   const requirements = getMinimumTileRequirementsPerSlice(
     mapType,
     hasMinorFactions,
   );
 
   return Math.min(
-    Math.floor(pool.total / requirements.total),
+    Math.max(
+      0,
+      Math.floor((pool.total - sharedTileCount) / requirements.total),
+    ),
     Math.floor(pool.red / requirements.red),
     Math.floor(pool.blue / requirements.blue),
   );

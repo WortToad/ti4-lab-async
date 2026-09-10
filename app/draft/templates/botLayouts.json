@@ -1,0 +1,1034 @@
+{
+  "heisen3p": {
+    "alias": "3pHyperlanesNucleus",
+    "bluePerPlayer": 2,
+    "nucleusSliceCount": 3,
+    "playerCount": 3,
+    "redPerPlayer": 1,
+    "templateTiles": [
+      {
+        "custodians": true,
+        "pos": "000",
+        "staticTileId": "18"
+      },
+      {
+        "nucleusNumbers": [
+          1
+        ],
+        "pos": "101"
+      },
+      {
+        "pos": "102",
+        "staticTileId": "86a4"
+      },
+      {
+        "nucleusNumbers": [
+          2
+        ],
+        "pos": "103"
+      },
+      {
+        "pos": "104",
+        "staticTileId": "86a0"
+      },
+      {
+        "nucleusNumbers": [
+          3
+        ],
+        "pos": "105"
+      },
+      {
+        "pos": "106",
+        "staticTileId": "86a2"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 1,
+        "pos": "201"
+      },
+      {
+        "pos": "202",
+        "staticTileId": "88a4"
+      },
+      {
+        "nucleusNumbers": [
+          1,
+          2
+        ],
+        "pos": "203"
+      },
+      {
+        "pos": "204",
+        "staticTileId": "87a4"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 2,
+        "pos": "205"
+      },
+      {
+        "pos": "206",
+        "staticTileId": "88a0"
+      },
+      {
+        "nucleusNumbers": [
+          2,
+          3
+        ],
+        "pos": "207"
+      },
+      {
+        "pos": "208",
+        "staticTileId": "87a0"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 3,
+        "pos": "209"
+      },
+      {
+        "pos": "210",
+        "staticTileId": "88a2"
+      },
+      {
+        "nucleusNumbers": [
+          3,
+          1
+        ],
+        "pos": "211"
+      },
+      {
+        "pos": "212",
+        "staticTileId": "87a2"
+      },
+      {
+        "home": true,
+        "playerNumber": 1,
+        "pos": "301"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 1,
+        "pos": "302"
+      },
+      {
+        "pos": "303",
+        "staticTileId": "83a4"
+      },
+      {
+        "pos": "304",
+        "staticTileId": "85a4"
+      },
+      {
+        "pos": "305",
+        "staticTileId": "84a4"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 2,
+        "pos": "306"
+      },
+      {
+        "home": true,
+        "playerNumber": 2,
+        "pos": "307"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 2,
+        "pos": "308"
+      },
+      {
+        "pos": "309",
+        "staticTileId": "83a0"
+      },
+      {
+        "pos": "310",
+        "staticTileId": "85a0"
+      },
+      {
+        "pos": "311",
+        "staticTileId": "84a0"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 3,
+        "pos": "312"
+      },
+      {
+        "home": true,
+        "playerNumber": 3,
+        "pos": "313"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 3,
+        "pos": "314"
+      },
+      {
+        "pos": "315",
+        "staticTileId": "83a2"
+      },
+      {
+        "pos": "316",
+        "staticTileId": "85a2"
+      },
+      {
+        "pos": "317",
+        "staticTileId": "84a2"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 1,
+        "pos": "318"
+      }
+    ],
+    "tilesPerNucleusSlice": 3,
+    "tilesPerPlayer": 3
+  },
+  "heisen4p": {
+    "alias": "4pHyperlanesNucleus",
+    "bluePerPlayer": 2,
+    "nucleusSliceCount": 4,
+    "playerCount": 4,
+    "redPerPlayer": 1,
+    "templateTiles": [
+      {
+        "custodians": true,
+        "pos": "000",
+        "staticTileId": "18"
+      },
+      {
+        "pos": "101",
+        "staticTileId": "86a3"
+      },
+      {
+        "nucleusNumbers": [
+          1
+        ],
+        "pos": "102"
+      },
+      {
+        "nucleusNumbers": [
+          2
+        ],
+        "pos": "103"
+      },
+      {
+        "pos": "104",
+        "staticTileId": "86a0"
+      },
+      {
+        "nucleusNumbers": [
+          3
+        ],
+        "pos": "105"
+      },
+      {
+        "nucleusNumbers": [
+          4
+        ],
+        "pos": "106"
+      },
+      {
+        "nucleusNumbers": [
+          4,
+          1
+        ],
+        "pos": "201"
+      },
+      {
+        "pos": "202",
+        "staticTileId": "87a3"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 1,
+        "pos": "203"
+      },
+      {
+        "nucleusNumbers": [
+          1,
+          2
+        ],
+        "pos": "204"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 2,
+        "pos": "205"
+      },
+      {
+        "pos": "206",
+        "staticTileId": "88a0"
+      },
+      {
+        "nucleusNumbers": [
+          2,
+          3
+        ],
+        "pos": "207"
+      },
+      {
+        "pos": "208",
+        "staticTileId": "87a0"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 3,
+        "pos": "209"
+      },
+      {
+        "nucleusNumbers": [
+          3,
+          4
+        ],
+        "pos": "210"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 4,
+        "pos": "211"
+      },
+      {
+        "pos": "212",
+        "staticTileId": "88a3"
+      },
+      {
+        "pos": "301",
+        "staticTileId": "85a3"
+      },
+      {
+        "pos": "302",
+        "staticTileId": "84a3"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 1,
+        "pos": "303"
+      },
+      {
+        "home": true,
+        "playerNumber": 1,
+        "pos": "304"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 1,
+        "pos": "305"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 2,
+        "pos": "306"
+      },
+      {
+        "home": true,
+        "playerNumber": 2,
+        "pos": "307"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 2,
+        "pos": "308"
+      },
+      {
+        "pos": "309",
+        "staticTileId": "83a0"
+      },
+      {
+        "pos": "310",
+        "staticTileId": "85a0"
+      },
+      {
+        "pos": "311",
+        "staticTileId": "84a0"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 3,
+        "pos": "312"
+      },
+      {
+        "home": true,
+        "playerNumber": 3,
+        "pos": "313"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 3,
+        "pos": "314"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 4,
+        "pos": "315"
+      },
+      {
+        "home": true,
+        "playerNumber": 4,
+        "pos": "316"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 4,
+        "pos": "317"
+      },
+      {
+        "pos": "318",
+        "staticTileId": "83a3"
+      }
+    ],
+    "tilesPerNucleusSlice": 3,
+    "tilesPerPlayer": 3
+  },
+  "heisen5p": {
+    "alias": "5pHyperlanesNucleus",
+    "bluePerPlayer": 2,
+    "nucleusSliceCount": 5,
+    "playerCount": 5,
+    "redPerPlayer": 1,
+    "templateTiles": [
+      {
+        "custodians": true,
+        "pos": "000",
+        "staticTileId": "18"
+      },
+      {
+        "nucleusNumbers": [
+          1
+        ],
+        "pos": "101"
+      },
+      {
+        "nucleusNumbers": [
+          2
+        ],
+        "pos": "102"
+      },
+      {
+        "nucleusNumbers": [
+          3
+        ],
+        "pos": "103"
+      },
+      {
+        "pos": "104",
+        "staticTileId": "86a0"
+      },
+      {
+        "nucleusNumbers": [
+          4
+        ],
+        "pos": "105"
+      },
+      {
+        "nucleusNumbers": [
+          5
+        ],
+        "pos": "106"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 1,
+        "pos": "201"
+      },
+      {
+        "nucleusNumbers": [
+          1,
+          2
+        ],
+        "pos": "202"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 2,
+        "pos": "203"
+      },
+      {
+        "nucleusNumbers": [
+          2,
+          3
+        ],
+        "pos": "204"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 3,
+        "pos": "205"
+      },
+      {
+        "pos": "206",
+        "staticTileId": "88a0"
+      },
+      {
+        "nucleusNumbers": [
+          3,
+          4
+        ],
+        "pos": "207"
+      },
+      {
+        "pos": "208",
+        "staticTileId": "87a0"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 4,
+        "pos": "209"
+      },
+      {
+        "nucleusNumbers": [
+          4,
+          5
+        ],
+        "pos": "210"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 5,
+        "pos": "211"
+      },
+      {
+        "nucleusNumbers": [
+          5,
+          1
+        ],
+        "pos": "212"
+      },
+      {
+        "home": true,
+        "playerNumber": 1,
+        "pos": "301"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 1,
+        "pos": "302"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 2,
+        "pos": "303"
+      },
+      {
+        "home": true,
+        "playerNumber": 2,
+        "pos": "304"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 2,
+        "pos": "305"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 3,
+        "pos": "306"
+      },
+      {
+        "home": true,
+        "playerNumber": 3,
+        "pos": "307"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 3,
+        "pos": "308"
+      },
+      {
+        "pos": "309",
+        "staticTileId": "83a0"
+      },
+      {
+        "pos": "310",
+        "staticTileId": "85a0"
+      },
+      {
+        "pos": "311",
+        "staticTileId": "84a0"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 4,
+        "pos": "312"
+      },
+      {
+        "home": true,
+        "playerNumber": 4,
+        "pos": "313"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 4,
+        "pos": "314"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 5,
+        "pos": "315"
+      },
+      {
+        "home": true,
+        "playerNumber": 5,
+        "pos": "316"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 5,
+        "pos": "317"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 1,
+        "pos": "318"
+      }
+    ],
+    "tilesPerNucleusSlice": 3,
+    "tilesPerPlayer": 3
+  },
+  "heisen7p": {
+    "alias": "7pHyperlanesNucleus",
+    "bluePerPlayer": 2,
+    "nucleusSliceCount": 7,
+    "playerCount": 7,
+    "redPerPlayer": 1,
+    "templateTiles": [
+      {
+        "custodians": true,
+        "pos": "000",
+        "staticTileId": "18"
+      },
+      {
+        "pos": "101",
+        "staticTileId": "83b0"
+      },
+      {
+        "nucleusNumbers": [
+          2
+        ],
+        "pos": "102"
+      },
+      {
+        "nucleusNumbers": [
+          3
+        ],
+        "pos": "103"
+      },
+      {
+        "pos": "104",
+        "staticTileId": "84b0"
+      },
+      {
+        "pos": "105",
+        "staticTileId": "89b0"
+      },
+      {
+        "nucleusNumbers": [
+          6
+        ],
+        "pos": "106"
+      },
+      {
+        "nucleusNumbers": [
+          1
+        ],
+        "pos": "201"
+      },
+      {
+        "nucleusNumbers": [
+          1,
+          2
+        ],
+        "pos": "202"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 2,
+        "pos": "203"
+      },
+      {
+        "nucleusNumbers": [
+          2,
+          3
+        ],
+        "pos": "204"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 3,
+        "pos": "205"
+      },
+      {
+        "nucleusNumbers": [
+          3,
+          4
+        ],
+        "pos": "206"
+      },
+      {
+        "nucleusNumbers": [
+          4
+        ],
+        "pos": "207"
+      },
+      {
+        "nucleusNumbers": [
+          5
+        ],
+        "pos": "208"
+      },
+      {
+        "nucleusNumbers": [
+          5,
+          6
+        ],
+        "pos": "209"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 6,
+        "pos": "210"
+      },
+      {
+        "nucleusNumbers": [
+          6,
+          7
+        ],
+        "pos": "211"
+      },
+      {
+        "nucleusNumbers": [
+          7
+        ],
+        "pos": "212"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 1,
+        "pos": "301"
+      },
+      {
+        "pos": "302",
+        "staticTileId": "83b0"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 2,
+        "pos": "303"
+      },
+      {
+        "home": true,
+        "playerNumber": 2,
+        "pos": "304"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 2,
+        "pos": "305"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 3,
+        "pos": "306"
+      },
+      {
+        "home": true,
+        "playerNumber": 3,
+        "pos": "307"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 3,
+        "pos": "308"
+      },
+      {
+        "pos": "309",
+        "staticTileId": "84b0"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 4,
+        "pos": "310"
+      },
+      {
+        "nucleusNumbers": [
+          4,
+          5
+        ],
+        "pos": "311"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 5,
+        "pos": "312"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 5,
+        "pos": "313"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 6,
+        "pos": "314"
+      },
+      {
+        "pos": "315",
+        "staticTileId": "83b2"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 7,
+        "pos": "316"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 7,
+        "pos": "317"
+      },
+      {
+        "nucleusNumbers": [
+          7,
+          1
+        ],
+        "pos": "318"
+      },
+      {
+        "home": true,
+        "playerNumber": 1,
+        "pos": "401"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 1,
+        "pos": "402"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 4,
+        "pos": "412"
+      },
+      {
+        "home": true,
+        "playerNumber": 4,
+        "pos": "413"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 4,
+        "pos": "414"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 5,
+        "pos": "415"
+      },
+      {
+        "home": true,
+        "playerNumber": 5,
+        "pos": "416"
+      },
+      {
+        "home": true,
+        "playerNumber": 6,
+        "pos": "419"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 6,
+        "pos": "420"
+      },
+      {
+        "home": true,
+        "playerNumber": 7,
+        "pos": "422"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 7,
+        "pos": "423"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 1,
+        "pos": "424"
+      }
+    ],
+    "tilesPerNucleusSlice": 3,
+    "tilesPerPlayer": 3
+  },
+  "milty3p": {
+    "alias": "3pHyperlanes",
+    "playerCount": 3,
+    "templateTiles": [
+      {
+        "custodians": true,
+        "pos": "000",
+        "staticTileId": "18"
+      },
+      {
+        "miltyTileIndex": 4,
+        "playerNumber": 1,
+        "pos": "101"
+      },
+      {
+        "pos": "102",
+        "staticTileId": "86a4"
+      },
+      {
+        "miltyTileIndex": 4,
+        "playerNumber": 2,
+        "pos": "103"
+      },
+      {
+        "pos": "104",
+        "staticTileId": "86a0"
+      },
+      {
+        "miltyTileIndex": 4,
+        "playerNumber": 3,
+        "pos": "105"
+      },
+      {
+        "pos": "106",
+        "staticTileId": "86a2"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 1,
+        "pos": "201"
+      },
+      {
+        "pos": "202",
+        "staticTileId": "88a4"
+      },
+      {
+        "miltyTileIndex": 3,
+        "playerNumber": 1,
+        "pos": "203"
+      },
+      {
+        "pos": "204",
+        "staticTileId": "87a4"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 2,
+        "pos": "205"
+      },
+      {
+        "pos": "206",
+        "staticTileId": "88a0"
+      },
+      {
+        "miltyTileIndex": 3,
+        "playerNumber": 2,
+        "pos": "207"
+      },
+      {
+        "pos": "208",
+        "staticTileId": "87a0"
+      },
+      {
+        "miltyTileIndex": 1,
+        "playerNumber": 3,
+        "pos": "209"
+      },
+      {
+        "pos": "210",
+        "staticTileId": "88a2"
+      },
+      {
+        "miltyTileIndex": 3,
+        "playerNumber": 3,
+        "pos": "211"
+      },
+      {
+        "pos": "212",
+        "staticTileId": "87a2"
+      },
+      {
+        "home": true,
+        "playerNumber": 1,
+        "pos": "301"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 1,
+        "pos": "302"
+      },
+      {
+        "pos": "303",
+        "staticTileId": "83a4"
+      },
+      {
+        "pos": "304",
+        "staticTileId": "85a4"
+      },
+      {
+        "pos": "305",
+        "staticTileId": "84a4"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 2,
+        "pos": "306"
+      },
+      {
+        "home": true,
+        "playerNumber": 2,
+        "pos": "307"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 2,
+        "pos": "308"
+      },
+      {
+        "pos": "309",
+        "staticTileId": "83a0"
+      },
+      {
+        "pos": "310",
+        "staticTileId": "85a0"
+      },
+      {
+        "pos": "311",
+        "staticTileId": "84a0"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 3,
+        "pos": "312"
+      },
+      {
+        "home": true,
+        "playerNumber": 3,
+        "pos": "313"
+      },
+      {
+        "miltyTileIndex": 0,
+        "playerNumber": 3,
+        "pos": "314"
+      },
+      {
+        "pos": "315",
+        "staticTileId": "83a2"
+      },
+      {
+        "pos": "316",
+        "staticTileId": "85a2"
+      },
+      {
+        "pos": "317",
+        "staticTileId": "84a2"
+      },
+      {
+        "miltyTileIndex": 2,
+        "playerNumber": 1,
+        "pos": "318"
+      }
+    ]
+  }
+}

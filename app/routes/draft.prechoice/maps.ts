@@ -53,6 +53,15 @@ const NUCLEUS_DESCRIPTION: DraftFormatDescriptionData = {
 };
 
 export const MAPS: Record<ChoosableDraftType, PrechoiceMap> = {
+  milty3p: {
+    title: "Milty (3P)",
+    description:
+      "Three-player Milty using the async bot's hyperlane layout, with five drafted systems per player.",
+    descriptionData: MILTY_DESCRIPTION,
+    map: hydrateDemoMap(draftConfig.milty3p),
+    titles: ["Speaker", "2nd", "3rd"],
+    playerCount: 3,
+  },
   milty: {
     title: "Milty",
     description:
@@ -199,10 +208,15 @@ export const MAPS: Record<ChoosableDraftType, PrechoiceMap> = {
     titles: ["Speaker", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"],
     playerCount: 8,
   },
+  heisen3p: nucleusMap("heisen3p", 3),
+  heisen4p: nucleusMap("heisen4p", 4),
+  heisen5p: nucleusMap("heisen5p", 5),
+  heisen7p: nucleusMap("heisen7p", 7),
 };
 
 export const isMiltyVariant = (mapType: ChoosableDraftType) =>
   mapType === "milty" ||
+  mapType === "milty3p" ||
   mapType === "milty4p" ||
   mapType === "milty5p" ||
   mapType === "milty7p" ||
@@ -214,3 +228,15 @@ export const isMiltyEqVariant = (mapType: ChoosableDraftType) =>
   mapType === "miltyeq5p" ||
   mapType === "miltyeq7p" ||
   mapType === "miltyeq8p";
+
+function nucleusMap(type: DraftType, playerCount: number): PrechoiceMap {
+  const description = `${playerCount}-player Nucleus using the async bot's hyperlane layout. Draft three-system slices around a shared central map, with speaker order drafted separately.`;
+  return {
+    title: `Nucleus (${playerCount}P)`,
+    description,
+    descriptionData: { ...NUCLEUS_DESCRIPTION, description },
+    map: hydrateDemoMap(draftConfig[type]),
+    titles: Array.from({ length: playerCount }, (_, index) => `P${index + 1}`),
+    playerCount,
+  };
+}

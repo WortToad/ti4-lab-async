@@ -24,6 +24,7 @@ export type SliceChoice = {
 export type TieredSlice = Tier[];
 
 export type DraftType =
+  | "milty3p"
   | "milty4p"
   | "milty5p"
   | "milty"
@@ -31,6 +32,10 @@ export type DraftType =
   | "milty8p"
   | "miltyeq8p"
   | "heisen"
+  | "heisen3p"
+  | "heisen4p"
+  | "heisen5p"
+  | "heisen7p"
   | "heisen8p"
   | "miltyeq"
   | "miltyeq5p"

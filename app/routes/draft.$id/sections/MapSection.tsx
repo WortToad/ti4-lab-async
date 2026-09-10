@@ -35,7 +35,7 @@ export function MapSection({ titleChildren }: Props) {
   const { selectSeat } = useDraft((state) => state.draftActions);
   const [pendingSeat, setPendingSeat] = useState<number | null>(null);
 
-  const isHeisenDraft = draftType === "heisen" || draftType === "heisen8p";
+  const showCoreSliceStats = draftType === "heisen";
   const coreSliceData = useCoreSliceValues(hydratedMap, sliceValueModifiers);
 
   const canSelect = currentlyPicking && activePlayer?.seatIdx === undefined;
@@ -109,7 +109,7 @@ export function MapSection({ titleChildren }: Props) {
           onDeleteSystemTile={
             canEditMap ? (tile) => removeSystemFromMap(tile.idx) : undefined
           }
-          coreSliceData={isHeisenDraft ? coreSliceData : undefined}
+          coreSliceData={showCoreSliceStats ? coreSliceData : undefined}
         />
       </Box>
     </div>

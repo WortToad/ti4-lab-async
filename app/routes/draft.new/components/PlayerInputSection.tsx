@@ -15,6 +15,7 @@ type Props = {
   players: Player[];
   discordData?: DiscordData;
   maxPlayers?: number;
+  minPlayers?: number;
   onChangeName: (playerIdx: number, name: string) => void;
   onIncreasePlayers?: () => void;
   onDecreasePlayers?: () => void;
@@ -26,6 +27,7 @@ export function PlayerInputSection({
   players,
   discordData,
   maxPlayers = 8,
+  minPlayers = 4,
   onIncreasePlayers,
   onDecreasePlayers,
   onChangeName,
@@ -50,7 +52,7 @@ export function PlayerInputSection({
               size="compact-xs"
               variant="subtle"
               color="gray"
-              disabled={players.length <= 4}
+              disabled={players.length <= minPlayers}
               onMouseDown={onDecreasePlayers}
             >
               -
