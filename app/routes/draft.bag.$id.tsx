@@ -193,6 +193,11 @@ function DraftPicking({
   submit: SubmitOperation;
 }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const seatIndex = view.players.findIndex((player) => player.id === seat.id);
+  // Each seat receives the next seat's bag and passes to the previous seat.
+  const receivingFrom = view.players[(seatIndex + 1) % view.players.length];
+  const passingTo =
+    view.players[(seatIndex - 1 + view.players.length) % view.players.length];
   const selectedCategories = new Set(
     seat.bag
       .filter((item) => selectedIds.includes(item.id))
@@ -209,6 +214,24 @@ function DraftPicking({
             </Title>
             <Badge variant="light">{seat.bag.length} components</Badge>
           </Group>
+          <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
+            <div>
+              <Text size="sm" c="dimmed">
+                Receiving from
+              </Text>
+              <Text fw={600} style={{ overflowWrap: "anywhere" }}>
+                {receivingFrom.name}
+              </Text>
+            </div>
+            <div>
+              <Text size="sm" c="dimmed">
+                Passing to
+              </Text>
+              <Text fw={600} style={{ overflowWrap: "anywhere" }}>
+                {passingTo.name}
+              </Text>
+            </div>
+          </SimpleGrid>
           {seat.ready ? (
             <>
               <Text>
@@ -276,8 +299,8 @@ function DraftPicking({
           <Text size="sm" c="dimmed">
             The collection maximum applies across all bags. Once you reach it,
             you cannot collect more of that category. After drafting ends, you
-            choose which collected components to keep for your final faction
-            and any tiles for the map.
+            choose which collected components to keep for your final faction and
+            any tiles for the map.
           </Text>
         </Stack>
       </Paper>
