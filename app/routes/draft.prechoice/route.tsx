@@ -35,7 +35,6 @@ import { useDisclosure } from "@mantine/hooks";
 import {
   SliceSettingsModal,
   DEFAULT_SLICE_SETTINGS,
-  SliceGenerationSettings,
   SliceSettingsFormatType,
 } from "~/components/SliceSettingsModal";
 import { useDraftSetup } from "./store";
@@ -91,13 +90,16 @@ export default function DraftPrechoice() {
   const faction = useDraftSetup((state) => state.faction);
   const multidraft = useDraftSetup((state) => state.multidraft);
 
-  const [sliceSettings, setSliceSettings] = useState<
-    Record<SliceSettingsFormatType, SliceGenerationSettings>
-  >({
-    milty: DEFAULT_SLICE_SETTINGS.milty,
-    miltyeq: DEFAULT_SLICE_SETTINGS.miltyeq,
-    heisen: DEFAULT_SLICE_SETTINGS.heisen,
-  });
+  const savedSliceSettings = useDraftSetup(
+    (state) => state.sliceGenerationSettings,
+  );
+  const setSliceGenerationSettings = useDraftSetup(
+    (state) => state.setSliceGenerationSettings,
+  );
+  const sliceSettings = {
+    ...DEFAULT_SLICE_SETTINGS,
+    ...savedSliceSettings,
+  };
 
   const [activeSettingsFormat, setActiveSettingsFormat] =
     useState<SliceSettingsFormatType>("milty");
@@ -390,10 +392,7 @@ export default function DraftPrechoice() {
         settings={sliceSettings[activeSettingsFormat]}
         onClose={closeSliceSettings}
         onSave={(newSettings) => {
-          setSliceSettings((prev) => ({
-            ...prev,
-            [activeSettingsFormat]: newSettings,
-          }));
+          setSliceGenerationSettings(activeSettingsFormat, newSettings);
         }}
       />
 

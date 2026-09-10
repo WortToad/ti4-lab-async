@@ -46,8 +46,17 @@ export function DraftTurnStatus({
   const identity = `${roomKey}:${playerId}`;
 
   useEffect(() => {
-    setSound(isAudioAlertEnabled());
-    setBrowser(browserAlertsEnabled());
+    const refreshPreferences = () => {
+      setSound(isAudioAlertEnabled());
+      setBrowser(browserAlertsEnabled());
+    };
+    refreshPreferences();
+    window.addEventListener("storage", refreshPreferences);
+    window.addEventListener("focus", refreshPreferences);
+    return () => {
+      window.removeEventListener("storage", refreshPreferences);
+      window.removeEventListener("focus", refreshPreferences);
+    };
   }, []);
 
   useEffect(() => {
@@ -86,17 +95,25 @@ export function DraftTurnStatus({
   const toggleBrowser = async (enabled: boolean) => {
     if (!enabled) {
       setBrowserAlertsEnabled(false);
-      setBrowser(false);
-      setPermissionMessage("");
+      const stillEnabled = browserAlertsEnabled();
+      setBrowser(stillEnabled);
+      setPermissionMessage(
+        stillEnabled
+          ? "Your browser could not save this preference. Allow site storage and try again."
+          : "",
+      );
       return;
     }
     const permission = await requestNotificationPermission();
     const allowed = permission === "granted";
     setBrowserAlertsEnabled(allowed);
-    setBrowser(allowed);
+    const saved = browserAlertsEnabled();
+    setBrowser(saved);
     setPermissionMessage(
       allowed
-        ? ""
+        ? saved
+          ? ""
+          : "Your browser could not save this preference. Allow site storage and try again."
         : "Browser alerts are unavailable or blocked. You can allow notifications in this site's browser settings.",
     );
   };

@@ -117,6 +117,7 @@ export function LobbyPanel({
   const [renameName, setRenameName] = useState("");
   const [storageError, setStorageError] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [readingFile, setReadingFile] = useState(false);
   const [confirmation, setConfirmation] = useState<{
     title: string;
     description: string;
@@ -127,6 +128,7 @@ export function LobbyPanel({
   const detailsId = useId();
   const recovered = useRef(new Set<string>());
   const downloaded = useRef<string | null>(null);
+  const resetImportFile = useRef<() => void>(null);
   const storageKey = `ti4-lobby:${mode}:${lobbyId}`;
   const lobbyPath =
     mode === "base" ? `/draft/${lobbyId}` : `/draft/${mode}/${lobbyId}`;
@@ -140,12 +142,24 @@ export function LobbyPanel({
     setLobbyUrl(appUrl(lobbyPath));
   }, [lobbyPath]);
   useEffect(() => {
+    let failed = false;
+    for (const [role, key] of [
+      ["player", lobby.ownUuid],
+      ["admin", lobby.adminUuid],
+    ]) {
+      if (!key) continue;
+      try {
+        localStorage.setItem(`${storageKey}:${role}`, key);
+      } catch {
+        failed = true;
+      }
+    }
+    setStorageError(failed);
+  }, [storageKey, lobby.ownUuid, lobby.adminUuid]);
+  useEffect(() => {
+    if (busy) return;
+    // A full storage quota can block writes while saved recovery codes remain readable.
     try {
-      if (lobby.ownUuid)
-        localStorage.setItem(`${storageKey}:player`, lobby.ownUuid);
-      if (lobby.adminUuid)
-        localStorage.setItem(`${storageKey}:admin`, lobby.adminUuid);
-      if (busy) return;
       const savedAdmin = !isAdmin
         ? localStorage.getItem(`${storageKey}:admin`)
         : null;
@@ -163,15 +177,7 @@ export function LobbyPanel({
     } catch {
       setStorageError(true);
     }
-  }, [
-    storageKey,
-    lobby.ownUuid,
-    lobby.adminUuid,
-    ownPlayerId,
-    isAdmin,
-    busy,
-    onOperation,
-  ]);
+  }, [storageKey, ownPlayerId, isAdmin, busy, onOperation]);
   useEffect(() => {
     if (exportState && downloaded.current !== exportState) {
       downloaded.current = exportState;
@@ -261,8 +267,9 @@ export function LobbyPanel({
         )}
         {storageError && (
           <Alert color="orange">
-            This browser could not remember your access. Copy or download your
-            recovery code from Recovery & access before leaving.
+            {lobby.ownUuid || lobby.adminUuid
+              ? "This browser could not save a backup of your access. Copy or download your recovery code from Recovery & access before leaving."
+              : "This browser could not restore saved access automatically. If you already joined, paste your recovery code below."}
           </Alert>
         )}
         <Collapse in={showDetails} id={detailsId}>
@@ -367,8 +374,8 @@ export function LobbyPanel({
                       : "You are ready. The admin can start once everyone has joined."}
                   </Text>
                   <Text size="sm">
-                    This browser remembers you. Save your recovery code below if
-                    you want to return on another device.
+                    Save your recovery code below to return on another device or
+                    after clearing browser data.
                   </Text>
                 </Stack>
               </Alert>
@@ -426,6 +433,9 @@ export function LobbyPanel({
                             description="Paste your saved code to return to the same player or admin role."
                             placeholder="Paste your recovery code"
                             autoComplete="off"
+                            autoCapitalize="none"
+                            spellCheck={false}
+                            maxLength={128}
                             value={uuid}
                             onChange={(event) =>
                               setUuid(event.currentTarget.value)
@@ -554,7 +564,7 @@ export function LobbyPanel({
                         <form
                           onSubmit={(event) => {
                             event.preventDefault();
-                            if (renameId !== null && renameName.trim())
+                            if (!busy && renameId !== null && renameName.trim())
                               onOperation({
                                 type: "rename",
                                 playerId: Number(renameId),
@@ -566,7 +576,15 @@ export function LobbyPanel({
                             <Select
                               label="Rename player"
                               value={renameId}
-                              onChange={setRenameId}
+                              onChange={(value) => {
+                                setRenameId(value);
+                                setRenameName(
+                                  lobby.slots.find(
+                                    (slot) => String(slot.id) === value,
+                                  )?.name ?? "",
+                                );
+                              }}
+                              disabled={busy}
                               data={lobby.slots
                                 .filter((s) => s.claimed)
                                 .map((s) => ({
@@ -582,6 +600,7 @@ export function LobbyPanel({
                                 setRenameName(event.currentTarget.value)
                               }
                               maxLength={60}
+                              disabled={busy || renameId === null}
                               style={{ flex: "1 1 160px" }}
                             />
                             <Button
@@ -701,9 +720,14 @@ export function LobbyPanel({
                           label="Import a saved state"
                           placeholder="Choose a .ti4-state.json file"
                           accept=".json,application/json,text/plain"
-                          disabled={busy}
-                          clearable
+                          disabled={busy || readingFile}
+                          description={
+                            readingFile ? "Reading save file…" : undefined
+                          }
+                          value={null}
+                          resetRef={resetImportFile}
                           onChange={async (file) => {
+                            resetImportFile.current?.();
                             setFileError(null);
                             if (!file) return;
                             if (file.size > 8 * 1024 * 1024) {
@@ -712,6 +736,7 @@ export function LobbyPanel({
                               );
                               return;
                             }
+                            setReadingFile(true);
                             try {
                               const state = await file.text();
                               confirm(
@@ -723,6 +748,8 @@ export function LobbyPanel({
                               setFileError(
                                 "The save file could not be read. Try selecting it again.",
                               );
+                            } finally {
+                              setReadingFile(false);
                             }
                           }}
                         />

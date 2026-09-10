@@ -9,6 +9,7 @@ import {
   Box,
   Stack,
   Tooltip,
+  UnstyledButton,
 } from "@mantine/core";
 import { CompactSetting } from "~/components/CompactSetting";
 import { SettingsSection } from "~/components/SettingsSection";
@@ -201,10 +202,11 @@ export function SliceSettingsModal({
   const [localSettings, setLocalSettings] =
     useState<SliceGenerationSettings>(settings);
 
-  // Sync local state when settings or formatType changes
+  // Reopening starts from saved settings, including after Escape/backdrop close.
   useEffect(() => {
+    if (!opened) return;
     setLocalSettings(settings);
-  }, [settings, formatType]);
+  }, [opened, settings, formatType]);
 
   const defaults = DEFAULT_SLICE_SETTINGS[formatType];
   const disabledFields = DISABLED_FIELDS[formatType];
@@ -470,14 +472,9 @@ export function SliceSettingsModal({
         pt="md"
         style={{ borderTop: "1px solid var(--mantine-color-default-border)" }}
       >
-        <Text
-          size="xs"
-          c="dimmed"
-          style={{ cursor: "pointer" }}
-          onClick={handleReset}
-        >
-          Reset to defaults
-        </Text>
+        <UnstyledButton onClick={handleReset}>
+          <Text size="xs" c="dimmed">Reset to defaults</Text>
+        </UnstyledButton>
         <Group gap="xs">
           <Button
             variant="default"

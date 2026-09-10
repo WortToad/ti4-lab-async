@@ -34,7 +34,8 @@ export function BuildableSlice({
         <Group gap={4}>
           <Button
             size="xs"
-            onMouseDown={onRandomizeSlice}
+            onClick={onRandomizeSlice}
+            aria-label={`Randomize ${slice.name}`}
             color="gray.7"
             variant="filled"
           >
@@ -42,7 +43,8 @@ export function BuildableSlice({
           </Button>
           <Button
             size="xs"
-            onMouseDown={onClearSlize}
+            onClick={onClearSlize}
+            aria-label={`Clear ${slice.name}`}
             variant="filled"
             color="red.9"
           >

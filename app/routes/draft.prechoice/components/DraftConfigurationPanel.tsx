@@ -111,6 +111,7 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
                       faction.numFactions <= factionConstraints.minNumFactions
                     }
                     onClick={faction.decrementNumFactions}
+                    aria-label="Decrease factions in pool"
                   >
                     -
                   </Button>
@@ -126,6 +127,7 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
                       faction.numFactions >= factionConstraints.maxNumFactions
                     }
                     onClick={faction.incrementNumFactions}
+                    aria-label="Increase factions in pool"
                   >
                     +
                   </Button>
@@ -163,6 +165,7 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
                     color="gray"
                     disabled={slices.numSlices <= playerCount}
                     onClick={() => slices.setNumSlices(slices.numSlices - 1)}
+                    aria-label="Decrease slices in pool"
                   >
                     -
                   </Button>
@@ -175,6 +178,7 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
                     color="gray"
                     disabled={slices.numSlices >= maxSlices}
                     onClick={() => slices.setNumSlices(slices.numSlices + 1)}
+                    aria-label="Increase slices in pool"
                   >
                     +
                   </Button>

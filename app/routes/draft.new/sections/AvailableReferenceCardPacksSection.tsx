@@ -24,7 +24,8 @@ export function AvailableReferenceCardPacksSection() {
       <SectionTitle title="Faction Reference Cards">
         <Button
           size="xs"
-          onMouseDown={randomizeReferenceCardPacks}
+          onClick={randomizeReferenceCardPacks}
+          aria-label="Randomize faction reference cards"
           color="gray.7"
           variant="filled"
           disabled={usesPresetPacks}

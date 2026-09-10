@@ -22,7 +22,7 @@ import {
   IconPlus,
   IconAlien,
 } from "@tabler/icons-react";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { factions } from "~/data/factionData";
 import { FactionId, FactionStratification, GameSet } from "~/types";
 
@@ -110,7 +110,7 @@ export function FactionSettingsModal({
   const handleSave = () => {
     // Remove any keys that have a value of 0
     let config = Object.fromEntries(
-      Object.entries(stratifiedConfig ?? {}).filter(([_, value]) => value > 0),
+      Object.entries(stratifiedConfig ?? {}).filter(([, value]) => value > 0),
     ) as FactionStratification | undefined;
 
     if (Object.keys(config!).length === 0) {
@@ -186,52 +186,6 @@ export function FactionSettingsModal({
     factionGameSets.includes("discordantexp");
 
   const showStratification = hasBasePok && (hasTE || hasDiscordant);
-
-  // Compact inline stepper for stratification
-  const StratStepper = ({
-    label,
-    value,
-    onDecrease,
-    onIncrease,
-    decreaseDisabled,
-    increaseDisabled,
-  }: {
-    label: string;
-    value: number;
-    onDecrease: () => void;
-    onIncrease: () => void;
-    decreaseDisabled: boolean;
-    increaseDisabled: boolean;
-  }) => (
-    <Group gap={4} wrap="nowrap">
-      <Text size="xs" c="dimmed">
-        {label}
-      </Text>
-      <Group gap={2}>
-        <ActionIcon
-          size="xs"
-          variant="subtle"
-          color="gray"
-          disabled={decreaseDisabled}
-          onMouseDown={onDecrease}
-        >
-          <IconMinus size={12} />
-        </ActionIcon>
-        <Text size="xs" fw={600} ta="center" miw={18} c={value > 0 ? "purple.3" : "dimmed"}>
-          {value}
-        </Text>
-        <ActionIcon
-          size="xs"
-          variant="subtle"
-          color="gray"
-          disabled={increaseDisabled}
-          onMouseDown={onIncrease}
-        >
-          <IconPlus size={12} />
-        </ActionIcon>
-      </Group>
-    </Group>
-  );
 
   return (
     <Modal
@@ -342,7 +296,14 @@ export function FactionSettingsModal({
                     {gameSetLabel[gameSet]}
                   </Text>
                   <Badge size="xs" variant="light" color="gray">
-                    {factionIds.filter((id) => allowedFactions.includes(id) || requiredFactions.includes(id)).length}/{factionIds.length}
+                    {
+                      factionIds.filter(
+                        (id) =>
+                          allowedFactions.includes(id) ||
+                          requiredFactions.includes(id),
+                      ).length
+                    }
+                    /{factionIds.length}
                   </Badge>
                 </Group>
 
@@ -376,6 +337,7 @@ export function FactionSettingsModal({
                       >
                         <Checkbox
                           size="xs"
+                          aria-label={`Allow ${factions[factionId].name}`}
                           checked={allowed || required}
                           disabled={required}
                           onChange={() => {
@@ -404,7 +366,9 @@ export function FactionSettingsModal({
                           {factions[factionId].name}
                         </Text>
                         <Tooltip
-                          label={required ? "Remove from required" : "Force include"}
+                          label={
+                            required ? "Remove from required" : "Force include"
+                          }
                           position="top"
                           withArrow
                         >
@@ -412,7 +376,9 @@ export function FactionSettingsModal({
                             size="xs"
                             variant={required ? "filled" : "subtle"}
                             color={required ? "green" : "gray"}
-                            onMouseDown={() => {
+                            aria-label={`${required ? "Stop requiring" : "Require"} ${factions[factionId].name}`}
+                            aria-pressed={required}
+                            onClick={() => {
                               if (required) {
                                 setRequiredFactions((f) =>
                                   f.filter((id) => id !== factionId),
@@ -465,7 +431,7 @@ export function FactionSettingsModal({
           <Button
             size="sm"
             leftSection={<IconCheck size={14} />}
-            onMouseDown={handleSave}
+            onClick={handleSave}
           >
             {buttonText}
           </Button>
@@ -487,3 +453,57 @@ const validateStratifiedConfig = (
   );
   return numFactions >= numPlayers;
 };
+
+// Compact inline stepper for stratification
+const StratStepper = ({
+  label,
+  value,
+  onDecrease,
+  onIncrease,
+  decreaseDisabled,
+  increaseDisabled,
+}: {
+  label: string;
+  value: number;
+  onDecrease: () => void;
+  onIncrease: () => void;
+  decreaseDisabled: boolean;
+  increaseDisabled: boolean;
+}) => (
+  <Group gap={4} wrap="nowrap">
+    <Text size="xs" c="dimmed">
+      {label}
+    </Text>
+    <Group gap={2}>
+      <ActionIcon
+        size="xs"
+        variant="subtle"
+        color="gray"
+        disabled={decreaseDisabled}
+        onClick={onDecrease}
+        aria-label={`Decrease ${label} factions`}
+      >
+        <IconMinus size={12} />
+      </ActionIcon>
+      <Text
+        size="xs"
+        fw={600}
+        ta="center"
+        miw={18}
+        c={value > 0 ? "purple.3" : "dimmed"}
+      >
+        {value}
+      </Text>
+      <ActionIcon
+        size="xs"
+        variant="subtle"
+        color="gray"
+        disabled={increaseDisabled}
+        onClick={onIncrease}
+        aria-label={`Increase ${label} factions`}
+      >
+        <IconPlus size={12} />
+      </ActionIcon>
+    </Group>
+  </Group>
+);

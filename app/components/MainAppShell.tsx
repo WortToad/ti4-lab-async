@@ -48,10 +48,7 @@ function NavItem({
       data-mobile={mobile || undefined}
     >
       <Box className={classes.navItemIndicator} />
-      <Text
-        size="sm"
-        fw={isActive ? 600 : 500}
-      >
+      <Text size="sm" fw={isActive ? 600 : 500}>
         {label}
       </Text>
       {badge && (
@@ -69,7 +66,12 @@ function NavItem({
 
   if (to) {
     return (
-      <UnstyledButton component={Link} to={to} onClick={onClick}>
+      <UnstyledButton
+        component={Link}
+        to={to}
+        onClick={onClick}
+        aria-current={isActive ? "page" : undefined}
+      >
         {content}
       </UnstyledButton>
     );
@@ -84,6 +86,16 @@ export function MainAppShell({ children, headerRightSection }: Props) {
   const isMapGeneratorActive = location.pathname === "/map-generator";
 
   const menuItems = [
+    {
+      to: "/draft/prechoice",
+      label: "New Draft",
+      isActive: ["/draft/prechoice", "/draft/new"].includes(location.pathname),
+    },
+    {
+      to: "/draft/rejoin",
+      label: "Rejoin Draft",
+      isActive: location.pathname === "/draft/rejoin",
+    },
     {
       to: "/map-generator",
       label: "Map Generator",
@@ -127,14 +139,13 @@ export function MainAppShell({ children, headerRightSection }: Props) {
             onClick={() => setMobileMenuOpened(!mobileMenuOpened)}
             size="sm"
             aria-label="Toggle navigation"
+            aria-expanded={mobileMenuOpened}
             className={classes.burger}
           />
-          <nav className={classes.desktopMenu}>
+          <nav className={classes.desktopMenu} aria-label="Main navigation">
             <Group gap={0}>{renderMenuItems()}</Group>
             <div style={{ flex: 1 }} />
-            <Group gap="xs">
-              {headerRightSection}
-            </Group>
+            <Group gap="xs">{headerRightSection}</Group>
           </nav>
         </Group>
       </AppShell.Header>
@@ -165,9 +176,7 @@ export function MainAppShell({ children, headerRightSection }: Props) {
           },
         }}
       >
-        <Stack gap="xs">
-          {renderMenuItems(true)}
-        </Stack>
+        <Stack gap="xs">{renderMenuItems(true)}</Stack>
         {headerRightSection && <Box mt="xl">{headerRightSection}</Box>}
       </Drawer>
 

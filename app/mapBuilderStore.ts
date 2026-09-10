@@ -1,5 +1,14 @@
 import { create } from "zustand";
-import { FactionId, GameSet, Map, SystemId, HomeTile, OpenTile, SystemTile, ClosedTile } from "~/types";
+import {
+  FactionId,
+  GameSet,
+  Map,
+  SystemId,
+  HomeTile,
+  OpenTile,
+  SystemTile,
+  ClosedTile,
+} from "~/types";
 import { systemData } from "~/data/systemData";
 import { getSystemPool } from "~/utils/system";
 import {
@@ -10,11 +19,11 @@ import {
 import {
   generateHexRings,
   getTileCount,
-  getRingForIndex,
   getRingIndices,
   findClosestOnRing,
   findAvailableOnRing,
 } from "~/utils/hexCoordinates";
+import { encodeMapString } from "~/mapgen/utils/mapStringCodec";
 
 type PlanetFinderModal = {
   mode: "map";
@@ -35,7 +44,13 @@ type MapBuilderState = {
 };
 
 type MapBuilderActions = {
-  addSystemToMap: (tileIdx: number, systemId: SystemId, rotation?: number) => void;
+  undo: () => void;
+  redo: () => void;
+  addSystemToMap: (
+    tileIdx: number,
+    systemId: SystemId,
+    rotation?: number,
+  ) => void;
   removeSystemFromMap: (tileIdx: number) => void;
   swapTiles: (originIdx: number, destIdx: number) => void;
   clearMap: () => void;
@@ -51,12 +66,30 @@ type MapBuilderActions = {
   toggleTileClosed: (idx: number) => void;
   addHomeSystem: () => void;
   removeHomeSystem: () => void;
-  loadDecodedMap: (map: Map, ringCount: number, gameSets: GameSet[]) => void;
+  loadDecodedMap: (
+    map: Map,
+    ringCount: number,
+    gameSets: GameSet[],
+    configId?: string,
+    recordHistory?: boolean,
+  ) => void;
 };
+
+type MapSnapshot = Pick<
+  MapBuilderState,
+  "map" | "ringCount" | "mapConfigId" | "gameSets" | "systemPool"
+>;
+
+function snapshot(state: MapBuilderState): MapSnapshot {
+  const { map, ringCount, mapConfigId, gameSets, systemPool } = state;
+  return { map, ringCount, mapConfigId, gameSets, systemPool };
+}
 
 type MapBuilderStore = {
   state: MapBuilderState;
   actions: MapBuilderActions;
+  past: MapSnapshot[];
+  future: MapSnapshot[];
   // Expose for PlanetFinder compatibility
   planetFinderModal: PlanetFinderModal;
   systemPool: SystemId[];
@@ -68,7 +101,52 @@ type MapBuilderStore = {
   };
 };
 
-export const useMapBuilder = create<MapBuilderStore>((set, get) => {
+export const useMapBuilder = create<MapBuilderStore>((setStore, get) => {
+  // Record complete edits, excluding transient hover and picker state.
+  const set = (update: (store: MapBuilderStore) => MapBuilderStore) => {
+    setStore((store) => {
+      const next = update(store);
+      if (
+        next.state.map === store.state.map &&
+        next.state.gameSets === store.state.gameSets &&
+        next.state.mapConfigId === store.state.mapConfigId &&
+        next.state.ringCount === store.state.ringCount
+      )
+        return next;
+      return {
+        ...next,
+        past: [...store.past.slice(-49), snapshot(store.state)],
+        future: [],
+      };
+    });
+  };
+
+  const restore = (direction: "undo" | "redo") => {
+    setStore((store) => {
+      const source = direction === "undo" ? store.past : store.future;
+      const previous = source.at(-1);
+      if (!previous) return store;
+      return {
+        ...store,
+        state: {
+          ...store.state,
+          ...previous,
+          planetFinderModal: null,
+          hoveredHomeIdx: null,
+        },
+        systemPool: previous.systemPool,
+        planetFinderModal: null,
+        past:
+          direction === "undo"
+            ? store.past.slice(0, -1)
+            : [...store.past, snapshot(store.state)],
+        future:
+          direction === "redo"
+            ? store.future.slice(0, -1)
+            : [...store.future, snapshot(store.state)],
+      };
+    });
+  };
   const initialGameSets: GameSet[] = ["base", "pok", "te"];
   const systemPool = getSystemPool(initialGameSets);
   const initialMapConfigId = defaultMapConfigId;
@@ -76,6 +154,8 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
   const initialRingCount = mapConfigs[initialMapConfigId].mapSize;
 
   return {
+    past: [],
+    future: [],
     state: {
       map: initialMap,
       planetFinderModal: null,
@@ -100,8 +180,16 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
     },
 
     actions: {
-      addSystemToMap: (tileIdx: number, systemId: SystemId, rotation?: number) => {
+      undo: () => restore("undo"),
+      redo: () => restore("redo"),
+      addSystemToMap: (
+        tileIdx: number,
+        systemId: SystemId,
+        rotation?: number,
+      ) => {
         set((store) => {
+          if (tileIdx === 0 || !store.state.map[tileIdx] || systemId === "18")
+            return store;
           const newMap = [...store.state.map];
           const system = systemData[systemId];
 
@@ -145,7 +233,7 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
       removeSystemFromMap: (tileIdx: number) => {
         set((store) => {
           // Don't remove Mecatol Rex
-          if (tileIdx === 0) {
+          if (tileIdx === 0 || !store.state.map[tileIdx]) {
             return store;
           }
 
@@ -170,7 +258,13 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
       swapTiles: (originIdx: number, destIdx: number) => {
         set((store) => {
           // Protect Mecatol Rex (index 0)
-          if (originIdx === 0 || destIdx === 0) {
+          if (
+            originIdx === destIdx ||
+            originIdx === 0 ||
+            destIdx === 0 ||
+            !store.state.map[originIdx] ||
+            !store.state.map[destIdx]
+          ) {
             return store;
           }
 
@@ -209,6 +303,7 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
             state: {
               ...store.state,
               map: newMap,
+              ringCount: config.mapSize,
             },
           };
         });
@@ -236,7 +331,12 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
         set((store) => {
           const currentRingCount = store.state.ringCount;
           if (newRingCount === currentRingCount) return store;
-          if (newRingCount < 2 || newRingCount > 5) return store;
+          if (
+            !Number.isInteger(newRingCount) ||
+            newRingCount < 2 ||
+            newRingCount > 5
+          )
+            return store;
 
           const currentMap = store.state.map;
           const newTileCount = getTileCount(newRingCount);
@@ -297,8 +397,16 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
 
             for (const { seat, oldIdx } of displacedHomes) {
               const oldCoord = oldCoords[oldIdx];
-              const closestIdx = findClosestOnRing(oldCoord, newRingCount, coords);
-              const availableIdx = findAvailableOnRing(closestIdx, newRingCount, occupiedIndices);
+              const closestIdx = findClosestOnRing(
+                oldCoord,
+                newRingCount,
+                coords,
+              );
+              const availableIdx = findAvailableOnRing(
+                closestIdx,
+                newRingCount,
+                occupiedIndices,
+              );
 
               if (availableIdx !== -1) {
                 // Convert the target position to a HOME tile
@@ -434,7 +542,7 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
       toggleTileClosed: (idx: number) => {
         set((store) => {
           // Cannot close Mecatol Rex (idx 0)
-          if (idx === 0) return store;
+          if (idx === 0 || !store.state.map[idx]) return store;
 
           // Cannot close HOME tiles
           const tile = store.state.map[idx];
@@ -473,8 +581,12 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
           const ringCount = store.state.ringCount;
 
           // Find current home systems and get next seat number
-          const homeTiles = currentMap.filter((tile) => tile.type === "HOME") as HomeTile[];
-          const nextSeat = homeTiles.length;
+          const homeTiles = currentMap.filter(
+            (tile) => tile.type === "HOME",
+          ) as HomeTile[];
+          const usedSeats = new Set(homeTiles.map((tile) => tile.seat));
+          let nextSeat = 0;
+          while (usedSeats.has(nextSeat)) nextSeat++;
 
           // Find candidate tiles to convert to home (prioritize OPEN, then SYSTEM)
           // Prefer tiles on the outer ring
@@ -483,35 +595,36 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
           // First, try to find an OPEN tile on the outer ring
           let targetIdx = -1;
           const outerOpenTiles = outerRingIndices.filter(
-            (idx) => currentMap[idx].type === "OPEN"
+            (idx) => currentMap[idx].type === "OPEN",
           );
 
           if (outerOpenTiles.length > 0) {
-            targetIdx = outerOpenTiles[Math.floor(Math.random() * outerOpenTiles.length)];
+            targetIdx =
+              outerOpenTiles[Math.floor(Math.random() * outerOpenTiles.length)];
           } else {
             // Try any OPEN tile (excluding Mecatol Rex and closed tiles)
             const allOpenTiles = currentMap
               .map((tile, idx) => ({ tile, idx }))
-              .filter(
-                ({ tile, idx }) =>
-                  tile.type === "OPEN" &&
-                  idx !== 0
-              )
+              .filter(({ tile, idx }) => tile.type === "OPEN" && idx !== 0)
               .map(({ idx }) => idx);
 
             if (allOpenTiles.length > 0) {
-              targetIdx = allOpenTiles[Math.floor(Math.random() * allOpenTiles.length)];
+              targetIdx =
+                allOpenTiles[Math.floor(Math.random() * allOpenTiles.length)];
             } else {
               // Last resort: pick a random SYSTEM tile on outer ring (not Mecatol)
               const outerSystemTiles = outerRingIndices.filter(
                 (idx) =>
                   currentMap[idx].type === "SYSTEM" &&
                   idx !== 0 &&
-                  (currentMap[idx] as SystemTile).systemId !== "18"
+                  (currentMap[idx] as SystemTile).systemId !== "18",
               );
 
               if (outerSystemTiles.length > 0) {
-                targetIdx = outerSystemTiles[Math.floor(Math.random() * outerSystemTiles.length)];
+                targetIdx =
+                  outerSystemTiles[
+                    Math.floor(Math.random() * outerSystemTiles.length)
+                  ];
               } else {
                 // Try any SYSTEM tile
                 const allSystemTiles = currentMap
@@ -520,12 +633,15 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
                     ({ tile, idx }) =>
                       tile.type === "SYSTEM" &&
                       idx !== 0 &&
-                      (tile as SystemTile).systemId !== "18"
+                      (tile as SystemTile).systemId !== "18",
                   )
                   .map(({ idx }) => idx);
 
                 if (allSystemTiles.length > 0) {
-                  targetIdx = allSystemTiles[Math.floor(Math.random() * allSystemTiles.length)];
+                  targetIdx =
+                    allSystemTiles[
+                      Math.floor(Math.random() * allSystemTiles.length)
+                    ];
                 }
               }
             }
@@ -564,7 +680,10 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
           // Find home systems
           const homeTiles = currentMap
             .map((tile, idx) => ({ tile, idx }))
-            .filter(({ tile }) => tile.type === "HOME") as { tile: HomeTile; idx: number }[];
+            .filter(({ tile }) => tile.type === "HOME") as {
+            tile: HomeTile;
+            idx: number;
+          }[];
 
           if (homeTiles.length <= 1) {
             // Don't remove if only 1 or 0 homes remain
@@ -573,7 +692,7 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
 
           // Find the home with the highest seat number
           const homeToRemove = homeTiles.reduce((max, current) =>
-            (current.tile.seat ?? 0) > (max.tile.seat ?? 0) ? current : max
+            (current.tile.seat ?? 0) > (max.tile.seat ?? 0) ? current : max,
           );
 
           const newMap = [...currentMap];
@@ -594,19 +713,37 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
         });
       },
 
-      loadDecodedMap: (map: Map, ringCount: number, gameSets: GameSet[]) => {
-        set((store) => {
+      loadDecodedMap: (
+        map: Map,
+        ringCount: number,
+        gameSets: GameSet[],
+        configId?: string,
+        recordHistory = true,
+      ) => {
+        const mapConfigId =
+          configId && Object.hasOwn(mapConfigs, configId)
+            ? configId
+            : defaultMapConfigId;
+        (recordHistory ? set : setStore)((store) => {
+          if (
+            !recordHistory &&
+            store.state.ringCount === ringCount &&
+            store.state.mapConfigId === mapConfigId &&
+            JSON.stringify(store.state.gameSets) === JSON.stringify(gameSets) &&
+            encodeMapString(store.state.map) === encodeMapString(map)
+          )
+            return store;
           const newSystemPool = getSystemPool(gameSets);
           return {
             ...store,
+            ...(!recordHistory ? { past: [], future: [] } : {}),
             state: {
               ...store.state,
               map,
               ringCount,
               gameSets,
               systemPool: newSystemPool,
-              // Reset to default mapConfigId since we're loading a custom map
-              mapConfigId: defaultMapConfigId,
+              mapConfigId,
             },
             systemPool: newSystemPool,
           };

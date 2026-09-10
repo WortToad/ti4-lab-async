@@ -24,6 +24,7 @@ export function NewDraftFaction({
 
   return (
     <Group
+      component={isSelectable ? "label" : "div"}
       gap="xs"
       className={classes.factionCard}
       data-selectable={isSelectable || undefined}
@@ -32,7 +33,6 @@ export function NewDraftFaction({
       py={6}
       wrap="nowrap"
       style={{ cursor: isSelectable ? "pointer" : undefined }}
-      onMouseDown={isSelectable ? () => onCheck(!checked) : undefined}
     >
       <Box className={classes.indicator} />
       <FactionIcon
@@ -48,7 +48,9 @@ export function NewDraftFaction({
           variant="subtle"
           color="gray"
           className={classes.removeButton}
-          onMouseDown={(e) => {
+          aria-label={`Remove ${faction.name}`}
+          onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             onRemove();
           }}
@@ -62,7 +64,8 @@ export function NewDraftFaction({
           radius="xl"
           size="sm"
           checked={checked}
-          onChange={() => onCheck(!checked)}
+          aria-label={`Include ${faction.name}`}
+          onChange={(event) => onCheck(event.currentTarget.checked)}
         />
       )}
     </Group>

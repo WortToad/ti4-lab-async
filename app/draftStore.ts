@@ -870,7 +870,10 @@ export const draftStore = createStore<DraftV2State>()(
 
       removeLastMinorFaction: () =>
         set(({ draft }) => {
-          if (!draft.availableMinorFactions) return;
+          if (
+            !draft.availableMinorFactions ||
+            draft.availableMinorFactions.length <= draft.players.length
+          ) return;
           const availableMinorFactions = draft.availableMinorFactions?.slice(
             0,
             -1,
@@ -881,12 +884,14 @@ export const draftStore = createStore<DraftV2State>()(
 
       removeMinorFaction: (id: FactionId) =>
         set(({ draft }) => {
-          if (!draft.availableMinorFactions) return;
-          draft.settings.numMinorFactions =
-            draft.availableMinorFactions.length - 1;
+          if (
+            !draft.availableMinorFactions?.includes(id) ||
+            draft.availableMinorFactions.length <= draft.players.length
+          ) return;
           draft.availableMinorFactions = draft.availableMinorFactions.filter(
             (f) => f !== id,
           );
+          draft.settings.numMinorFactions = draft.availableMinorFactions.length;
         }),
 
       randomizeReferenceCardPacks: () =>

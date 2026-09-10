@@ -39,13 +39,18 @@ export function SlicesSection() {
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const [, originSliceIdx, originTileIdx] = String(event.active!.id).split("-");
-    const [, destSliceIdx, destTileIdx] = String(event.over!.id).split("-");
+    setDraggingSlice(undefined);
+    if (!event.over || !event.active.data.current || !event.over.data.current)
+      return;
+    const [, originSliceIdx, originTileIdx] = String(event.active.id).split(
+      "-",
+    );
+    const [, destSliceIdx, destTileIdx] = String(event.over.id).split("-");
 
-    const destTile: Tile = event.over!.data.current!.tile;
-    const originTile: Tile = event.active!.data.current!.tile;
+    const destTile: Tile | undefined = event.over.data.current.tile;
+    const originTile: Tile | undefined = event.active.data.current.tile;
 
-    if (destTile.type !== "SYSTEM" || originTile.type !== "SYSTEM") {
+    if (destTile?.type !== "SYSTEM" || originTile?.type !== "SYSTEM") {
       return;
     }
 
@@ -54,9 +59,16 @@ export function SlicesSection() {
 
     removeSystemFromSlice(parseInt(originSliceIdx), parseInt(originTileIdx));
     removeSystemFromSlice(parseInt(destSliceIdx), parseInt(destTileIdx));
-    addSystemToSlice(parseInt(destSliceIdx), parseInt(destTileIdx), originSystem);
-    addSystemToSlice(parseInt(originSliceIdx), parseInt(originTileIdx), destinationSystem);
-    setDraggingSlice(undefined);
+    addSystemToSlice(
+      parseInt(destSliceIdx),
+      parseInt(destTileIdx),
+      originSystem,
+    );
+    addSystemToSlice(
+      parseInt(originSliceIdx),
+      parseInt(originTileIdx),
+      destinationSystem,
+    );
   };
 
   const delayedPointerSensor = useSensor(PointerSensor, {
@@ -72,7 +84,7 @@ export function SlicesSection() {
         <SectionTitle title="Slices">
           <Group gap={4}>
             <Button
-              onMouseDown={() => {
+              onClick={() => {
                 if (config.generateMap !== undefined) {
                   randomizeAll();
                 } else {
@@ -96,6 +108,7 @@ export function SlicesSection() {
         <DndContext
           onDragEnd={handleDragEnd}
           onDragStart={handleDragStart}
+          onDragCancel={() => setDraggingSlice(undefined)}
           sensors={sensors}
         >
           {slices.map((slice, idx) => (

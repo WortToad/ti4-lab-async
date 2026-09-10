@@ -78,7 +78,8 @@ export function CompactSetting<T extends string>({
           variant="subtle"
           color="gray"
           disabled={decreaseDisabled}
-          onMouseDown={handleDecrease}
+          onClick={handleDecrease}
+          aria-label={`Decrease ${label}`}
         >
           <IconMinus size={14} />
         </ActionIcon>
@@ -98,7 +99,8 @@ export function CompactSetting<T extends string>({
           size="sm"
           variant="subtle"
           color="gray"
-          onMouseDown={handleIncrease}
+          onClick={handleIncrease}
+          aria-label={`Increase ${label}`}
         >
           <IconPlus size={14} />
         </ActionIcon>

@@ -107,6 +107,37 @@ describe("live draft refresh", () => {
 });
 
 describe("draft faction pool editing", () => {
+  it.each([3, 4, 5, 6, 7, 8])(
+    "keeps the separate minor pool at its %i-player minimum",
+    (count) => {
+      const actions = prepareDraft(count, count, {
+        numMinorFactions: count + 2,
+      });
+      const minorPool = factions.slice(count, count * 2 + 2);
+      const draft = structuredClone(draftStore.getState().draft);
+      draft.availableMinorFactions = minorPool;
+      draftStore.setState({ draft });
+
+      actions.removeLastMinorFaction();
+      actions.removeMinorFaction(minorPool[0]);
+      expect(draftStore.getState().draft.availableMinorFactions).toHaveLength(count);
+      actions.removeLastMinorFaction();
+      actions.removeMinorFaction(minorPool[1]);
+      expect(draftStore.getState().draft.availableMinorFactions).toHaveLength(count);
+      expect(draftStore.getState().draft.settings.numMinorFactions).toBe(count);
+    },
+  );
+
+  it("does not decrement the minor count when removing a faction outside its pool", () => {
+    const actions = prepareDraft(3, 3, { numMinorFactions: 4 });
+    const draft = structuredClone(draftStore.getState().draft);
+    draft.availableMinorFactions = factions.slice(3, 7);
+    draftStore.setState({ draft });
+    actions.removeMinorFaction(factions[0]);
+    expect(draftStore.getState().draft.settings.numMinorFactions).toBe(4);
+    expect(draftStore.getState().draft.availableMinorFactions).toHaveLength(4);
+  });
+
   it("excludes Keleres from minor-only pools and refuses to add an undefined minor when the pool is exhausted", () => {
     const actions = prepareDraft(3, 3, { numMinorFactions: 1 });
     draftStore.setState({ factionPool: ["hacan", "sol", "xxcha", "keleres"] });

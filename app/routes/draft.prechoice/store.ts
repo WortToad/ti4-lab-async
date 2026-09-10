@@ -21,6 +21,10 @@ import {
 } from "./validation";
 import { filterFactionList, getMaxAvailableSlices } from "./utils";
 import { referenceCardFactionPool } from "~/draft/twilightsFall/pools";
+import type {
+  SliceGenerationSettings,
+  SliceSettingsFormatType,
+} from "~/components/SliceSettingsModal";
 
 type ContentFlags = {
   // Base game
@@ -74,6 +78,13 @@ type DraftSetupStore = {
     numSlices: number;
     setNumSlices: (num: number) => void;
   };
+  sliceGenerationSettings: Partial<
+    Record<SliceSettingsFormatType, SliceGenerationSettings>
+  >;
+  setSliceGenerationSettings: (
+    format: SliceSettingsFormatType,
+    settings: SliceGenerationSettings,
+  ) => void;
   referenceCardPacks: {
     numReferenceCardPacks: number;
     setNumReferenceCardPacks: (num: number) => void;
@@ -333,6 +344,7 @@ export const useDraftSetup = create<DraftSetupStore>()(
         selectedMapType: "milty",
 
         setSelectedMapType: (mapType: ChoosableDraftType) => {
+          if (get().map.selectedMapType === mapType) return;
           setAndValidate((state) => {
             state.map.selectedMapType = mapType;
 
@@ -350,6 +362,12 @@ export const useDraftSetup = create<DraftSetupStore>()(
           });
         },
       },
+
+      sliceGenerationSettings: {},
+      setSliceGenerationSettings: (format, settings) =>
+        set((state) => {
+          state.sliceGenerationSettings[format] = settings;
+        }),
 
       slices: {
         numSlices: 6,

@@ -1,11 +1,17 @@
-import { useFetcher } from "react-router";
-import { createContext, useContext, useEffect } from "react";
+import { useFetcher, useRevalidator } from "react-router";
+import { createContext, useContext, useEffect, useRef } from "react";
 import { draftStore } from "~/draftStore";
 import { notifications } from "@mantine/notifications";
 import { FactionId, PlayerId, SimultaneousPickType } from "~/types";
 import { useDraftApiMutation } from "./useDraftApiMutation";
 
 type UndoResult = { success: boolean; removedSelection?: unknown };
+
+type SyncResult = {
+  success: boolean;
+  error?: string;
+  message?: string;
+};
 
 type SyncDraftContextValue = {
   syncDraft: () => Promise<void>;
@@ -49,40 +55,34 @@ export function useSyncDraft() {
 }
 
 export function useSyncDraftFetcher() {
-  const fetcher = useFetcher({ key: "sync-draft" });
+  const fetcher = useFetcher<SyncResult>({ key: "sync-draft" });
+  const revalidator = useRevalidator();
   const mutation = useDraftApiMutation();
+  const handledResult = useRef<SyncResult | undefined>(undefined);
 
   useEffect(() => {
-    const data = fetcher.data as {
-      success: boolean;
-      error?: string;
-      message?: string;
-      discordError?: boolean;
-      discordMessage?: string;
-      serverSelectionCount?: number;
-      clientSelectionCount?: number;
-    };
+    const data = fetcher.data;
+    if (fetcher.state !== "idle" || !data || handledResult.current === data)
+      return;
+    handledResult.current = data;
+    if (data.success !== false) return;
 
-    if (data?.success === false) {
-      // Handle out-of-sync error specifically
-      if (data.error === "out_of_sync") {
-        notifications.show({
-          id: "out-of-sync-error",
-          title: "Draft Out of Sync",
-          message: `${data.message} (Server: ${data.serverSelectionCount} picks, Your client: ${data.clientSelectionCount} picks). Refreshing...`,
-          color: "orange",
-          autoClose: 3000,
-        });
-        // Delay refresh slightly so user sees the notification
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
-      } else {
-        // Other errors - just reload
-        window.location.reload();
-      }
-    }
-  }, [fetcher.data]);
+    const outOfSync = data.error === "out_of_sync";
+    notifications.show({
+      id: "draft-sync-error",
+      title: outOfSync ? "The draft has changed" : "Could not save your choice",
+      message: outOfSync
+        ? "Another action changed the draft. Updating the board so you can review your next choice."
+        : data.message ||
+          data.error ||
+          "Your choice could not be saved. Please try again.",
+      color: outOfSync ? "orange" : "red",
+      autoClose: 6000,
+    });
+    // Rejected actions may skip automatic loader revalidation. Restore the
+    // authoritative board without discarding open controls or replay position.
+    void revalidator.revalidate();
+  }, [fetcher.data, fetcher.state, revalidator]);
 
   const stageSimultaneousPick = async (
     phase: SimultaneousPickType,
@@ -115,10 +115,21 @@ export function useSyncDraftFetcher() {
       const { draft, draftId } = draftStore.getState();
       if (!draft || !draftId) return;
 
-      fetcher.submit(
-        { id: draftId, draft },
-        { method: "POST", encType: "application/json" },
-      );
+      try {
+        await fetcher.submit(
+          { id: draftId, draft },
+          { method: "POST", encType: "application/json" },
+        );
+      } catch {
+        notifications.show({
+          id: "draft-sync-error",
+          title: "Could not save your choice",
+          message:
+            "Check your connection and wait for the board to update before trying again.",
+          color: "red",
+          autoClose: 6000,
+        });
+      }
     },
     stagePriorityValue: async (playerId: PlayerId, factionId: FactionId) => {
       await stageSimultaneousPick("priorityValue", playerId, factionId);
@@ -173,13 +184,12 @@ export function useSyncDraftFetcher() {
         if (error.error === "out_of_sync") {
           notifications.show({
             title: "Cannot Undo - Out of Sync",
-            message: `${error.message} Refreshing...`,
+            message:
+              "Another action changed the draft. Updating the board; review it before trying undo again.",
             color: "orange",
-            autoClose: 3000,
+            autoClose: 6000,
           });
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
+          void revalidator.revalidate();
         } else {
           notifications.show({
             title: "Error",
@@ -215,13 +225,12 @@ export function useSyncDraftFetcher() {
         if (error.error === "out_of_sync") {
           notifications.show({
             title: "Cannot Undo - Out of Sync",
-            message: `${error.message} Refreshing...`,
+            message:
+              "Another action changed the draft. Updating the board; review it before trying undo again.",
             color: "orange",
-            autoClose: 3000,
+            autoClose: 6000,
           });
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
+          void revalidator.revalidate();
         } else {
           notifications.show({
             title: "Error",

@@ -33,12 +33,12 @@ export function meta() {
 
 export async function action({ request }: ActionFunctionArgs) {
   const form = await request.formData();
-  const uuid = String(form.get("uuid") ?? "")
-    .trim()
-    .toLowerCase();
+  const submittedCode = String(form.get("uuid") ?? "");
+  const uuid = submittedCode.trim().toLowerCase();
   if (!validRecoveryToken(uuid))
     return data(
       {
+        uuid: submittedCode.slice(0, 128),
         error:
           "Enter your saved recovery code. Ask your lobby admin for a replacement if you have lost it.",
       },
@@ -52,6 +52,7 @@ export async function action({ request }: ActionFunctionArgs) {
   if (!found)
     return data(
       {
+        uuid: submittedCode.slice(0, 128),
         error:
           "This recovery code was not found. Check that you copied the whole code, or ask your lobby admin to recover or replace it.",
       },
@@ -83,7 +84,7 @@ export default function RejoinLobby() {
             {result.error}
           </Alert>
         )}
-        <LobbyRecovery defaultOpened />
+        <LobbyRecovery defaultOpened defaultRecoveryCode={result?.uuid} />
         <Button component={Link} to="/draft/prechoice" variant="subtle">
           Back to draft setup
         </Button>

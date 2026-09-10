@@ -12,6 +12,7 @@ import {
   TextInput,
   Textarea,
   Alert,
+  Tooltip,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
@@ -24,7 +25,7 @@ import { OriginalArtToggle } from "~/components/OriginalArtToggle";
 import { TileArtContext } from "~/contexts/TileArtContext";
 import { useSafeOutletContext } from "~/useSafeOutletContext";
 import { useState, useMemo, useEffect } from "react";
-import { Tile, GameSet } from "~/types";
+import { Tile, GameSet, Map as GalaxyMap } from "~/types";
 import {
   DndContext,
   DragEndEvent,
@@ -47,8 +48,10 @@ import {
   IconPlus,
   IconHexagonOff,
   IconFileExport,
+  IconArrowBackUp,
+  IconArrowForwardUp,
 } from "@tabler/icons-react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { draftConfig } from "~/draft/draftConfig";
 import {
   mapConfigToCompatibleDraftTypes,
@@ -59,10 +62,7 @@ import {
 } from "../utils/mapToDraft";
 import { autoCompleteMap } from "../utils/mapCompletion";
 import { useMapStats } from "../utils/mapStats";
-import {
-  encodeMapString,
-  decodeMapString,
-} from "../utils/mapStringCodec";
+import { encodeMapString, decodeMapString } from "../utils/mapStringCodec";
 import {
   encodeAsyncMapString,
   decodeAsyncMapString,
@@ -88,11 +88,15 @@ import { DraftTypeSelectionModal } from "./DraftTypeSelectionModal";
 import { MapStringImportExportModal } from "./MapStringImportExportModal";
 import { DraftType } from "~/draft/types";
 import { buildPresetDraftState } from "../utils/presetDraft";
+import { readSavedMap, saveMap } from "../utils/editorStorage";
+import { countMapLegalityViolations } from "../utils/mapLegality";
 
 function MapGeneratorContent() {
   const { originalArt } = useSafeOutletContext();
   const DragTile = originalArt ? OriginalArtTile : RawSystemTile;
   const navigate = useNavigate();
+  const location = useLocation();
+  const [savedLocally, setSavedLocally] = useState(true);
   const map = useMapBuilder((state) => state.state.map);
   const systemPool = useMapBuilder((state) => state.state.systemPool);
   const mapConfigId = useMapBuilder((state) => state.state.mapConfigId);
@@ -100,7 +104,11 @@ function MapGeneratorContent() {
   const ringCount = useMapBuilder((state) => state.state.ringCount);
   const hoveredHomeIdx = useMapBuilder((state) => state.state.hoveredHomeIdx);
   const closeTileMode = useMapBuilder((state) => state.state.closeTileMode);
+  const canUndo = useMapBuilder((state) => state.past.length > 0);
+  const canRedo = useMapBuilder((state) => state.future.length > 0);
   const {
+    undo,
+    redo,
     addSystemToMap,
     removeSystemFromMap,
     swapTiles,
@@ -187,8 +195,10 @@ function MapGeneratorContent() {
 
   const shareUrl = useMemo(() => {
     const encoded = encodeMapString(map);
-    return appUrl(`/map-generator?map=${encodeURIComponent(encoded)}`);
-  }, [map]);
+    return appUrl(
+      `/map-generator?map=${encodeURIComponent(encoded)}&layout=${encodeURIComponent(mapConfigId)}`,
+    );
+  }, [map, mapConfigId]);
 
   const imageUrl = useMemo(() => {
     const encoded = encodeMapString(map);
@@ -207,59 +217,31 @@ function MapGeneratorContent() {
   ).filter((i) => i !== 0 && map[i]?.type !== "CLOSED");
 
   const handleRandomize = () => {
-    // Get current map state - preserve hyperlanes and home systems
-    const currentMap = useMapBuilder.getState().state.map;
-
-    // Identify indices to preserve (hyperlanes and home systems)
-    const preserveIndices = new Set<number>();
-    preserveIndices.add(0); // Always preserve Mecatol Rex
-
-    currentMap.forEach((tile, idx) => {
-      if (tile.type === "HOME") {
-        preserveIndices.add(idx);
-      } else if (tile.type === "SYSTEM") {
-        const system = systemData[tile.systemId];
-        if (system?.type === "HYPERLANE") {
-          preserveIndices.add(idx);
-        }
-      }
-    });
-
-    // Clear non-preserved system tiles
-    currentMap.forEach((tile, idx) => {
-      if (tile.type === "SYSTEM" && !preserveIndices.has(idx)) {
-        removeSystemFromMap(idx);
-      }
-    });
-
-    // Get the partially cleared map
-    const partialMap = useMapBuilder.getState().state.map;
+    // Prepare a candidate without destroying the current map on failure.
+    const partialMap: GalaxyMap = map.map((tile) =>
+      tile.type === "SYSTEM" &&
+      tile.idx !== 0 &&
+      systemData[tile.systemId]?.type !== "HYPERLANE"
+        ? { idx: tile.idx, position: tile.position, type: "OPEN" }
+        : tile,
+    );
     const completedMap = autoCompleteMap(partialMap, systemPool);
-
     if (completedMap) {
-      completedMap.forEach((tile, idx) => {
-        // Only add to non-preserved positions
-        if (tile.type === "SYSTEM" && !preserveIndices.has(idx)) {
-          addSystemToMap(idx, tile.systemId);
-        }
-      });
+      setMap(completedMap);
+      const violations = countMapLegalityViolations(completedMap);
+      if (violations > 0)
+        notifications.show({
+          title: "Map generated with adjacent hazards",
+          message:
+            "Some anomalies or matching wormholes are adjacent. Adjust those tiles or randomize again if your setup requires separation.",
+          color: "yellow",
+        });
     } else {
-      // Fallback to random placement if auto-complete fails
       notifications.show({
         title: "Randomization failed",
         message:
-          "Try different parameters. Using random placement as fallback.",
+          "There are not enough available systems to fill this map. Add a game set, reduce the ring count, or close unused spaces. Your previous map is preserved.",
         color: "yellow",
-      });
-
-      const shuffledSystems = [...systemPool].sort(() => Math.random() - 0.5);
-      let systemIdx = 0;
-      modifiableMapTiles.forEach((tileIdx) => {
-        // Skip preserved tiles (hyperlanes, homes)
-        if (!preserveIndices.has(tileIdx) && systemIdx < shuffledSystems.length) {
-          addSystemToMap(tileIdx, shuffledSystems[systemIdx]);
-          systemIdx++;
-        }
       });
     }
   };
@@ -298,9 +280,7 @@ function MapGeneratorContent() {
       return false;
     }
 
-    setGameSets(decoded.gameSets);
-    setRingCount(decoded.ringCount);
-    setMap(decoded.map);
+    loadDecodedMap(decoded.map, decoded.ringCount, decoded.gameSets, mapConfigId);
 
     const systemsPlaced = decoded.map.filter(
       (tile) => tile.type === "SYSTEM" && tile.idx !== 0,
@@ -444,32 +424,68 @@ function MapGeneratorContent() {
 
       // Navigate to the published map page
       navigate(`/maps/${result.slug}`);
+    } catch {
+      notifications.show({
+        title: "Publish failed",
+        message:
+          "Could not reach the server. Your map and publishing details are preserved; check your connection and try again.",
+        color: "red",
+      });
     } finally {
       setPublishing(false);
     }
   };
 
   const [activeSystemId, setActiveSystemId] = useState<string | null>(null);
-  const [activeSystemRotation, setActiveSystemRotation] = useState<number | undefined>(
-    undefined,
-  );
+  const [activeSystemRotation, setActiveSystemRotation] = useState<
+    number | undefined
+  >(undefined);
 
-  // Parse URL parameters and seed map on page load
+  // Restore edits on refresh, including edits made after opening a shared map.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const params = new URLSearchParams(window.location.search);
-    const mapParam = params.get("map");
-
-    if (mapParam) {
-      // New format: single `map` parameter with complete map encoding
-      const decoded = decodeMapString(mapParam);
-      if (decoded) {
-        loadDecodedMap(decoded.map, decoded.ringCount, decoded.gameSets);
-      }
+    const params = new URLSearchParams(location.search);
+    let mapParam = params.get("map");
+    let saved = readSavedMap(mapParam);
+    const decoded = !saved && mapParam ? decodeMapString(mapParam) : null;
+    if (mapParam && !saved && !decoded) {
+      notifications.show({
+        id: "map-link-error",
+        title: "Map link could not be loaded",
+        message:
+          "The map string is invalid. Check that you copied the complete link. Your saved map is preserved.",
+        color: "red",
+      });
+      saved = readSavedMap(null);
+      mapParam = saved?.source ?? null;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
+    if (saved) {
+      loadDecodedMap(
+        saved.map,
+        saved.ringCount,
+        saved.gameSets,
+        saved.mapConfigId,
+        false,
+      );
+    } else if (decoded) {
+      loadDecodedMap(
+        decoded.map,
+        decoded.ringCount,
+        decoded.gameSets,
+        params.get("layout") ?? undefined,
+        false,
+      );
+    }
+    setSavedLocally(saveMap(useMapBuilder.getState().state, mapParam));
+    return useMapBuilder.subscribe((next, previous) => {
+      if (
+        next.state.map !== previous.state.map ||
+        next.state.gameSets !== previous.state.gameSets ||
+        next.state.mapConfigId !== previous.state.mapConfigId
+      ) {
+        setSavedLocally(saveMap(next.state, mapParam));
+      }
+    });
+  }, [loadDecodedMap, location.search]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const activeId = event.active.id as string;
@@ -605,6 +621,10 @@ function MapGeneratorContent() {
       <DndContext
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onDragCancel={() => {
+          setActiveSystemId(null);
+          setActiveSystemRotation(undefined);
+        }}
         sensors={sensors}
       >
         {duplicateHyperlanes.length > 0 && (
@@ -616,7 +636,8 @@ function MapGeneratorContent() {
           >
             <Alert color="yellow" variant="light" radius="md">
               <Text size="xs">
-                Duplicate hyperlanes detected. Physical maps may be limited to one copy per tile.
+                Duplicate hyperlanes detected. Physical maps may be limited to
+                one copy per tile.
               </Text>
             </Alert>
           </Box>
@@ -642,6 +663,7 @@ function MapGeneratorContent() {
                     label: config.name,
                   }))}
                   value={mapConfigId}
+                  aria-label="Map layout"
                   onChange={(value) => {
                     if (value && mapConfigs[value]) {
                       setMapConfig(value);
@@ -658,19 +680,35 @@ function MapGeneratorContent() {
                     { value: "unchartedstars", label: "Uncharted Stars" },
                   ]}
                   value={gameSets}
+                  aria-label="Game sets"
                   onChange={(value) => setGameSets(value as GameSet[])}
                   placeholder="Game Sets"
                   size="xs"
                   w={160}
                   checkIconPosition="right"
-                  styles={{ pill: { display: "none" } }}
                 />
                 <Group gap={4}>
-                  <ActionIcon variant="subtle" color="gray" size="sm" onClick={() => setRingCount(ringCount - 1)} disabled={ringCount <= 2}>
+                  <ActionIcon
+                    aria-label="Remove outer ring"
+                    variant="subtle"
+                    color="gray"
+                    size="sm"
+                    onClick={() => setRingCount(ringCount - 1)}
+                    disabled={ringCount <= 2}
+                  >
                     <IconMinus size={14} />
                   </ActionIcon>
-                  <Text size="xs" c="dimmed" w={50} ta="center">{ringCount} rings</Text>
-                  <ActionIcon variant="subtle" color="gray" size="sm" onClick={() => setRingCount(ringCount + 1)} disabled={ringCount >= 5}>
+                  <Text size="xs" c="dimmed" w={50} ta="center">
+                    {ringCount} rings
+                  </Text>
+                  <ActionIcon
+                    aria-label="Add outer ring"
+                    variant="subtle"
+                    color="gray"
+                    size="sm"
+                    onClick={() => setRingCount(ringCount + 1)}
+                    disabled={ringCount >= 5}
+                  >
                     <IconPlus size={14} />
                   </ActionIcon>
                 </Group>
@@ -684,11 +722,26 @@ function MapGeneratorContent() {
                   Map Strings
                 </Button>
                 <Group gap={4}>
-                  <ActionIcon variant="subtle" color="gray" size="sm" onClick={removeHomeSystem} disabled={playerCount <= 1}>
+                  <ActionIcon
+                    aria-label="Remove home system"
+                    variant="subtle"
+                    color="gray"
+                    size="sm"
+                    onClick={removeHomeSystem}
+                    disabled={playerCount <= 1}
+                  >
                     <IconMinus size={14} />
                   </ActionIcon>
-                  <Text size="xs" c="dimmed" w={55} ta="center">{playerCount} players</Text>
-                  <ActionIcon variant="subtle" color="gray" size="sm" onClick={addHomeSystem}>
+                  <Text size="xs" c="dimmed" w={55} ta="center">
+                    {playerCount} players
+                  </Text>
+                  <ActionIcon
+                    aria-label="Add home system"
+                    variant="subtle"
+                    color="gray"
+                    size="sm"
+                    onClick={addHomeSystem}
+                  >
                     <IconPlus size={14} />
                   </ActionIcon>
                 </Group>
@@ -698,47 +751,138 @@ function MapGeneratorContent() {
                   size="sm"
                   onClick={toggleCloseTileMode}
                   title="Close tile tool"
+                  aria-label="Close tile tool"
+                  aria-pressed={closeTileMode}
                 >
                   <IconHexagonOff size={16} />
                 </ActionIcon>
-                <Button leftSection={<IconRefresh size={14} />} variant="subtle" color="gray" size="xs" onClick={handleRandomize}>
+                <Button
+                  leftSection={<IconRefresh size={14} />}
+                  variant="subtle"
+                  color="gray"
+                  size="xs"
+                  onClick={handleRandomize}
+                >
                   Randomize
                 </Button>
-                <Button leftSection={<IconArrowsShuffle size={14} />} variant="subtle" color="gray" size="xs" onClick={handleImproveBalance} disabled={balanceGap === 0}>
+                <Button
+                  leftSection={<IconArrowsShuffle size={14} />}
+                  variant="subtle"
+                  color="gray"
+                  size="xs"
+                  onClick={handleImproveBalance}
+                  disabled={balanceGap === 0}
+                >
                   Balance
                 </Button>
-                <Button leftSection={<IconTrash size={14} />} variant="subtle" color="gray" size="xs" onClick={clearMap}>
+                <Button
+                  leftSection={<IconTrash size={14} />}
+                  variant="subtle"
+                  color="gray"
+                  size="xs"
+                  onClick={clearMap}
+                >
                   Reset
                 </Button>
+                <Group gap={4}>
+                  <Tooltip label="Undo map edit">
+                    <ActionIcon
+                      aria-label="Undo map edit"
+                      variant="subtle"
+                      color="gray"
+                      onClick={undo}
+                      disabled={!canUndo}
+                    >
+                      <IconArrowBackUp size={18} />
+                    </ActionIcon>
+                  </Tooltip>
+                  <Tooltip label="Redo map edit">
+                    <ActionIcon
+                      aria-label="Redo map edit"
+                      variant="subtle"
+                      color="gray"
+                      onClick={redo}
+                      disabled={!canRedo}
+                    >
+                      <IconArrowForwardUp size={18} />
+                    </ActionIcon>
+                  </Tooltip>
+                </Group>
                 {balanceGap > 0 && (
-                  <Group gap={4} onClick={openInfo} style={{ cursor: "pointer" }}>
-                    <Text size="xs" c="dimmed">Gap:</Text>
-                    <Text size="xs" fw={600} c="yellow.5">{balanceGap.toFixed(1)}</Text>
-                  </Group>
+                  <Button
+                    variant="subtle"
+                    color="yellow"
+                    size="xs"
+                    onClick={openInfo}
+                    aria-label="Explain map balance"
+                  >
+                    Gap: {balanceGap.toFixed(1)}
+                  </Button>
                 )}
                 <Box style={{ marginLeft: "auto" }}>
                   <Group gap="xs">
-                    <Button leftSection={<IconShare size={14} />} variant="subtle" color="gray" size="xs" onClick={openShare}>
+                    <Button
+                      leftSection={<IconShare size={14} />}
+                      variant="subtle"
+                      color="gray"
+                      size="xs"
+                      onClick={openShare}
+                    >
                       Share
                     </Button>
-                    <Button leftSection={<IconPhoto size={14} />} variant="subtle" color="gray" size="xs" onClick={() => window.open(imageUrl, "_blank")} disabled={!isMapComplete}>
+                    <Button
+                      leftSection={<IconPhoto size={14} />}
+                      variant="subtle"
+                      color="gray"
+                      size="xs"
+                      onClick={() => window.open(imageUrl, "_blank")}
+                      disabled={!isMapComplete}
+                    >
                       Image
                     </Button>
-                    <Button variant="light" color="blue" size="xs" onClick={handleCreateDraft} disabled={!isMapComplete}>
+                    <Button
+                      variant="light"
+                      color="blue"
+                      size="xs"
+                      onClick={handleCreateDraft}
+                      disabled={!isMapComplete}
+                    >
                       Slice Draft
                     </Button>
-                    <Button variant="light" size="xs" onClick={() => navigate("/draft/raw/new")}>
+                    <Button
+                      variant="light"
+                      size="xs"
+                      onClick={() => navigate("/draft/raw/new")}
+                    >
                       Build a RAW galaxy
                     </Button>
-                    <Button leftSection={<IconWand size={14} />} variant="filled" color="blue" size="xs" onClick={handleCreatePresetDraft} disabled={!isMapComplete}>
+                    <Button
+                      leftSection={<IconWand size={14} />}
+                      variant="filled"
+                      color="blue"
+                      size="xs"
+                      onClick={handleCreatePresetDraft}
+                      disabled={!isMapComplete}
+                    >
                       Preset Draft
                     </Button>
-                    <Button variant="light" color="teal" size="xs" onClick={openPublish} disabled={!isMapComplete}>
+                    <Button
+                      variant="light"
+                      color="teal"
+                      size="xs"
+                      onClick={openPublish}
+                      disabled={!isMapComplete}
+                    >
                       Publish
                     </Button>
                   </Group>
                 </Box>
               </Group>
+              <Text size="xs" c={savedLocally ? "dimmed" : "yellow"} mt={4}>
+                {savedLocally
+                  ? "Map edits are saved in this tab. Undo restores the previous edit, including resets."
+                  : "This browser could not save your edits. Use Share or Map Strings to keep a copy before leaving."}
+              </Text>
             </Box>
             <Box
               w="100%"

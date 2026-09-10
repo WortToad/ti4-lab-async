@@ -1,11 +1,37 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { useDraftSetup } from "./store";
 import { MAPS, type ChoosableDraftType } from "./maps";
+import { DEFAULT_SLICE_SETTINGS } from "~/components/SliceSettingsModal";
 
 const initial = useDraftSetup.getState();
 afterEach(() => useDraftSetup.setState(initial, true));
 
 describe("setting up a lobby by player count", () => {
+  it("preserves faction configuration when reopening the selected layout's settings", () => {
+    useDraftSetup.getState().faction.setNumFactions(9);
+    useDraftSetup.getState().faction.setMinorFactionsMode("separate");
+    useDraftSetup.getState().format.setAllowEmptyTiles(true);
+    const before = useDraftSetup.getState();
+    before.map.setSelectedMapType(before.map.selectedMapType);
+    const after = useDraftSetup.getState();
+    expect(after.faction).toEqual(before.faction);
+    expect(after.format).toEqual(before.format);
+  });
+
+  it("keeps custom generation settings for each format outside the setup page", () => {
+    const custom = { ...DEFAULT_SLICE_SETTINGS.milty, minSliceValue: 7 };
+    useDraftSetup.getState().setSliceGenerationSettings("milty", custom);
+    useDraftSetup.getState().map.setSelectedMapType("heisen");
+    useDraftSetup.getState().player.setCount(7);
+    useDraftSetup.getState().map.setSelectedMapType("milty7p");
+    expect(useDraftSetup.getState().sliceGenerationSettings.milty).toEqual(
+      custom,
+    );
+    expect(
+      useDraftSetup.getState().sliceGenerationSettings.heisen,
+    ).toBeUndefined();
+  });
+
   it.each([
     ["heisen", 7, "heisen7p"],
     ["heisen", 3, "heisen3p"],

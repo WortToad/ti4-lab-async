@@ -8,7 +8,7 @@ For low-cost hosting at **obsecsolutions.com/ti4**, see the [Railway setup and c
 
 ### Dependencies
 
-- Node.js
+- Node.js 22 (matches the Docker image; run `nvm use` if you use nvm)
 - Sqlite3
 
 ### Environment setup
@@ -32,6 +32,10 @@ yarn run dev
 ```
 
 Open `http://localhost:3000/` in your browser and you're good to go.
+
+Use the same Node version for dependency installation, development and tests. If you switch Node versions after installing, reinstall dependencies to rebuild the native SQLite and image-rendering modules.
+
+The map generator saves edits in the current browser tab, including changes to shared maps. Undo and redo cover tile edits, layout/content changes, resizing, imports, generation and resets; history is kept while the editor is open. Share a link or export a map string to keep a copy beyond that tab. Failed generation preserves the existing map, and publishing failures retain both the map and form for retry.
 
 ## Shared lobbies and recovery
 

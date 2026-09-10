@@ -12,7 +12,7 @@ function selectSystemPool(
   slotsToFill: number,
   minAlpha: number,
   minBeta: number,
-  minRed: number
+  minRed: number,
 ): SystemId[] {
   const selected: SystemId[] = [];
   const remaining = new Set(availableSystemIds);
@@ -66,7 +66,7 @@ function selectSystemPool(
   }
 
   // 3. Count red tiles already selected (wormholes can be red)
-  let currentRedCount = selected.filter((id) => {
+  const currentRedCount = selected.filter((id) => {
     const sys = systemData[id];
     return sys?.type === "RED";
   }).length;
@@ -118,7 +118,7 @@ function findLegalPlacement(
   map: Map,
   openIndices: number[],
   systemId: SystemId,
-  adjacencyMap: globalThis.Map<number, number[]>
+  adjacencyMap: globalThis.Map<number, number[]>,
 ): number {
   // Shuffle to randomize placement
   const shuffledIndices = shuffle([...openIndices]);
@@ -138,7 +138,7 @@ function findLegalPlacement(
  */
 export function autoCompleteMap(
   currentMap: Map,
-  availableSystemIds: SystemId[]
+  availableSystemIds: SystemId[],
 ): Map | null {
   const openIndices: number[] = [];
   currentMap.forEach((tile, idx) => {
@@ -148,6 +148,20 @@ export function autoCompleteMap(
   });
 
   if (openIndices.length === 0) return currentMap;
+
+  const existingSystems = new Set(
+    currentMap.flatMap((tile) =>
+      tile.type === "SYSTEM" ? [tile.systemId] : [],
+    ),
+  );
+  availableSystemIds = [...new Set(availableSystemIds)].filter((id) => {
+    const system = systemData[id];
+    return (
+      !existingSystems.has(id) &&
+      (system?.type === "BLUE" || system?.type === "RED")
+    );
+  });
+  if (availableSystemIds.length < openIndices.length) return null;
 
   // Scale red tile requirement based on map size (baseline: 11 red for 30 tiles)
   const redTileRatio = 11 / 30;
@@ -160,7 +174,7 @@ export function autoCompleteMap(
     openIndices.length,
     2,
     2,
-    minRedTiles
+    minRedTiles,
   );
 
   const result: Map = currentMap.map((tile) => ({ ...tile }));
@@ -171,7 +185,12 @@ export function autoCompleteMap(
   for (const systemId of selectedSystems) {
     if (remainingOpenIndices.length === 0) break;
 
-    const legalIdx = findLegalPlacement(result, remainingOpenIndices, systemId, adjacencyMap);
+    const legalIdx = findLegalPlacement(
+      result,
+      remainingOpenIndices,
+      systemId,
+      adjacencyMap,
+    );
 
     if (legalIdx !== -1) {
       result[legalIdx] = {
@@ -195,7 +214,12 @@ export function autoCompleteMap(
     for (const systemId of shuffle(unusedSystems)) {
       if (remainingOpenIndices.length === 0) break;
 
-      const legalIdx = findLegalPlacement(result, remainingOpenIndices, systemId, adjacencyMap);
+      const legalIdx = findLegalPlacement(
+        result,
+        remainingOpenIndices,
+        systemId,
+        adjacencyMap,
+      );
 
       if (legalIdx !== -1) {
         result[legalIdx] = {
@@ -231,5 +255,5 @@ export function autoCompleteMap(
     }
   }
 
-  return result;
+  return remainingOpenIndices.length === 0 ? result : null;
 }

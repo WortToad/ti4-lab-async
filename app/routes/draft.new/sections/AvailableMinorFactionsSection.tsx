@@ -15,8 +15,11 @@ export function AvailableMinorFactionsSection() {
   } = useDraft((state) => state.actions);
 
   const factionPool = useDraft((state) =>
-    state.factionPool.filter((f) => !state.draft.availableFactions.includes(f)),
+    state.factionPool.filter(
+      (f) => f !== "keleres" && !state.draft.availableFactions.includes(f),
+    ),
   );
+  const playerCount = useDraft((state) => state.draft.players.length);
   const numFactions = useDraft(
     (state) => state.draft.settings.numMinorFactions,
   );
@@ -32,7 +35,8 @@ export function AvailableMinorFactionsSection() {
         <Group>
           <Button
             size="xs"
-            onMouseDown={randomizeMinorFactions}
+            onClick={randomizeMinorFactions}
+            aria-label="Randomize minor factions"
             color="gray.7"
             variant="filled"
           >
@@ -43,7 +47,7 @@ export function AvailableMinorFactionsSection() {
           <NumberStepper
             decrease={removeLastMinorFaction}
             increase={addRandomMinorFaction}
-            decreaseDisabled={numFactions <= 6}
+            decreaseDisabled={availableFactions.length <= playerCount}
             increaseDisabled={numFactions >= factionPool.length}
           />
         </Group>
@@ -57,7 +61,7 @@ export function AvailableMinorFactionsSection() {
             key={factionId}
             faction={factions[factionId]}
             onRemove={() => removeMinorFaction(factionId)}
-            removeEnabled={availableFactions.length > 6}
+            removeEnabled={availableFactions.length > playerCount}
           />
         ))}
       </SimpleGrid>

@@ -9,7 +9,7 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import {
   getSystemGameSet,
   searchableSystemData,
@@ -33,6 +33,7 @@ export type PlanetFinderBaseProps = {
   availableSystemIds: SystemId[];
   factionPool: FactionId[];
   allowHomePlanetSearch: boolean;
+  usedSystemIds?: SystemId[];
 };
 
 export function PlanetFinderBase({
@@ -42,8 +43,10 @@ export function PlanetFinderBase({
   availableSystemIds,
   factionPool,
   allowHomePlanetSearch,
+  usedSystemIds: suppliedUsedSystemIds,
 }: PlanetFinderBaseProps) {
-  const usedSystemIds = useUsedSystemIds();
+  const draftUsedSystemIds = useUsedSystemIds();
+  const usedSystemIds = suppliedUsedSystemIds ?? draftUsedSystemIds;
 
   const [searchString, setSearchString] = useState<string>("");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
@@ -71,16 +74,19 @@ export function PlanetFinderBase({
     return terms;
   }, [activeFilters, searchString]);
 
-  const isValidSystem = (system: System) => {
-    return (
-      availableSystemIds.includes(system.id) ||
-      system.type === "HYPERLANE" ||
-      (allowHomePlanetSearch &&
-        system.faction &&
-        system.type === "GREEN" &&
-        factionPool.includes(system.faction))
-    );
-  };
+  const isValidSystem = useCallback(
+    (system: System) => {
+      return (
+        availableSystemIds.includes(system.id) ||
+        system.type === "HYPERLANE" ||
+        (allowHomePlanetSearch &&
+          system.faction &&
+          system.type === "GREEN" &&
+          factionPool.includes(system.faction))
+      );
+    },
+    [availableSystemIds, allowHomePlanetSearch, factionPool],
+  );
 
   const systems = useMemo(() => {
     if (combinedSearchTerms.length === 0) return [];
@@ -98,7 +104,7 @@ export function PlanetFinderBase({
         if (!data.hyperlanes) return data;
 
         const rotations = [];
-        for (let i = 0; i < 300; i += 60) {
+        for (let i = 0; i < 360; i += 60) {
           rotations.push({ ...data, rotation: i });
         }
         return rotations;
@@ -111,22 +117,27 @@ export function PlanetFinderBase({
           return -1;
         return 0;
       });
-  }, [combinedSearchTerms, availableSystemIds, usedSystemIds]);
+  }, [combinedSearchTerms, usedSystemIds, isValidSystem]);
 
-  const { itemRefs, resetFocus } = useArrowFocus(systems, (idx) => {
-    if (idx <= 0) return;
-    onSystemSelected(systems[idx - 1]);
-  });
+  const { itemRefs, resetFocus } = useArrowFocus(
+    systems,
+    (idx) => {
+      if (idx <= 0) return;
+      onSystemSelected(systems[idx - 1]);
+    },
+    opened,
+  );
 
   useEffect(() => {
     if (opened) {
       setSearchString("");
       setActiveFilters([]);
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         itemRefs.current[0]?.focus();
       }, 150);
+      return () => clearTimeout(timer);
     }
-  }, [opened]);
+  }, [opened, itemRefs]);
 
   const hasActiveFilters = activeFilters.length > 0 || searchString.length > 0;
 
@@ -136,7 +147,12 @@ export function PlanetFinderBase({
       onClose={onClose}
       size="900"
       title={
-        <Text size="sm" fw={600} tt="uppercase" style={{ letterSpacing: "0.05em" }}>
+        <Text
+          size="sm"
+          fw={600}
+          tt="uppercase"
+          style={{ letterSpacing: "0.05em" }}
+        >
           System Database
         </Text>
       }
@@ -160,13 +176,19 @@ export function PlanetFinderBase({
               }}
             />
 
-            <Group gap="xs" p="xs" wrap="wrap" mih={36} className={styles.activeFiltersBar}>
+            <Group
+              gap="xs"
+              p="xs"
+              wrap="wrap"
+              mih={36}
+              className={styles.activeFiltersBar}
+            >
               {hasActiveFilters ? (
                 <>
                   {activeFilters.map((filterId) => {
-                    const filter = FILTER_CATEGORIES.flatMap((c) => c.filters).find(
-                      (f) => f.id === filterId,
-                    );
+                    const filter = FILTER_CATEGORIES.flatMap(
+                      (c) => c.filters,
+                    ).find((f) => f.id === filterId);
                     if (!filter) return null;
                     return (
                       <Badge
@@ -192,7 +214,7 @@ export function PlanetFinderBase({
                       style={{ cursor: "pointer" }}
                       onClick={() => setSearchString("")}
                     >
-                      "{searchString}" ×
+                      &quot;{searchString}&quot; ×
                     </Badge>
                   )}
                   <Button
@@ -251,15 +273,31 @@ export function PlanetFinderBase({
             )}
 
             {systems.length === 0 && hasActiveFilters && (
-              <Stack align="center" justify="center" p="xl" mih={200} ta="center">
-                <Text size="xl" mb="xs">∅</Text>
+              <Stack
+                align="center"
+                justify="center"
+                p="xl"
+                mih={200}
+                ta="center"
+              >
+                <Text size="xl" mb="xs">
+                  ∅
+                </Text>
                 <Text size="sm">No systems match your filters</Text>
               </Stack>
             )}
 
             {systems.length === 0 && !hasActiveFilters && (
-              <Stack align="center" justify="center" p="xl" mih={200} ta="center">
-                <Text size="xl" mb="xs">⬡</Text>
+              <Stack
+                align="center"
+                justify="center"
+                p="xl"
+                mih={200}
+                ta="center"
+              >
+                <Text size="xl" mb="xs">
+                  ⬡
+                </Text>
                 <Text size="sm">Select filters or search to find systems</Text>
               </Stack>
             )}
@@ -267,14 +305,21 @@ export function PlanetFinderBase({
             <Stack gap={2}>
               {systems.map((system, idx) => (
                 <Box
+                  component="button"
+                  type="button"
                   key={`${system.id}-${system.rotation ?? 0}`}
                   className={`${styles.systemRow} ${usedSystemIds.includes(system.id) ? styles.inUse : ""}`}
-                  tabIndex={idx + 1}
+                  style={{
+                    textAlign: "left",
+                    color: "inherit",
+                    font: "inherit",
+                    width: "100%",
+                  }}
                   ref={(el) => {
                     if (!itemRefs.current || !el) return;
                     itemRefs.current[idx + 1] = el;
                   }}
-                  onMouseDown={() => onSystemSelected(system)}
+                  onClick={() => onSystemSelected(system)}
                 >
                   <Group gap="sm" wrap="wrap" style={{ flex: 1 }}>
                     <Group gap={4} wrap="nowrap">
@@ -314,7 +359,11 @@ export function PlanetFinderBase({
                             influence={planet.influence}
                           />
                           {planet.tech?.map((tech) => (
-                            <TechIcon key={tech} techSpecialty={tech} size={14} />
+                            <TechIcon
+                              key={tech}
+                              techSpecialty={tech}
+                              size={14}
+                            />
                           ))}
                           {planet.legendary && (
                             <Badge size="xs" color="yellow" variant="light">
@@ -350,7 +399,12 @@ export function PlanetFinderBase({
                     })}
 
                     {system.anomalies.map((anomaly) => (
-                      <Badge key={anomaly} size="xs" color="orange" variant="light">
+                      <Badge
+                        key={anomaly}
+                        size="xs"
+                        color="orange"
+                        variant="light"
+                      >
                         {anomaly.replace(/_/g, " ")}
                       </Badge>
                     ))}

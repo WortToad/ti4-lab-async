@@ -33,6 +33,7 @@ import { MapBuildDiagram } from "~/draft/mantis/MapBuildDiagram";
 import { LobbyPlayerCount } from "~/draft/LobbyPlayerCount";
 import { makeLobbyPlayers, parseLobbyPlayerCount } from "~/draft/lobbySetup";
 import type { FactionId, GameSet } from "~/types";
+import { getFactionPool } from "~/utils/factions";
 
 export async function action({ request }: ActionFunctionArgs) {
   try {
@@ -90,12 +91,43 @@ export default function MantisNew() {
   const [extraBlues, setExtraBlues] = useState(0);
   const [extraReds, setExtraReds] = useState(0);
   const [mulligans, setMulligans] = useState(1);
+  const [pok, setPok] = useState(true);
+  const [te, setTe] = useState(true);
+  const [discordant, setDiscordant] = useState(false);
+  const [numFactions, setNumFactions] = useState<string | number>(8);
   const [playerCount, setPlayerCount] = useState(() =>
     parseLobbyPlayerCount(search.get("playerCount"), 4, 8),
   );
+  const gameSets: GameSet[] = ["base"];
+  if (pok) gameSets.push("pok");
+  if (te) gameSets.push("te");
+  if (discordant)
+    gameSets.push("discordant", "discordantexp", "unchartedstars");
+  const enabledFactions = getFactionPool(gameSets);
+  const availableFactions = enabledFactions.filter((id) => !banned.includes(id));
   const options = Object.values(allFactions)
     .filter((f) => f.set !== "twilightsFall")
-    .map((f) => ({ value: f.id, label: f.name }));
+    .map((f) => ({
+      value: f.id,
+      label: f.name,
+      disabled: !enabledFactions.includes(f.id),
+    }));
+  const unavailableRequired = required.filter(
+    (id) => !availableFactions.includes(id as FactionId),
+  );
+  const countError =
+    availableFactions.length < playerCount
+      ? `At least ${playerCount} factions are needed. Enable more content or remove some bans.`
+      : !Number.isInteger(numFactions) ||
+          Number(numFactions) < playerCount ||
+          Number(numFactions) > availableFactions.length
+        ? `Choose between ${playerCount} and ${availableFactions.length} factions.`
+        : undefined;
+  const requiredError = unavailableRequired.length
+    ? `Unavailable: ${unavailableRequired.map((id) => allFactions[id as FactionId].name).join(", ")}. Enable their content or remove their ban or requirement.`
+    : required.length > Number(numFactions)
+      ? `Increase the faction pool to at least ${required.length} or remove some required factions.`
+      : undefined;
   return (
     <Container size="sm" py="xl">
       <Form method="post">
@@ -125,7 +157,14 @@ export default function MantisNew() {
           <LobbyPlayerCount
             description="4–8 players; names are entered when joining."
             count={playerCount}
-            onChange={setPlayerCount}
+            onChange={(count) => {
+              setPlayerCount(count);
+              setNumFactions((current) =>
+                typeof current === "number" && Number.isFinite(current)
+                  ? Math.max(count, current)
+                  : count,
+              );
+            }}
             min={4}
             max={8}
           />
@@ -135,9 +174,24 @@ export default function MantisNew() {
             description="Otherwise the initial draft order is shuffled. Speaker positions are chosen during the draft."
           />
           <Group>
-            <Checkbox name="pok" label="Prophecy of Kings" defaultChecked />
-            <Checkbox name="te" label="Thunder's Edge" defaultChecked />
-            <Checkbox name="ds" label="Discordant Stars" />
+            <Checkbox
+              name="pok"
+              label="Prophecy of Kings"
+              checked={pok}
+              onChange={(event) => setPok(event.currentTarget.checked)}
+            />
+            <Checkbox
+              name="te"
+              label="Thunder's Edge"
+              checked={te}
+              onChange={(event) => setTe(event.currentTarget.checked)}
+            />
+            <Checkbox
+              name="ds"
+              label="Discordant Stars"
+              checked={discordant}
+              onChange={(event) => setDiscordant(event.currentTarget.checked)}
+            />
           </Group>
           <Text size="sm" c="dimmed">
             Base game content is always included.
@@ -145,9 +199,12 @@ export default function MantisNew() {
           <NumberInput
             name="numFactions"
             label="Factions in the public pool"
-            min={4}
-            max={80}
-            defaultValue={8}
+            description={`${availableFactions.length} factions available with the current content and bans.`}
+            min={playerCount}
+            max={Math.max(playerCount, availableFactions.length)}
+            value={numFactions}
+            onChange={setNumFactions}
+            error={countError}
             allowDecimal={false}
           />
           <MultiSelect
@@ -161,9 +218,14 @@ export default function MantisNew() {
           <MultiSelect
             label="Required factions"
             searchable
-            data={options.filter((f) => !banned.includes(f.value))}
+            description="Enable a faction's content before adding it. Existing choices are kept when content is disabled."
+            data={options.map((f) => ({
+              ...f,
+              disabled: f.disabled || banned.includes(f.value),
+            }))}
             value={required}
             onChange={setRequired}
+            error={requiredError}
           />
           <input
             type="hidden"
@@ -232,7 +294,11 @@ export default function MantisNew() {
             onChange={(value) => setMulligans(Number(value) || 0)}
             allowDecimal={false}
           />
-          <Button type="submit" loading={navigation.state !== "idle"}>
+          <Button
+            type="submit"
+            loading={navigation.state !== "idle"}
+            disabled={!!countError || !!requiredError}
+          >
             Create Mantis lobby
           </Button>
         </Stack>
