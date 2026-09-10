@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { Stack, Text, Group, Box, ThemeIcon, Badge } from "@mantine/core";
 import { IconCheck } from "@tabler/icons-react";
 import { Surface } from "~/ui";
@@ -91,7 +92,7 @@ export function PlayerSelectionSidebar({
                     {faction && (
                       <Box
                         component="img"
-                        src={faction.iconPath}
+                        src={appPath(faction.iconPath)}
                         alt={faction.name}
                         w={32}
                         h={32}

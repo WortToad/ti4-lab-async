@@ -1,3 +1,4 @@
+import { appUrl } from "~/utils/appUrl";
 import { LoaderFunctionArgs, data } from "react-router";
 import { draftByPrettyUrl } from "~/drizzle/draft.server";
 import { Draft } from "~/types";
@@ -23,13 +24,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   const draftTypeDisplay = formatDraftType(draftType, playerCount);
 
   // Image URL (either from CDN or the .png route that will generate it)
-  const imageUrl = result.imageUrl || `https://tidraft.com/draft/${draftId}.png`;
+  const imageUrl = result.imageUrl || appUrl(`/draft/${draftId}.png`);
 
   return data({
     title: `${draftId} - TI4 Lab`,
     description: `${draftTypeDisplay} on TI4 Lab`,
     image: imageUrl,
-    url: `https://tidraft.com/draft/${draftId}`,
+    url: appUrl(`/draft/${draftId}`),
     type: "website",
     siteName: "TI4 Lab",
   });

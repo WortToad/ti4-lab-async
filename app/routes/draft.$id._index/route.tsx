@@ -1,3 +1,4 @@
+import { appPath, appUrl } from "~/utils/appUrl";
 import { Button, Grid, Stack, Text } from "@mantine/core";
 import {
   ActionFunctionArgs,
@@ -254,7 +255,7 @@ export default function RunningDraft() {
 
       <PlanetFinder onSystemSelected={syncDraft} />
       <AudioAlertConsentModal />
-      <audio id="notificationSound" src="/chime.mp3" preload="auto">
+      <audio id="notificationSound" src={appPath("/chime.mp3")} preload="auto">
         <track kind="captions" />
       </audio>
       <Stack gap="sm" mb="60" mt="lg">
@@ -265,7 +266,7 @@ export default function RunningDraft() {
       <Grid gutter="xl">
         <Grid.Col span={12} order={{ base: 0 }}>
           <Text size="md" ta="right" c="dimmed">
-            https://tidraft.com/draft/{result.urlName}
+            {appUrl(`/draft/${result.urlName}`)}
           </Text>
         </Grid.Col>
 
@@ -465,7 +466,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     ? (typed.imageUrl ?? undefined)
     : (typed.incompleteImageUrl ?? undefined);
   const imageUrl =
-    existingImageUrl || `https://tidraft.com/draft/${draftId}.png`;
+    existingImageUrl || appUrl(`/draft/${draftId}.png`);
 
   return [
     { title },
@@ -473,7 +474,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     { property: "og:title", content: title },
     { property: "og:description", content: description },
     { property: "og:image", content: imageUrl },
-    { property: "og:url", content: `https://tidraft.com/draft/${draftId}` },
+    { property: "og:url", content: appUrl(`/draft/${draftId}`) },
     { property: "og:type", content: "website" },
     { property: "og:site_name", content: "TI4 Lab" },
     { name: "twitter:card", content: "summary_large_image" },

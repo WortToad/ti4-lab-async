@@ -33,3 +33,14 @@ README.md
 *.test.tsx
 *.spec.ts
 *.spec.tsx
+
+# Downloaded catalog source, not an application dependency (over 2 GB).
+TI4_map_generator_bot
+.react-router
+deployment
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+docs

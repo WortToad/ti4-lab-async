@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import {
   Badge,
   Box,
@@ -30,7 +31,7 @@ export function MahactKingReference({ faction, reference }: Props) {
           <Group gap="md" wrap="nowrap" miw={0}>
             <Box
               component="img"
-              src={faction.iconPath}
+              src={appPath(faction.iconPath)}
               alt=""
               aria-hidden
               w={{ base: 42, sm: 54 }}

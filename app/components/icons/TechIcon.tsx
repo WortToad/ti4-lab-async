@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { TechSpecialty } from "~/types";
 
 const techIcon: Record<TechSpecialty, string> = {
@@ -15,7 +16,7 @@ type Props = {
 export function TechIcon({ techSpecialty, size = 20 }: Props) {
   return (
     <img
-      src={techIcon[techSpecialty]}
+      src={appPath(techIcon[techSpecialty])}
       style={{ width: size }}
       alt={techSpecialty}
     />

@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { useEffect } from "react";
 import {
   playNotificationSound,
@@ -19,8 +20,8 @@ export function useNotifyActivePlayer() {
   const handleNotify = () => {
     const title = "It's your turn to draft!";
     const options = {
-      icon: "/icon.png",
-      badge: "/badge.png",
+      icon: appPath("/favicon-32x32.png"),
+      badge: appPath("/favicon-32x32.png"),
     };
     showNotification(title, options);
     playNotificationSound();

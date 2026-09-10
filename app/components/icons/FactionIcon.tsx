@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { Box, MantineSize } from "@mantine/core";
 import { factions } from "~/data/factionData";
 import { FactionId } from "~/types";
@@ -22,7 +23,7 @@ export function FactionIcon({
   if (!visibleFrom && !hiddenFrom) {
     return (
       <img
-        src={factions[faction].iconPath}
+        src={appPath(factions[faction].iconPath)}
         style={{
           objectFit: "contain",
           ...style,
@@ -41,7 +42,7 @@ export function FactionIcon({
       className={className}
     >
       <img
-        src={factions[faction].iconPath}
+        src={appPath(factions[faction].iconPath)}
         style={{
           objectFit: "contain",
           width: "100%",

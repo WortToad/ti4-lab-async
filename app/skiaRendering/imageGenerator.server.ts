@@ -1,3 +1,4 @@
+import { appUrl } from "~/utils/appUrl";
 import { Draft } from "~/types";
 import { hydrateMap } from "~/utils/map";
 import {
@@ -59,7 +60,7 @@ export async function generateDraftImageBuffer(
   drawBackground(ctx, dimensions.width, dimensions.height);
   drawMap(ctx, hydratedMap, hydratedPlayers, dimensions);
   drawBranding(ctx, dimensions.width, dimensions.height, {
-    urlText: `tidraft.com/draft/${draftId}`,
+    urlText: appUrl(`/draft/${draftId}`).replace(/^https?:\/\//, ""),
   });
 
   // Return PNG buffer

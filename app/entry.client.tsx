@@ -6,7 +6,9 @@ import posthog from "posthog-js";
 // Initialize PostHog
 function PosthogInit() {
   useEffect(() => {
-    posthog.init("phc_OOxDW31RdcnDDSAj4xhjY7RVTtR053K4gVeJrMVML2H", {
+    const key = import.meta.env.VITE_POSTHOG_KEY;
+    if (!key) return;
+    posthog.init(key, {
       api_host: "https://us.i.posthog.com",
       person_profiles: "identified_only", // or 'always' to create profiles for anonymous users as well
       session_recording: {
@@ -15,7 +17,7 @@ function PosthogInit() {
       },
       before_send: (event) => {
         // Private draft URLs and card selections must never enter analytics.
-        if (/^\/draft\/bag\//.test(window.location.pathname)) return null;
+        if (/\/draft\/bag\//.test(window.location.pathname)) return null;
         if (
           event?.properties &&
           Object.values(event.properties).some(

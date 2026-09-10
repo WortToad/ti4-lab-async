@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import {
   Accordion,
   Alert,
@@ -135,7 +136,7 @@ function CopyLink({
       >
         {label}
       </Anchor>
-      <CopyButton value={`${origin}${path}`}>
+      <CopyButton value={`${origin}${appPath(path)}`}>
         {({ copied, copy }) => (
           <Button size="xs" variant="light" onClick={copy} disabled={!origin}>
             {copied ? "Copied" : "Copy link"}

@@ -203,39 +203,38 @@ export async function likePresetMap(
   id: string,
   ip: string,
 ): Promise<{ likes: number; liked: boolean }> {
-  return await db.transaction(async (tx) => {
-    const existing = await tx
+  // better-sqlite3 transactions must finish synchronously to commit atomically.
+  return db.transaction((tx) => {
+    const existing = tx
       .select({ id: presetMapLikes.id })
       .from(presetMapLikes)
       .where(and(eq(presetMapLikes.presetMapId, id), eq(presetMapLikes.ip, ip)))
-      .limit(1);
+      .get();
 
-    if (existing.length > 0) {
-      const current = await tx
+    if (existing) {
+      const current = tx
         .select({ likes: presetMaps.likes })
         .from(presetMaps)
         .where(eq(presetMaps.id, id))
-        .limit(1);
-      return { likes: current[0]?.likes ?? 0, liked: true };
+        .get();
+      return { likes: current?.likes ?? 0, liked: true };
     }
 
-    await tx.insert(presetMapLikes).values({
-      id: uuidv4(),
-      presetMapId: id,
-      ip,
-    });
+    tx.insert(presetMapLikes)
+      .values({ id: uuidv4(), presetMapId: id, ip })
+      .run();
 
-    await tx
-      .update(presetMaps)
+    tx.update(presetMaps)
       .set({ likes: sql`${presetMaps.likes} + 1` })
-      .where(eq(presetMaps.id, id));
+      .where(eq(presetMaps.id, id))
+      .run();
 
-    const current = await tx
+    const current = tx
       .select({ likes: presetMaps.likes })
       .from(presetMaps)
       .where(eq(presetMaps.id, id))
-      .limit(1);
+      .get();
 
-    return { likes: current[0]?.likes ?? 0, liked: true };
+    return { likes: current?.likes ?? 0, liked: true };
   });
 }

@@ -1,3 +1,4 @@
+import { appUrl } from "~/utils/appUrl";
 import {
   initializeFonts,
   loadAllAssets,
@@ -29,7 +30,7 @@ export async function generateMapGeneratorImageBuffer(
   drawBackground(ctx, dimensions.width, dimensions.height);
   drawMap(ctx, map, [], dimensions);
   drawBranding(ctx, dimensions.width, dimensions.height, {
-    urlText: "tidraft.com/map-generator",
+    urlText: appUrl("/map-generator").replace(/^https?:\/\//, ""),
   });
 
   // Return PNG buffer

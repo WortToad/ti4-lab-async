@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { Group, SimpleGrid, Stack, Text } from "@mantine/core";
 import { LoaderFunctionArgs, data } from "react-router";
 import { useLoaderData } from "react-router";
@@ -37,7 +38,7 @@ export default function MultidraftRoute() {
         const data: Draft = JSON.parse(draft.data as string);
         return (
           <Stack key={urlName}>
-            <a href={`/draft/${urlName}`}>
+            <a href={appPath(`/draft/${urlName}`)}>
               <SectionTitle title={urlName} />
             </a>
             <Text ff="mono" fw={700}>

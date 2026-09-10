@@ -48,12 +48,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       ? await generatePresetDraftImage(draft, draftId)
       : await generateDraftSlicesImage(draft, draftId);
 
-  // Dev mode: return image directly
-  if (devMode) {
+  // Without object storage, serve generated images from this same service.
+  if (devMode || process.env.R2_INTEGRATION_DISABLED === "true") {
     return new Response(imageBuffer, {
       headers: {
         "Content-Type": "image/png",
-        "Cache-Control": "no-cache",
+        "Cache-Control": devMode ? "no-cache" : "public, max-age=60",
       },
     });
   }

@@ -1,59 +1,38 @@
-# syntax = docker/dockerfile:1
-ARG NODE_VERSION=22.12.0
-FROM --platform=linux/amd64 node:${NODE_VERSION}-slim AS base
-LABEL fly_launch_runtime="Remix"
-
-# Install google-chrome-stable
-RUN apt-get update && apt-get install gnupg wget -y && \
-  wget --quiet --output-document=- https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor > /etc/apt/trusted.gpg.d/google-archive.gpg && \
-  sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' && \
-  apt-get update && \
-  apt-get install google-chrome-stable -y --no-install-recommends && \
-  rm -rf /var/lib/apt/lists/*
-
-# Remix app lives here
+# syntax=docker/dockerfile:1
+ARG NODE_VERSION=22-bookworm-slim
+FROM node:${NODE_VERSION} AS base
 WORKDIR /app
+ENV NODE_ENV=production
+# skia-canvas renders PNGs without Chrome or a separate browser service.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates fontconfig libfontconfig1 && \
+    rm -rf /var/lib/apt/lists/*
 
-# Set production environment
-ENV NODE_ENV="production"
-ARG YARN_VERSION=1.22.19
-RUN npm install -g yarn@$YARN_VERSION --force
-
-# Throw-away build stage to reduce size of final image
 FROM base AS build
-
-# Install packages needed to build node modules
-RUN apt-get update -qq && \
-    apt-get install -y build-essential pkg-config python-is-python3
-
-# Install node modules
-COPY --link package.json yarn.lock ./
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential python3 pkg-config && rm -rf /var/lib/apt/lists/*
+COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile --production=false --network-timeout=120000
+COPY . .
+# Railway passes service variables to matching Docker build arguments.
+# These public URL settings must be identical at build time and runtime.
+ARG TI4_BASE_PATH=""
+ARG VITE_PUBLIC_ORIGIN=""
+ARG VITE_POSTHOG_KEY=""
+ENV TI4_BASE_PATH=${TI4_BASE_PATH} VITE_PUBLIC_ORIGIN=${VITE_PUBLIC_ORIGIN}
+RUN yarn build
+RUN yarn install --frozen-lockfile --production=true --network-timeout=120000 && yarn cache clean
 
-# Copy application code
-COPY --link . .
-
-# Build application
-RUN yarn run build
-
-# Remove development dependencies
-RUN yarn install
-
-# Final stage for app image
-FROM base
-
-# Copy built application
-COPY --from=build /app /app
-
-# Setup sqlite3 on a separate volume
-RUN mkdir -p /data
-VOLUME /data
-
-# add shortcut for connecting to database CLI
-RUN echo "#!/bin/sh\nset -x\nsqlite3 \$DATABASE_URL" > /usr/local/bin/database-cli && chmod +x /usr/local/bin/database-cli
-
-# Start the server by default, this can be overwritten at runtime
+FROM base AS runtime
+ARG TI4_BASE_PATH=""
+ARG VITE_PUBLIC_ORIGIN=""
+ENV TI4_BASE_PATH=${TI4_BASE_PATH} VITE_PUBLIC_ORIGIN=${VITE_PUBLIC_ORIGIN}
+ENV TI4_LAB_DATABASE_PATH=file:///data/sqlite.db
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/build ./build
+COPY --from=build /app/app ./app
+COPY --from=build /app/server.ts /app/package.json /app/tsconfig.json ./
+# The renderer reads public assets from disk; reuse the client copy.
+RUN ln -s build/client public && mkdir -p /data
 EXPOSE 3000
-ENV DATABASE_URL="file:///data/sqlite.db"
-ENV TI4_LAB_DATABASE_PATH="file:///data/sqlite.db"
-CMD [ "yarn", "run", "start" ]
+CMD ["node", "--import", "tsx", "server.ts"]

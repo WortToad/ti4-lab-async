@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { SystemId } from "~/types";
 
 type Props = {
@@ -10,7 +11,7 @@ export function LegendaryImage({ systemId, radius }: Props) {
     case "66":
       return (
         <image
-          href="/hopesend.webp"
+          href={appPath("/hopesend.webp")}
           x={-radius * 0.85}
           y={-radius * 0.85}
           width={radius * 1.75}
@@ -22,7 +23,7 @@ export function LegendaryImage({ systemId, radius }: Props) {
     case "65":
       return (
         <image
-          href="/primor.png"
+          href={appPath("/primor.png")}
           x={-radius * 0.5}
           y={-radius * 0.5}
           width={radius}
@@ -34,7 +35,7 @@ export function LegendaryImage({ systemId, radius }: Props) {
     case "237":
       return (
         <image
-          href="/silence.webp"
+          href={appPath("/silence.webp")}
           x={-radius * 0.5}
           y={-radius * 0.5}
           width={radius}
@@ -45,7 +46,7 @@ export function LegendaryImage({ systemId, radius }: Props) {
     case "240":
       return (
         <image
-          href="/prism.png"
+          href={appPath("/prism.png")}
           x={-radius * 0.5}
           y={-radius * 0.5}
           width={radius}
@@ -56,7 +57,7 @@ export function LegendaryImage({ systemId, radius }: Props) {
     case "253":
       return (
         <image
-          href="/domna.webp"
+          href={appPath("/domna.webp")}
           x={-radius * 0.5}
           y={-radius * 0.5}
           width={radius}
@@ -67,7 +68,7 @@ export function LegendaryImage({ systemId, radius }: Props) {
     case "239":
       return (
         <image
-          href="/tarrock.webp"
+          href={appPath("/tarrock.webp")}
           x={-radius * 0.5}
           y={-radius * 0.5}
           width={radius}
@@ -78,7 +79,7 @@ export function LegendaryImage({ systemId, radius }: Props) {
     case "238":
       return (
         <image
-          href="/echo.webp"
+          href={appPath("/echo.webp")}
           x={-radius * 0.5}
           y={-radius * 0.5}
           width={radius}

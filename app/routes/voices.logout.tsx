@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { LoaderFunctionArgs, redirect } from "react-router";
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -5,11 +6,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   response.headers.append(
     "Set-Cookie",
-    "spotifyAccessToken=; Path=/; Max-Age=0; SameSite=Lax",
+    `spotifyAccessToken=; Path=${appPath("/")}; Max-Age=0; SameSite=Lax`,
   );
   response.headers.append(
     "Set-Cookie",
-    "spotifyRefreshToken=; Path=/; Max-Age=0; SameSite=Lax",
+    `spotifyRefreshToken=; Path=${appPath("/")}; Max-Age=0; SameSite=Lax`,
   );
 
   return response;

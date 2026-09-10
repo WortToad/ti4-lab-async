@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import {
   ActionIcon,
   Accordion,
@@ -587,7 +588,7 @@ export default function AdminDraftsIndex() {
                     </ActionIcon>
                     <ActionIcon
                       component="a"
-                      href={`/admin/drafts/${draft.urlName ?? draft.id}/raw`}
+                      href={appPath(`/admin/drafts/${draft.urlName ?? draft.id}/raw`)}
                       variant="light"
                       color="gray"
                       size="sm"

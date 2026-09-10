@@ -1,7 +1,8 @@
+import { appPath } from "~/utils/appUrl";
 export function EntroficScar({ radius }: { radius: number }) {
   return (
     <image
-      href="/entropic.png"
+      href={appPath("/entropic.png")}
       x={-radius * 1}
       y={-radius * 1}
       width={2 * radius * 1}

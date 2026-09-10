@@ -1,4 +1,5 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
+import { appPath } from "~/utils/appUrl";
 import { and, eq } from "drizzle-orm";
 import {
   createCookie,
@@ -25,7 +26,7 @@ export const rawCookie = (id: string) =>
   createCookie(`raw-${id}`, {
     httpOnly: true,
     sameSite: "lax",
-    path: "/draft/raw",
+    path: appPath("/draft/raw"),
     secure: process.env.NODE_ENV === "production",
     maxAge: 60 * 60 * 24 * 365,
   });

@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { Button, Group, Image, Modal, Stack, Stepper, Text } from "@mantine/core";
 import { Link } from "react-router";
 import { IconBrandDiscordFilled } from "@tabler/icons-react";
@@ -56,14 +57,14 @@ export function DiscordIntegrationModal({
         />
         <Stepper.Step
           label="Start a draft via /labdraft"
-          description={<Image src="/discorddraft.png" />}
+          description={<Image src={appPath("/discorddraft.png")} />}
         />
         <Stepper.Step
           label="Setup draft on TI4 Lab"
           description={
             <Stack>
               <Text>Follow the created draft link.</Text>
-              <Image src="/discorddraftresponse.png" />
+              <Image src={appPath("/discorddraftresponse.png")} />
             </Stack>
           }
           mt="lg"

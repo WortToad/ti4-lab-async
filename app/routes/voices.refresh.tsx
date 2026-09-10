@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { data, LoaderFunctionArgs, redirect } from "react-router";
 import { spotifyApi } from "~/vendors/spotifyApi";
 
@@ -22,7 +23,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const headers = new Headers();
     headers.append(
       "Set-Cookie",
-      `spotifyAccessToken=${accessToken}; Path=/; Max-Age=${expiresIn}; SameSite=Lax`,
+      `spotifyAccessToken=${accessToken}; Path=${appPath("/")}; Max-Age=${expiresIn}; SameSite=Lax`,
     );
 
     return data(
@@ -36,11 +37,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const headers = new Headers();
     headers.append(
       "Set-Cookie",
-      "spotifyAccessToken=; Path=/; Max-Age=0; SameSite=Lax",
+      `spotifyAccessToken=; Path=${appPath("/")}; Max-Age=0; SameSite=Lax`,
     );
     headers.append(
       "Set-Cookie",
-      "spotifyRefreshToken=; Path=/; Max-Age=0; SameSite=Lax",
+      `spotifyRefreshToken=; Path=${appPath("/")}; Max-Age=0; SameSite=Lax`,
     );
 
     return data(

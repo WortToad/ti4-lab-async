@@ -3,7 +3,8 @@ import { createRequestHandler } from "@react-router/express";
 import { createServer } from "http";
 import type { ServerBuild } from "react-router";
 import { Server } from "socket.io";
-import { startDiscordBot } from "~/discord/bot.server.js";
+import "dotenv/config";
+import { appPath, normalizeBasePath } from "~/utils/appUrl.js";
 import { initEnv } from "~/env.server.js";
 import {
   metricsMiddleware,
@@ -28,6 +29,7 @@ const viteDevServer =
       );
 
 const app = express();
+const basePath = normalizeBasePath(process.env.TI4_BASE_PATH);
 
 // Health check endpoint - must be before other middleware
 app.get("/health", (_req, res) => {
@@ -41,9 +43,28 @@ app.get("/metrics", async (_req, res) => {
 
 app.use(metricsMiddleware);
 
-app.use(
-  viteDevServer ? viteDevServer.middlewares : express.static("build/client"),
-);
+if (viteDevServer) {
+  app.use(viteDevServer.middlewares);
+} else {
+  app.use(
+    appPath("/assets"),
+    express.static("build/client/assets", {
+      immutable: true,
+      maxAge: "1y",
+    }),
+  );
+  app.use(
+    basePath || "/",
+    express.static("build/client", {
+      maxAge: "1h",
+      setHeaders(res, filePath) {
+        if (filePath.endsWith("/sw.js") || filePath.endsWith(".webmanifest")) {
+          res.setHeader("Cache-Control", "no-cache");
+        }
+      },
+    }),
+  );
+}
 
 const build: ServerBuild | (() => Promise<ServerBuild>) = viteDevServer
   ? async () =>
@@ -52,12 +73,28 @@ const build: ServerBuild | (() => Promise<ServerBuild>) = viteDevServer
       )) as ServerBuild
   : ((await import("./build/server/index.js")) as unknown as ServerBuild);
 
+if (
+  typeof build !== "function" &&
+  (build.basename || "/") !== (basePath || "/")
+) {
+  throw new Error(
+    "TI4_BASE_PATH changed since the build. Rebuild with the same value used at runtime.",
+  );
+}
+
+if (basePath) {
+  app.get("/", (req, res) =>
+    res.redirect(302, `${basePath}/${req.url.slice(1)}`),
+  );
+}
+
 app.all("/{*splat}", createRequestHandler({ build }));
 
 // Connect socket.io
 const httpServer = createServer(app);
 // Attach the socket.io server to the HTTP server
 const io = new Server(httpServer, {
+  path: appPath("/socket.io"),
   connectionStateRecovery: {
     maxDisconnectionDuration: 2 * 60 * 1000,
     skipMiddlewares: true,
@@ -164,11 +201,15 @@ io.on("connection", (socket) => {
   });
 });
 
-httpServer.listen(3000, "0.0.0.0", () => {
-  console.log(`Express server listening on port 3000`);
+const port = Number(process.env.PORT || 3000);
+httpServer.listen(port, "0.0.0.0", () => {
+  console.log(
+    `Express server listening on port ${port}, app path ${basePath || "/"}`,
+  );
 });
 
 if (process.env.DISCORD_DISABLED !== "true") {
+  const { startDiscordBot } = await import("~/discord/bot.server.js");
   startDiscordBot();
 }
 
@@ -181,6 +222,7 @@ const shutdown = (signal: string) => {
 
   console.log(`${signal} received, shutting down gracefully...`);
 
+  io.disconnectSockets(true);
   httpServer.close(() => {
     console.log("HTTP server closed");
     process.exit(0);

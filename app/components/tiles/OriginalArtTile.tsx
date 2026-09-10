@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { useContext, useState } from "react";
 import { Hex } from "../Hex";
 import type { SystemTile } from "~/types";
@@ -25,7 +26,7 @@ export function OriginalArtTile({ mapId, tile, children }: Props) {
         radius={radius}
         image={
           <image
-            href={`/tiles/ST_${system.id}.png`}
+            href={appPath(`/tiles/ST_${system.id}.png`)}
             x={-radius}
             y={-radius}
             width={radius * 2}

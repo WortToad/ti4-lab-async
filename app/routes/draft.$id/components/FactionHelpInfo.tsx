@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { Faction } from "~/types";
 import { useDisclosure } from "@mantine/hooks";
 import { Box, Button, Modal, SimpleGrid, Stack, Text } from "@mantine/core";
@@ -67,7 +68,7 @@ export function FactionHelpInfo({ faction }: Props) {
               </Text>
               <Box>
                 <img
-                  src={`/factioncards/${faction.id}.png`}
+                  src={appPath(`/factioncards/${faction.id}.png`)}
                   alt={`${faction.name} faction card`}
                   style={{
                     objectFit: "contain",
@@ -86,7 +87,7 @@ export function FactionHelpInfo({ faction }: Props) {
                 </Text>
                 <Box>
                   <img
-                    src={faction.monument}
+                    src={faction.monument ? appPath(faction.monument) : undefined}
                     alt={`${faction.name} monument art`}
                     style={{
                       objectFit: "contain",

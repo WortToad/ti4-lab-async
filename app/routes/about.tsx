@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import {
   Button,
   Container,
@@ -92,8 +93,8 @@ function About() {
               <Text size="lg" fw={600}>
                 Some of our in person games
               </Text>
-              <Image src="/ourgame.jpg" alt="Our game" radius="md" />
-              <Image src="/ourgame2.jpg" alt="Our game" radius="md" />
+              <Image src={appPath("/ourgame.jpg")} alt="Our game" radius="md" />
+              <Image src={appPath("/ourgame2.jpg")} alt="Our game" radius="md" />
             </Stack>
           </Grid.Col>
         </Grid>

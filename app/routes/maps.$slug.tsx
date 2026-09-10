@@ -1,3 +1,4 @@
+import { appUrl, appPath } from "~/utils/appUrl";
 import { ActionIcon, Box, Button, Group, Stack, Text } from "@mantine/core";
 import {
   LoaderFunctionArgs,
@@ -165,8 +166,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     ? `${preset.description} — by ${preset.author}`
     : `Map by ${preset.author}`;
   const imageUrl =
-    preset.imageUrl ?? `https://tidraft.com/map-preset/${preset.id}.png`;
-  const url = `https://tidraft.com/maps/${preset.slug}`;
+    preset.imageUrl ?? appUrl(`/map-preset/${preset.id}.png`);
+  const url = appUrl(`/maps/${preset.slug}`);
 
   return [
     { title },
@@ -227,7 +228,7 @@ export default function MapDetail() {
     [decoded],
   );
   const handleLike = async () => {
-    const response = await fetch(`/api/preset-maps/${preset.id}/like`, {
+    const response = await fetch(appPath(`/api/preset-maps/${preset.id}/like`), {
       method: "POST",
     });
     const result = await response.json().catch(() => null);
@@ -416,9 +417,9 @@ export default function MapDetail() {
 
                 <Button
                   component="a"
-                  href={`/map-generator?map=${encodeURIComponent(
+                  href={appPath(`/map-generator?map=${encodeURIComponent(
                     preset.mapString,
-                  )}`}
+                  )}`)}
                   variant="light"
                   color="blue"
                   size="sm"

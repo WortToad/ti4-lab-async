@@ -1,3 +1,5 @@
+import { appUrl } from "./utils/appUrl";
+
 declare global {
   var env: Env;
 }
@@ -20,5 +22,10 @@ const prodEnv = {
 };
 
 export function initEnv() {
-  global.env = process.env.NODE_ENV === "production" ? prodEnv : localEnv;
+  const defaults = process.env.NODE_ENV === "production" ? prodEnv : localEnv;
+  global.env = {
+    ...defaults,
+    baseUrl: appUrl("/").replace(/\/$/, ""),
+    discordOauthUrl: process.env.DISCORD_OAUTH_URL || defaults.discordOauthUrl,
+  };
 }

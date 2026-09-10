@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { Box, Image, Text } from "@mantine/core";
 
 type Props = {
@@ -8,7 +9,7 @@ type Props = {
 export function ResourceIcon({ value, size = 20 }: Props) {
   return (
     <Box pos="relative" w={size} h={size} style={{ display: "inline-block" }}>
-      <Image src="/pa_resources.png" w={size} h={size} alt="Resources" />
+      <Image src={appPath("/pa_resources.png")} w={size} h={size} alt="Resources" />
       <Text
         fz="sm"
         fw="bold"

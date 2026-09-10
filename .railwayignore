@@ -1,0 +1,14 @@
+node_modules
+.git
+build
+.react-router
+.env
+.env.*
+TI4_map_generator_bot
+deployment
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.log

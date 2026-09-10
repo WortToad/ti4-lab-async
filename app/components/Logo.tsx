@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { Group, Text } from "@mantine/core";
 
 import classes from "./Logo.module.css";
@@ -5,7 +6,7 @@ import classes from "./Logo.module.css";
 export function Logo() {
   return (
     <Group align="center" gap="xs" className={classes.logo}>
-      <img src="/logo.webp" style={{ width: 32 }} alt="TI4 Lab logo" />
+      <img src={appPath("/logo.webp")} style={{ width: 32 }} alt="TI4 Lab logo" />
       <Text
         fw={700}
         size="sm"

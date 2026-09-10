@@ -1,4 +1,5 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
+import { appPath } from "~/utils/appUrl";
 import { and, eq } from "drizzle-orm";
 import { createCookie } from "react-router";
 import { db } from "./config.server";
@@ -17,7 +18,7 @@ export const mantisCookie = (id: string) =>
   createCookie(`mantis-${id}`, {
     httpOnly: true,
     sameSite: "lax",
-    path: "/draft/mantis",
+    path: appPath("/draft/mantis"),
     secure: process.env.NODE_ENV === "production",
     maxAge: 60 * 60 * 24 * 365,
   });

@@ -1,3 +1,4 @@
+import { appPath, appUrl } from "~/utils/appUrl";
 import { Fragment, useEffect, useState, useMemo, useRef } from "react";
 import {
   Text,
@@ -219,7 +220,7 @@ const SpotifyPlaybackUI = ({ currentPlayback }: SpotifyPlaybackUIProps) => {
     <>
       <Group justify="space-between" align="center">
         <Image
-          src="/spotifylogo.svg"
+          src={appPath("/spotifylogo.svg")}
           alt="Spotify Logo"
           style={{ width: 90, height: 24 }}
         />
@@ -228,7 +229,7 @@ const SpotifyPlaybackUI = ({ currentPlayback }: SpotifyPlaybackUIProps) => {
           color="red"
           size="xs"
           component="a"
-          href="/voices/logout"
+          href={appPath("/voices/logout")}
         >
           Logout
         </Button>
@@ -855,7 +856,7 @@ export default function VoicesMaster() {
                 </Text>
                 <Text className={styles.sessionCode}>{sessionId}</Text>
                 <Text size="sm" c="dimmed">
-                  tidraft.com/voices/{sessionId}
+                  {appUrl(`/voices/${sessionId}`)}
                 </Text>
                 <Button
                   size="xs"
@@ -870,7 +871,7 @@ export default function VoicesMaster() {
               <Stack align="center" gap={4}>
                 <Box className={styles.qrContainer}>
                   <QRCode
-                    value={`https://tidraft.com/voices/${sessionId}`}
+                    value={appUrl(`/voices/${sessionId}`)}
                     size={100}
                   />
                 </Box>
@@ -887,7 +888,7 @@ export default function VoicesMaster() {
           <Stack gap="sm">
             <Group justify="space-between" align="center">
               <Image
-                src="/spotifylogo.svg"
+                src={appPath("/spotifylogo.svg")}
                 alt="Spotify"
                 style={{ width: 80, height: 24 }}
               />
@@ -897,7 +898,7 @@ export default function VoicesMaster() {
                   color="red"
                   size="compact-xs"
                   component="a"
-                  href="/voices/logout"
+                  href={appPath("/voices/logout")}
                 >
                   Logout
                 </Button>
@@ -1629,7 +1630,7 @@ export default function VoicesMaster() {
         <Stack align="center" gap="md">
           {sessionId && (
             <QRCode
-              value={`https://tidraft.com/voices/${sessionId}`}
+              value={appUrl(`/voices/${sessionId}`)}
               size={600}
             />
           )}
@@ -1637,7 +1638,7 @@ export default function VoicesMaster() {
             Scan this QR code to join the session
           </Text>
           <Text size="xs" c="dimmed" ta="center">
-            https://tidraft.com/voices/{sessionId}
+            {appUrl(`/voices/${sessionId}`)}
           </Text>
         </Stack>
       </Modal>

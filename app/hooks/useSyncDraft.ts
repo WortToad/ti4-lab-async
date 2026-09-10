@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { useFetcher } from "react-router";
 import { createContext, useContext, useEffect } from "react";
 import { draftStore } from "~/draftStore";
@@ -102,7 +103,7 @@ export function useSyncDraftFetcher() {
 
     draftActions.stageSimultaneousPick(phase, playerId, value);
 
-    const response = await fetch(`/api/draft/${draftId}/stage`, {
+    const response = await fetch(appPath(`/api/draft/${draftId}/stage`), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ playerId, value, phase }),
@@ -153,7 +154,7 @@ export function useSyncDraftFetcher() {
       draftActions.clearStagedSelection(phase, playerId);
 
       const response = await fetch(
-        `/api/draft/${draftId}/simultaneous-undo-pick`,
+        appPath(`/api/draft/${draftId}/simultaneous-undo-pick`),
         {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -191,7 +192,7 @@ export function useSyncDraftFetcher() {
       const expectedSelectionCount = draft.selections.length;
 
       const response = await fetch(
-        `/api/draft/${draftId}/simultaneous-undo-phase`,
+        appPath(`/api/draft/${draftId}/simultaneous-undo-phase`),
         {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -244,7 +245,7 @@ export function useSyncDraftFetcher() {
 
       const expectedSelectionCount = draft.selections.length;
 
-      const response = await fetch(`/api/draft/${draftId}/undo`, {
+      const response = await fetch(appPath(`/api/draft/${draftId}/undo`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ expectedSelectionCount }),

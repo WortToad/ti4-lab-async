@@ -1,3 +1,4 @@
+import { appUrl } from "~/utils/appUrl";
 import { Grid, Stack, Text } from "@mantine/core";
 import { data, redirect } from "react-router";
 import { useLoaderData } from "react-router";
@@ -56,7 +57,7 @@ export default function DraftReplay() {
       <Grid gutter="xl">
         <Grid.Col span={12} order={{ base: 0 }}>
           <Text size="md" ta="right" c="dimmed">
-            https://tidraft.com/draft/{result.urlName}
+            {appUrl(`/draft/${result.urlName}`)}
           </Text>
         </Grid.Col>
 

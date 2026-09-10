@@ -1,3 +1,4 @@
+import { appUrl } from "~/utils/appUrl";
 import { Draft, Slice, Tile, System } from "~/types";
 import { calcHexHeight } from "~/utils/positioning";
 import { hydratePresetMap } from "~/utils/map";
@@ -66,7 +67,7 @@ export async function generateDraftSlicesImage(
 
   // Draw branding
   drawBranding(ctx, canvasWidth, canvasHeight, {
-    urlText: `tidraft.com/draft/${draftId}`,
+    urlText: appUrl(`/draft/${draftId}`).replace(/^https?:\/\//, ""),
     urlPosition: "inline",
     logoX: 20,
     logoY: 20,
@@ -174,7 +175,7 @@ export async function generatePresetDraftImage(
   });
 
   drawBranding(ctx, canvasWidth, canvasHeight, {
-    urlText: `tidraft.com/draft/${draftId}`,
+    urlText: appUrl(`/draft/${draftId}`).replace(/^https?:\/\//, ""),
     urlPosition: "inline",
     logoX: 20,
     logoY: 20,

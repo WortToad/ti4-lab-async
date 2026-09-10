@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import {
   ActionIcon,
   Box,
@@ -106,7 +107,7 @@ export function FinalizedDraft() {
         <Group justify="space-between" align="flex-start" wrap="wrap" gap="md">
           <Title order={1}>Draft Complete</Title>
           <Group gap="sm">
-            <Anchor href={`/draft/${draftUrl}.png`} target="_blank">
+            <Anchor href={appPath(`/draft/${draftUrl}.png`)} target="_blank">
               <Button
                 size="md"
                 color="green"

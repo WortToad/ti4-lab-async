@@ -1,3 +1,4 @@
+import { appPath, appUrl } from "~/utils/appUrl";
 import { Fragment, useEffect, useState, useMemo } from "react";
 import {
   Text,
@@ -224,7 +225,7 @@ const SpotifyPlaybackUI = ({ currentPlayback }: SpotifyPlaybackUIProps) => {
     <>
       <Group justify="space-between" align="center">
         <Image
-          src="/spotifylogo.svg"
+          src={appPath("/spotifylogo.svg")}
           alt="Spotify Logo"
           style={{ width: 90, height: 24 }}
         />
@@ -233,7 +234,7 @@ const SpotifyPlaybackUI = ({ currentPlayback }: SpotifyPlaybackUIProps) => {
           color="red"
           size="xs"
           component="a"
-          href="/voices/logout"
+          href={appPath("/voices/logout")}
         >
           Logout
         </Button>
@@ -553,13 +554,13 @@ export default function SoundboardMaster() {
                 </Text>
                 <Text className={styles.sessionCode}>{sessionId}</Text>
                 <Text size="sm" c="dimmed">
-                  tidraft.com/voices/{sessionId}
+                  {appUrl(`/voices/${sessionId}`)}
                 </Text>
               </Stack>
               <Stack align="center" gap={4}>
                 <div className={styles.qrContainer}>
                   <QRCode
-                    value={`https://tidraft.com/voices/${sessionId}`}
+                    value={appUrl(`/voices/${sessionId}`)}
                     size={100}
                   />
                 </div>
@@ -576,7 +577,7 @@ export default function SoundboardMaster() {
           <Stack gap="sm">
             <Group justify="space-between" align="center">
               <Image
-                src="/spotifylogo.svg"
+                src={appPath("/spotifylogo.svg")}
                 alt="Spotify"
                 style={{ width: 80, height: 24 }}
               />
@@ -586,7 +587,7 @@ export default function SoundboardMaster() {
                   color="red"
                   size="compact-xs"
                   component="a"
-                  href="/voices/logout"
+                  href={appPath("/voices/logout")}
                 >
                   Logout
                 </Button>
@@ -940,7 +941,7 @@ export const loader = async () => {
   }
 
   const u = new URL(envRedirect);
-  u.pathname = "/voices/callback";
+  u.pathname = appPath("/voices/callback");
 
   return data({
     spotifyClientId: clientId,

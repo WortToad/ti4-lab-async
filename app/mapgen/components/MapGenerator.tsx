@@ -1,3 +1,4 @@
+import { appUrl, appPath } from "~/utils/appUrl";
 import {
   AppShell,
   Box,
@@ -180,12 +181,12 @@ function MapGeneratorContent() {
 
   const shareUrl = useMemo(() => {
     const encoded = encodeMapString(map);
-    return `https://tidraft.com/map-generator?map=${encodeURIComponent(encoded)}`;
+    return appUrl(`/map-generator?map=${encodeURIComponent(encoded)}`);
   }, [map]);
 
   const imageUrl = useMemo(() => {
     const encoded = encodeMapString(map);
-    return `https://tidraft.com/map-generator.png?map=${encodeURIComponent(encoded)}`;
+    return appUrl(`/map-generator.png?map=${encodeURIComponent(encoded)}`);
   }, [map]);
 
   // Check if map is complete (no OPEN tiles)
@@ -413,7 +414,7 @@ function MapGeneratorContent() {
 
     setPublishing(true);
     try {
-      const response = await fetch("/api/preset-maps", {
+      const response = await fetch(appPath("/api/preset-maps"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

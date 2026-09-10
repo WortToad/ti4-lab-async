@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { ActionIcon, Box, Button, Group, Text } from "@mantine/core";
 import { Link, useLoaderData } from "react-router";
 import { listPresetMaps, TechSkipsData } from "~/drizzle/presetMap.server";
@@ -107,7 +108,7 @@ type AuthorGroup = {
 };
 
 const presetImageUrl = (preset: PresetMapRecord) =>
-  preset.imageUrl ?? `/map-preset/${preset.id}.png`;
+  preset.imageUrl ?? appPath(`/map-preset/${preset.id}.png`);
 
 function groupByAuthor(presets: PresetMapRecord[]): AuthorGroup[] {
   const grouped = new Map<string, PresetMapRecord[]>();
@@ -213,7 +214,7 @@ function MapCard({
           </Group>
           <Button
             component="a"
-            href={`/map-generator?map=${encodeURIComponent(preset.mapString)}`}
+            href={appPath(`/map-generator?map=${encodeURIComponent(preset.mapString)}`)}
             variant="subtle"
             color="blue"
             size="compact-xs"
@@ -261,7 +262,7 @@ export default function MapPresets() {
   }, [presets]);
 
   const handleLike = async (id: string) => {
-    const response = await fetch(`/api/preset-maps/${id}/like`, {
+    const response = await fetch(appPath(`/api/preset-maps/${id}/like`), {
       method: "POST",
     });
     const result = await response.json().catch(() => null);

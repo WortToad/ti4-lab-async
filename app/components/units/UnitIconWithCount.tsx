@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { Box, Image, Text } from "@mantine/core";
 import styles from "./UnitIconWithCount.module.css";
 
@@ -16,7 +17,7 @@ export function UnitIconWithCount({ unit, count, size = 28 }: Props) {
       h={size}
       style={{ display: "inline-block" }}
     >
-      <Image src={src} w={size} h={size} alt={unit} fit="contain" />
+      <Image src={appPath(src)} w={size} h={size} alt={unit} fit="contain" />
       <Text className={styles.count} fz={Math.round(size * 0.6)}>
         {count}
       </Text>

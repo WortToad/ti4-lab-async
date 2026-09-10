@@ -2,6 +2,8 @@
 
 TI4 lab is a Twilight Imperium 4 drafting and map building tool. It supports multiple draft formats, has browser notifications, discord integration, and many other fun things.
 
+For low-cost hosting at **obsecsolutions.com/ti4**, see the [Railway setup and cost guide](docs/railway.md). It uses one app service and a persistent SQLite volume, with an estimated initial budget of **US$5–10/month** for light use.
+
 ## Prerequisites
 
 ### Dependencies

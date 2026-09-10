@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "./main.css";
@@ -130,7 +131,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
-        .register("/sw.js")
+        .register(appPath("/sw.js"))
         .then((registration) => {
           console.log(
             "Service Worker registered with scope:",
@@ -144,7 +145,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const socket = io();
+    const socket = io({ path: appPath("/socket.io") });
     setSocket(socket);
     return () => {
       socket.close();
@@ -168,22 +169,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <link
           rel="apple-touch-icon"
           sizes="76x76"
-          href="/apple-touch-icon.png"
+          href={appPath("/apple-touch-icon.png")}
         />
         <link
           rel="icon"
           type="image/png"
           sizes="32x32"
-          href="/favicon-32x32.png"
+          href={appPath("/favicon-32x32.png")}
         />
         <link
           rel="icon"
           type="image/png"
           sizes="16x16"
-          href="/favicon-16x16.png"
+          href={appPath("/favicon-16x16.png")}
         />
-        <link rel="manifest" href="/site.webmanifest" />
-        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5" />
+        <link rel="manifest" href={appPath("/site.webmanifest")} />
+        <link rel="mask-icon" href={appPath("/safari-pinned-tab.svg")} color="#5bbad5" />
         <meta name="msapplication-TileColor" content="#da532c" />
         <meta name="theme-color" content="#ffffff"></meta>
         <link rel="preconnect" href="https://fonts.googleapis.com" />

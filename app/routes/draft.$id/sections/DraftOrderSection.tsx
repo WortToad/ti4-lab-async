@@ -1,3 +1,4 @@
+import { appPath } from "~/utils/appUrl";
 import { ActionIcon, Box, Button, Group, Stack } from "@mantine/core";
 import { SectionTitle } from "~/components/Section";
 import { DraftOrder } from "../components/DraftOrder";
@@ -73,7 +74,7 @@ export function DraftOrderSection() {
       {/* Primary action: Share */}
       <Button
         component="a"
-        href={`/draft/${draftUrl}.png`}
+        href={appPath(`/draft/${draftUrl}.png`)}
         target="_blank"
         rel="noreferrer"
         size="compact-xs"
