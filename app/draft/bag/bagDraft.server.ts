@@ -4,10 +4,11 @@ import {
   randomUUID,
   timingSafeEqual,
 } from "node:crypto";
-import { and, eq, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "~/drizzle/config.server";
 import { bagDrafts } from "~/drizzle/schema.server";
-import { systemData } from "~/data/systemData";
+import { createMantisRoomFromState } from "~/drizzle/mantisDraft.server";
+import { bagMapBuildError, bagToMantisState } from "./bagToMantis";
 import {
   applyBagAction,
   assemblyOptions,
@@ -25,7 +26,11 @@ import type {
   CreateBagDraftInput,
 } from "./types";
 
-type Credentials = { adminHash: string; seatKeys: Record<number, string> };
+type Credentials = {
+  adminHash: string;
+  seatKeys: Record<number, string>;
+  mapHostToken?: string;
+};
 
 function digest(key: string) {
   return createHash("sha256").update(key).digest("hex");
@@ -58,6 +63,53 @@ function getRecord(id: string) {
   return record;
 }
 
+function loadBagDraft(id: string, key?: string) {
+  const record = getRecord(id);
+  const credentials = JSON.parse(record.credentials) as Credentials;
+  return {
+    state: JSON.parse(record.data) as BagDraftState,
+    credentials,
+    viewer: authenticate(credentials, key),
+  };
+}
+
+function saveBagDraft(
+  id: string,
+  state: BagDraftState,
+  credentials: Credentials,
+) {
+  db.update(bagDrafts)
+    .set({
+      data: JSON.stringify(state),
+      credentials: JSON.stringify(credentials),
+      revision: state.revision,
+      updatedAt: sql`CURRENT_TIMESTAMP`,
+    })
+    .where(eq(bagDrafts.id, id))
+    .run();
+}
+
+function attachMapRoom(
+  id: string,
+  state: BagDraftState,
+  credentials: Credentials,
+) {
+  if (state.mapRoomId || state.phase !== "complete" || bagMapBuildError(state))
+    return false;
+  const map = bagToMantisState(state);
+  map.bagDraftId = id;
+  const claims = Object.fromEntries(
+    Object.entries(credentials.seatKeys).map(([seatId, key]) => [
+      seatId,
+      digest(key),
+    ]),
+  );
+  const room = createMantisRoomFromState(map, claims);
+  state.mapRoomId = room.id;
+  credentials.mapHostToken = room.token;
+  return true;
+}
+
 export async function createBagDraft(input: CreateBagDraftInput) {
   const state = createBagState(input);
   const id = randomUUID();
@@ -84,6 +136,7 @@ export function projectBagDraft(
   viewer: { isAdmin: boolean; playerId?: number },
 ): BagDraftView {
   const seat = state.seats.find((player) => player.id === viewer.playerId);
+  const mapBuildError = state.mapRoomId ? undefined : bagMapBuildError(state);
   return {
     id,
     settings: state.settings,
@@ -127,52 +180,50 @@ export function projectBagDraft(
         }
       : {}),
     canUndoRound:
-      viewer.isAdmin && state.history.length > 0 && state.revision > 0,
-    canBuildMap:
+      !state.mapRoomId &&
       viewer.isAdmin &&
-      state.phase === "complete" &&
-      state.seats.length >= 4 &&
-      state.seats.length <= 8 &&
-      state.seats.every((player) => {
-        const items = keptBagItems(state, player);
-        const tiles = items.filter(
-          (item) => item.category === "BLUETILE" || item.category === "REDTILE",
-        );
-        return (
-          items.filter((item) => item.category === "BLUETILE").length === 3 &&
-          items.filter((item) => item.category === "REDTILE").length === 2 &&
-          tiles.every((item) => item.systemId && systemData[item.systemId])
-        );
-      }),
+      state.history.length > 0 &&
+      state.revision > 0,
+    mapBuildError,
+    mapRoomId: state.mapRoomId,
   };
 }
 
-export async function getCompletedBagDraft(
-  id: string,
-  key?: string,
-): Promise<BagDraftState> {
-  const record = getRecord(id);
-  const viewer = authenticate(
-    JSON.parse(record.credentials) as Credentials,
-    key,
-  );
-  if (!viewer.isAdmin)
-    throw new Response("Only the host can start the map build.", {
-      status: 403,
-    });
-  const state = JSON.parse(record.data) as BagDraftState;
-  if (state.phase !== "complete")
-    throw new BagDraftError(
-      "Finish choosing everyone's components before building the map.",
-    );
-  return state;
+export async function getBagMapAccess(id: string, key?: string) {
+  const { state, credentials, viewer } = loadBagDraft(id, key);
+  if (!state.mapRoomId) return undefined;
+  if (viewer.isAdmin && !credentials.mapHostToken)
+    throw new BagDraftError("The map room's host credentials are missing.");
+  return {
+    id: state.mapRoomId,
+    token: viewer.isAdmin
+      ? credentials.mapHostToken
+      : viewer.playerId !== undefined
+        ? credentials.seatKeys[viewer.playerId]
+        : undefined,
+  };
 }
 
 export async function getBagDraftView(id: string, key?: string) {
-  const record = getRecord(id);
-  const credentials = JSON.parse(record.credentials) as Credentials;
-  const viewer = authenticate(credentials, key);
-  const state = JSON.parse(record.data) as BagDraftState;
+  let saved = loadBagDraft(id, key);
+  if (
+    saved.state.phase === "complete" &&
+    !saved.state.mapRoomId &&
+    !bagMapBuildError(saved.state)
+  ) {
+    saved = db.transaction(
+      () => {
+        const latest = loadBagDraft(id, key);
+        if (attachMapRoom(id, latest.state, latest.credentials)) {
+          latest.state.revision++;
+          saveBagDraft(id, latest.state, latest.credentials);
+        }
+        return latest;
+      },
+      { behavior: "immediate" },
+    );
+  }
+  const { state, credentials, viewer } = saved;
   const view = projectBagDraft(id, state, viewer);
   if (viewer.isAdmin) {
     view.seatLinks = state.seats.map((seat) => ({
@@ -189,32 +240,23 @@ export async function mutateBagDraft(
   key: string | undefined,
   action: BagDraftAction,
 ) {
-  // Each transition is computed from the latest server state and committed with
-  // compare-and-swap, so simultaneous confirmations cannot overwrite each other.
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const record = getRecord(id);
-    const viewer = authenticate(
-      JSON.parse(record.credentials) as Credentials,
-      key,
-    );
-    if (!viewer.isAdmin && viewer.playerId === undefined)
-      throw new Response("Use your private player link to draft.", {
-        status: 403,
-      });
-    const state = JSON.parse(record.data) as BagDraftState;
-    const next = applyBagAction(state, viewer.playerId, action, viewer.isAdmin);
-    const result = db
-      .update(bagDrafts)
-      .set({
-        data: JSON.stringify(next),
-        revision: next.revision,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where(and(eq(bagDrafts.id, id), eq(bagDrafts.revision, record.revision)))
-      .run();
-    if (result.changes > 0) return getBagDraftView(id, key);
-  }
-  throw new BagDraftError(
-    "Other players changed the draft at the same time. Please try your selection again.",
+  db.transaction(
+    () => {
+      const { state, credentials, viewer } = loadBagDraft(id, key);
+      if (!viewer.isAdmin && viewer.playerId === undefined)
+        throw new Response("Use your private player link to draft.", {
+          status: 403,
+        });
+      const next = applyBagAction(
+        state,
+        viewer.playerId,
+        action,
+        viewer.isAdmin,
+      );
+      attachMapRoom(id, next, credentials);
+      saveBagDraft(id, next, credentials);
+    },
+    { behavior: "immediate" },
   );
+  return getBagDraftView(id, key);
 }

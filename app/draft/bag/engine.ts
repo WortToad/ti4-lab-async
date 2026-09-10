@@ -481,6 +481,10 @@ export function applyBagAction(
   isAdmin = false,
 ): BagDraftState {
   assert(action && typeof action === "object", "An action is required.");
+  assert(
+    !state.mapRoomId,
+    "Map building has started. Continue in the shared map room.",
+  );
   const next = structuredClone(state);
   if (action.action === "undoRound") {
     assert(isAdmin, "Only the host can undo a round.");

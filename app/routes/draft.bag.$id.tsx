@@ -31,17 +31,14 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 import { BagItemCard, bagCategoryLabel } from "~/draft/bag/BagComponents";
+import { BagMapSetup } from "~/draft/bag/BagMapSetup";
 import { OriginalArtToggle } from "~/components/OriginalArtToggle";
 import {
   getBagDraftView,
-  getCompletedBagDraft,
+  getBagMapAccess,
   mutateBagDraft,
 } from "~/draft/bag/bagDraft.server";
-import { bagToMantisState } from "~/draft/bag/bagToMantis";
-import {
-  createMantisRoomFromState,
-  mantisCookie,
-} from "~/drizzle/mantisDraft.server";
+import { mantisCookie } from "~/drizzle/mantisDraft.server";
 import type { BagDraftItem, BagItemCategory } from "~/draft/bag/catalog";
 import { BAG_VARIANTS } from "~/draft/bag/rules";
 import type { BagDraftAction, BagDraftView } from "~/draft/bag/types";
@@ -50,8 +47,6 @@ const privateHeaders = {
   "Cache-Control": "no-store",
   "Referrer-Policy": "no-referrer",
 };
-
-type BagPageAction = BagDraftAction | { action: "buildMap" };
 
 export function headers() {
   return privateHeaders;
@@ -66,9 +61,25 @@ export function meta() {
 }
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
-  const key = new URL(request.url).searchParams.get("key") ?? undefined;
+  const search = new URL(request.url).searchParams;
+  const key = search.get("key") ?? undefined;
   const view = await getBagDraftView(params.id!, key);
+  if (view.mapRoomId && search.get("results") !== "1")
+    return redirectToMap(params.id!, key);
   return data(view, { headers: privateHeaders });
+}
+
+async function redirectToMap(id: string, key?: string) {
+  const room = await getBagMapAccess(id, key);
+  if (!room)
+    throw new Response("The map room is not ready yet.", { status: 409 });
+  const headers = new Headers(privateHeaders);
+  if (room.token)
+    headers.set(
+      "Set-Cookie",
+      await mantisCookie(room.id).serialize(room.token),
+    );
+  return redirect(`/draft/mantis/${room.id}`, { headers });
 }
 
 export async function action({ params, request }: ActionFunctionArgs) {
@@ -77,18 +88,9 @@ export async function action({ params, request }: ActionFunctionArgs) {
   try {
     const input = JSON.parse(
       String(form.get("operation") ?? ""),
-    ) as BagPageAction;
-    if (input.action === "buildMap") {
-      const completed = await getCompletedBagDraft(params.id!, key);
-      const room = createMantisRoomFromState(bagToMantisState(completed));
-      return redirect(`/draft/mantis/${room.id}`, {
-        headers: {
-          ...privateHeaders,
-          "Set-Cookie": await mantisCookie(room.id).serialize(room.token),
-        },
-      });
-    }
-    await mutateBagDraft(params.id!, key, input);
+    ) as BagDraftAction;
+    const view = await mutateBagDraft(params.id!, key, input);
+    if (view.mapRoomId) return redirectToMap(params.id!, key);
     return data({ error: null }, { headers: privateHeaders });
   } catch (error) {
     if (error instanceof Response)
@@ -574,6 +576,8 @@ export default function BagDraftPage() {
     (player) => player.id === view.viewer.playerId,
   )?.name;
   const publicPath = `/draft/bag/${view.id}`;
+  const mapSearch = new URLSearchParams(location.search);
+  mapSearch.delete("results");
   const donePlayers = view.players.filter((player) =>
     view.phase === "drafting" ? player.ready : player.finished,
   ).length;
@@ -593,7 +597,7 @@ export default function BagDraftPage() {
     return () => window.clearInterval(interval);
   }, [revalidator, fetcher.state]);
 
-  function submit(operation: BagPageAction) {
+  function submit(operation: BagDraftAction) {
     void fetcher.submit(
       { operation: JSON.stringify(operation) },
       { method: "post", action: `${location.pathname}${location.search}` },
@@ -720,6 +724,9 @@ export default function BagDraftPage() {
           </Table.ScrollContainer>
         </Stack>
       </Paper>
+      {view.phase !== "drafting" && (
+        <BagMapSetup view={view} mapPath={`${publicPath}?${mapSearch}`} />
+      )}
       {view.viewer.isAdmin && (
         <Paper withBorder p="lg" radius="md">
           <Stack>
@@ -759,22 +766,7 @@ export default function BagDraftPage() {
                   Rewind draft round
                 </Button>
               )}
-              {view.canBuildMap && (
-                <Button
-                  onClick={() => submit({ action: "buildMap" })}
-                  loading={busy}
-                >
-                  Build map from drafted tiles
-                </Button>
-              )}
             </Group>
-            {view.canBuildMap && (
-              <Text size="sm" c="dimmed">
-                Continue with your drafted tiles, home systems, and speaker
-                order. Players take turns drawing and placing tiles to build the
-                map from the center outward.
-              </Text>
-            )}
           </Stack>
         </Paper>
       )}
@@ -813,7 +805,7 @@ export default function BagDraftPage() {
           <Group justify="space-between">
             <Title order={2}>Completed factions</Title>
             <Group>
-              {seat && (
+              {seat && !view.mapRoomId && (
                 <Button
                   variant="light"
                   onClick={() => submit({ action: "reopen" })}

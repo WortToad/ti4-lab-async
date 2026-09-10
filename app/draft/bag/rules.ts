@@ -48,9 +48,9 @@ export const BAG_VARIANTS: {
   },
   {
     id: "twilights_fall",
-    name: "Twilight’s Fall bag draft",
+    name: "Twilight’s Fall · Bag Draft of Everything",
     description:
-      "Draft Mahact kings, abilities, genomes, unit upgrades, home systems, fleets, tiles and speaker order. Keep two abilities, one genome and one unit upgrade.",
+      "The bot’s Twilight’s Fall Franken draft: pick three cards from your first bag, then two per pass. Draft kings, abilities, genomes, unit upgrades, homes, fleets, tiles and speaker order; choose your final faction, then build the map.",
   },
   {
     id: "inaugural_splice",

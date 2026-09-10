@@ -64,6 +64,7 @@ export type BagDraftState = {
   revision: number;
   seats: BagSeat[];
   history: BagRoundSnapshot[];
+  mapRoomId?: string;
 };
 
 export type BagDraftView = {
@@ -97,7 +98,8 @@ export type BagDraftView = {
   };
   seatLinks?: { id: number; name: string; path: string }[];
   canUndoRound: boolean;
-  canBuildMap: boolean;
+  mapBuildError?: string;
+  mapRoomId?: string;
 };
 
 export type BagDraftAction =

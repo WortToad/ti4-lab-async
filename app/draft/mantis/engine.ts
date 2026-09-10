@@ -13,6 +13,7 @@ import type {
 } from "~/types";
 
 export const MANTIS_MAPS: Partial<Record<number, DraftType>> = {
+  3: "milty3p",
   4: "milty4p",
   5: "milty5p",
   6: "milty",
@@ -45,6 +46,7 @@ export type MantisSnapshot = {
   hands: Record<number, SystemId[]>;
   chosenFactions: Record<number, FactionId>;
   factionLabels?: Record<number, string>;
+  bagDraftId?: string;
   seats: Record<number, number>;
   discarded: SystemId[];
   mulligansUsed: Record<number, number>;
@@ -182,7 +184,7 @@ export function createMantisMapBuild(
   random: Random = Math.random,
 ): MantisState {
   const count = input.players.length;
-  integer(count, 4, 8, "Player count");
+  integer(count, 3, 8, "Player count");
   const ids = input.players.map((player) => player.id);
   if (new Set(ids).size !== count || ids.some((id) => !Number.isInteger(id)))
     throw new Error("Players must have unique numeric IDs.");

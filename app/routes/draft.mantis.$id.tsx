@@ -17,6 +17,7 @@ import {
 import { useEffect, useState } from "react";
 import {
   data,
+  Link,
   useFetcher,
   useLoaderData,
   useRevalidator,
@@ -223,8 +224,19 @@ export default function MantisRoom() {
     <Container size="xl" py="lg">
       <Stack gap="lg">
         <Group justify="space-between">
-          <Title order={2}>Mantis draft</Title>
+          <Title order={2}>
+            {draft.factionLabels ? "Your drafted map" : "Mantis draft"}
+          </Title>
           <Group>
+            {draft.bagDraftId && (
+              <Button
+                component={Link}
+                to={`/draft/bag/${draft.bagDraftId}?results=1`}
+                variant="light"
+              >
+                View drafted factions
+              </Button>
+            )}
             <OriginalArtToggle />
             <Button
               variant="light"
@@ -255,9 +267,11 @@ export default function MantisRoom() {
         </Group>
         {shareMessage && <Text size="sm">{shareMessage}</Text>}
         <Text>
-          Public snake draft → discard extras → build your own slice. Map
-          building draws from your hand at random; a mulligan keeps the original
-          tile in your hand.
+          {draft.factionLabels
+            ? "Build the map with the tiles, home systems, and speaker order from your completed bag draft. "
+            : "Public snake draft → discard extras → build your own slice. "}
+          Map building draws from your hand at random; a mulligan keeps the
+          original tile in your hand.
         </Text>
         <Group>
           <Badge size="lg">{draft.phase}</Badge>

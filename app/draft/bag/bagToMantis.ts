@@ -36,6 +36,17 @@ export function bagToMantisState(state: BagDraftState, random = Math.random) {
       "Everyone must finish their faction before building the map.",
     );
   }
+  if (
+    !(state.rules.keepLimits.BLUETILE ?? 0) &&
+    !(state.rules.keepLimits.REDTILE ?? 0)
+  ) {
+    throw new Error(
+      "This draft does not include map tiles. Use an existing map or create one in the map generator.",
+    );
+  }
+  if (state.seats.length < 3 || state.seats.length > 8) {
+    throw new Error("Map building supports 3–8 players.");
+  }
   const hands: Record<number, string[]> = {};
   const homeSystems: Record<number, string> = {};
   const factionLabels: Record<number, string> = {};
@@ -111,4 +122,13 @@ export function bagToMantisState(state: BagDraftState, random = Math.random) {
   );
   mapBuild.log.push(...notes);
   return mapBuild;
+}
+
+export function bagMapBuildError(state: BagDraftState): string | undefined {
+  try {
+    bagToMantisState(state, () => 0);
+    return undefined;
+  } catch (error) {
+    return error instanceof Error ? error.message : "Unable to build this map.";
+  }
 }

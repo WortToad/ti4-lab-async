@@ -41,13 +41,16 @@ export function createMantisRoom(settings: MantisSettings) {
   return createMantisRoomFromState(createMantisDraft(settings));
 }
 
-export function createMantisRoomFromState(draft: MantisState) {
+export function createMantisRoomFromState(
+  draft: MantisState,
+  claims: Record<number, string> = {},
+) {
   const id = randomUUID();
   const token = newMantisToken();
   db.insert(mantisDrafts)
     .values({
       id,
-      data: JSON.stringify({ draft, claims: {} } satisfies RoomData),
+      data: JSON.stringify({ draft, claims } satisfies RoomData),
       revision: 0,
       hostTokenHash: mantisTokenHash(token),
     })

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { draftConfig } from "~/draft/draftConfig";
 import { systemData } from "~/data/systemData";
-import { bagToMantisState } from "./bagToMantis";
+import { bagMapBuildError, bagToMantisState } from "./bagToMantis";
 import { BAG_CATALOG } from "./catalog";
 import { createBagState } from "./engine";
 
@@ -120,5 +120,22 @@ describe("completed bag to map building", () => {
     bag.seats[0].finished = true;
     bag.seats[0].keptItemIds.shift();
     expect(() => bagToMantisState(bag)).toThrow(/exactly 3 blue and 2 red/);
+    expect(bagMapBuildError(bag)).toMatch(/exactly 3 blue and 2 red/);
+  });
+
+  it("explains drafts without tiles and unsupported player counts", () => {
+    const bag = completedBag();
+    bag.seats = bag.seats.slice(0, 2);
+    expect(bagMapBuildError(bag)).toMatch(/3–8 players/);
+    bag.rules.keepLimits = { TECH: 2, AGENT: 1, UNIT: 1 };
+    expect(bagMapBuildError(bag)).toMatch(/does not include map tiles/);
+  });
+
+  it("reports unsupported tiles and duplicate tiles using the actual builder validation", () => {
+    const bag = completedBag();
+    bag.seats[0].keptItemIds[0] = "BLUETILE:d100";
+    expect(bagMapBuildError(bag)).toContain("does not have Silence");
+    bag.seats[0].keptItemIds[0] = bag.seats[1].keptItemIds[0];
+    expect(bagMapBuildError(bag)).toMatch(/must be unique/);
   });
 });
