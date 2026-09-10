@@ -25,8 +25,15 @@ import {
 } from "react-router";
 import { Map as DraftMap, MAP_INTERACTIONS } from "~/components/Map";
 import { SystemTileCard } from "~/components/SystemTileCard";
-import { factions as allFactions } from "~/data/factionData";
+import { OriginalArtToggle } from "~/components/OriginalArtToggle";
+import { FactionIcon } from "~/components/icons/FactionIcon";
+import { Section, SectionTitle } from "~/components/Section";
+import { factions as allFactions, playerColors } from "~/data/factionData";
 import { systemData } from "~/data/systemData";
+import { DraftableSpeakerOrder } from "~/routes/draft.$id/components/DraftableSpeakerOrder";
+import { FactionReference } from "~/routes/draft.$id/components/FactionHelpInfo";
+import { PlayerChip } from "~/routes/draft.$id/components/PlayerChip";
+import { SelectableCard, type PlayerColor } from "~/ui";
 import {
   applyMantisAction,
   countMantisTiles,
@@ -189,6 +196,16 @@ export default function MantisRoom() {
     setConfirmation(action);
   };
   const hand = playerId === undefined ? [] : (draft.hands[playerId] ?? []);
+  const confirmationTile =
+    confirmation?.type === "tile" || confirmation?.type === "discard"
+      ? confirmation.tileId
+      : confirmation?.type === "place"
+        ? draft.drawnTile
+        : undefined;
+  const confirmationFaction =
+    confirmation?.type === "faction"
+      ? allFactions[confirmation.factionId]
+      : undefined;
   const actionLabel =
     confirmation?.type === "tile"
       ? `Draft tile ${confirmation.tileId}?`
@@ -208,6 +225,7 @@ export default function MantisRoom() {
         <Group justify="space-between">
           <Title order={2}>Mantis draft</Title>
           <Group>
+            <OriginalArtToggle />
             <Button
               variant="light"
               onClick={async () => {
@@ -327,9 +345,19 @@ export default function MantisRoom() {
                     {p.name}
                   </Table.Td>
                   <Table.Td>
-                    {allFactions[draft.chosenFactions[p.id]]?.name ??
-                      draft.factionLabels?.[p.id] ??
-                      "—"}
+                    <Group gap="xs" wrap="nowrap">
+                      {allFactions[draft.chosenFactions[p.id]] && (
+                        <FactionIcon
+                          faction={draft.chosenFactions[p.id]}
+                          style={{ width: 28, height: 28, flexShrink: 0 }}
+                        />
+                      )}
+                      <Text size="sm">
+                        {allFactions[draft.chosenFactions[p.id]]?.name ??
+                          draft.factionLabels?.[p.id] ??
+                          "—"}
+                      </Text>
+                    </Group>
                   </Table.Td>
                   <Table.Td>
                     {draft.seats[p.id] === undefined
@@ -352,45 +380,89 @@ export default function MantisRoom() {
         </Table.ScrollContainer>
         {draft.phase === "draft" && (
           <>
-            <Title order={3}>Factions</Title>
-            <Group>
-              {draft.factions.map((id) => (
-                <Button
-                  key={id}
-                  variant="light"
-                  disabled={
-                    !canPick ||
-                    !!draft.chosenFactions[playerId!] ||
-                    Object.values(draft.chosenFactions).includes(id)
-                  }
-                  onClick={() => pick({ type: "faction", factionId: id })}
-                >
-                  {allFactions[id]?.name ?? id}
-                </Button>
-              ))}
-            </Group>
-            <Title order={3}>Speaker positions</Title>
-            <Group>
-              {draft.players.map((_, seat) => (
-                <Button
-                  key={seat}
-                  variant="light"
-                  disabled={
-                    !canPick ||
-                    draft.seats[playerId!] !== undefined ||
-                    Object.values(draft.seats).includes(seat)
-                  }
-                  onClick={() => pick({ type: "seat", seat })}
-                >
-                  {seat === 0 ? "Speaker" : `Position ${seat + 1}`}
-                </Button>
-              ))}
-            </Group>
+            <Section>
+              <SectionTitle title="Factions" />
+              <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+                {draft.factions.map((id) => {
+                  const faction = allFactions[id];
+                  const claimedBy = draft.players.find(
+                    (player) => draft.chosenFactions[player.id] === id,
+                  );
+                  const available =
+                    canPick && !draft.chosenFactions[playerId!] && !claimedBy;
+                  const selectFaction = () =>
+                    pick({ type: "faction", factionId: id });
+                  return (
+                    <SelectableCard
+                      key={id}
+                      selected={!!claimedBy}
+                      selectedColor={
+                        claimedBy
+                          ? (playerColors[claimedBy.id] as PlayerColor)
+                          : undefined
+                      }
+                      onSelect={available ? selectFaction : undefined}
+                      header={
+                        <Group p="sm" gap="sm" wrap="nowrap">
+                          <FactionIcon
+                            faction={id}
+                            style={{ width: 36, height: 36, flexShrink: 0 }}
+                          />
+                          <Text size="sm" ff="heading" fw={600} flex={1}>
+                            {faction.name}
+                          </Text>
+                          {claimedBy ? (
+                            <PlayerChip player={claimedBy} size="sm" />
+                          ) : (
+                            <Button
+                              size="compact-xs"
+                              disabled={!available}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                selectFaction();
+                              }}
+                            >
+                              Select
+                            </Button>
+                          )}
+                        </Group>
+                      }
+                      body={<FactionReference faction={faction} />}
+                    />
+                  );
+                })}
+              </SimpleGrid>
+            </Section>
+            <Section>
+              <SectionTitle title="Speaker positions" />
+              <SimpleGrid cols={{ base: 2, xs: 3, md: draft.players.length }}>
+                {draft.players.map((_, seat) => (
+                  <DraftableSpeakerOrder
+                    key={seat}
+                    speakerOrder={
+                      seat === 0
+                        ? "Speaker"
+                        : ["", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"][
+                            seat
+                          ]
+                    }
+                    player={draft.players.find(
+                      (player) => draft.seats[player.id] === seat,
+                    )}
+                    canSelectSpeakerOrder={
+                      canPick && draft.seats[playerId!] === undefined
+                    }
+                    disabled={!canPick}
+                    onSelect={() => pick({ type: "seat", seat })}
+                  />
+                ))}
+              </SimpleGrid>
+            </Section>
             {(["BLUE", "RED"] as const).map((color) => (
-              <Stack key={color} gap="xs">
-                <Title order={3}>
-                  {color === "BLUE" ? "Blue" : "Red"} tiles
-                </Title>
+              <Section key={color}>
+                <SectionTitle
+                  title={`${color === "BLUE" ? "Blue" : "Red"} tiles`}
+                />
                 <Text size="sm">
                   Draft{" "}
                   {color === "BLUE"
@@ -398,7 +470,7 @@ export default function MantisRoom() {
                     : 2 + draft.settings.extraReds}{" "}
                   per player.
                 </Text>
-                <SimpleGrid cols={{ base: 2, xs: 3, sm: 5, md: 7 }}>
+                <SimpleGrid cols={{ base: 2, xs: 3, sm: 4, md: 6, xl: 7 }}>
                   {draft.pool
                     .filter((id) => systemData[id]?.type === color)
                     .map((id) => (
@@ -417,11 +489,11 @@ export default function MantisRoom() {
                         }
                         onClick={() => pick({ type: "tile", tileId: id })}
                       >
-                        <SystemTileCard systemId={id} radius={48} />
+                        <SystemTileCard systemId={id} radius={55} />
                       </Button>
                     ))}
                 </SimpleGrid>
-              </Stack>
+              </Section>
             ))}
           </>
         )}
@@ -551,6 +623,20 @@ export default function MantisRoom() {
       >
         <Stack>
           <Text>{actionLabel}</Text>
+          {confirmationTile && (
+            <Group justify="center">
+              <SystemTileCard systemId={confirmationTile} radius={100} />
+            </Group>
+          )}
+          {confirmationFaction && (
+            <Stack align="center" gap="sm">
+              <FactionIcon
+                faction={confirmationFaction.id}
+                style={{ width: 64, height: 64 }}
+              />
+              <FactionReference faction={confirmationFaction} />
+            </Stack>
+          )}
           <Group justify="flex-end">
             <Button variant="default" onClick={() => setConfirmation(null)}>
               Cancel

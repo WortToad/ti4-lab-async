@@ -35,6 +35,7 @@ function withContext(
   return {
     ...item,
     name: item.twilightsFallName ?? item.name,
+    imagePath: item.twilightsFallImagePath ?? item.imagePath,
     description:
       item.twilightsFallDescription ??
       item.originalDescription ??

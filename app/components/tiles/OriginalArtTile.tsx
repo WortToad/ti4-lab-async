@@ -4,19 +4,63 @@ import { Hex } from "../Hex";
 import type { SystemTile } from "~/types";
 import { MapContext } from "~/contexts/MapContext";
 import { systemData } from "~/data/systemData";
+import { RawSystemTile } from "./SystemTile";
 
 import classes from "./Tiles.module.css";
 
-type Props = { mapId: string; tile: SystemTile; children?: React.ReactNode };
+type Props = {
+  mapId: string;
+  tile: SystemTile;
+  radius?: number;
+  imagePath?: string;
+  hoverEffects?: boolean;
+  children?: React.ReactNode;
+};
 
-export function OriginalArtTile({ mapId, tile, children }: Props) {
-  const { radius } = useContext(MapContext);
+export function OriginalArtTile({
+  mapId,
+  tile,
+  radius: radiusOverride,
+  imagePath,
+  hoverEffects = true,
+  children,
+}: Props) {
+  const { radius: mapRadius } = useContext(MapContext);
+  const radius = radiusOverride ?? mapRadius;
   const system = systemData[tile.systemId];
   const [isHovered, setIsHovered] = useState(false);
+  const [failedImagePath, setFailedImagePath] = useState<string>();
+  const artworkPath = imagePath ?? `/tiles/ST_${system.id}.png`;
+
+  if (failedImagePath === artworkPath) {
+    return (
+      <div className={classes.tileWrapper}>
+        <RawSystemTile
+          mapId={mapId}
+          tile={tile}
+          radius={radius}
+          disablePopover
+        />
+        {children && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {children}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
-      className={`${classes.tileWrapper} ${isHovered ? classes.hovered : ""}`}
+      className={`${classes.tileWrapper} ${hoverEffects && isHovered ? classes.hovered : ""}`}
       style={{
         transform: tile.rotation ? `rotate(${tile.rotation}deg)` : undefined,
       }}
@@ -26,7 +70,8 @@ export function OriginalArtTile({ mapId, tile, children }: Props) {
         radius={radius}
         image={
           <image
-            href={appPath(`/tiles/ST_${system.id}.png`)}
+            href={appPath(artworkPath)}
+            {...{ onError: () => setFailedImagePath(artworkPath) }}
             x={-radius}
             y={-radius}
             width={radius * 2}
@@ -46,8 +91,8 @@ export function OriginalArtTile({ mapId, tile, children }: Props) {
           left: `${radius * 0.125}px`,
           borderRadius: "50%",
         }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={hoverEffects ? () => setIsHovered(true) : undefined}
+        onMouseLeave={hoverEffects ? () => setIsHovered(false) : undefined}
       />
     </div>
   );

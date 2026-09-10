@@ -38,6 +38,17 @@ export type BagDraftItem = {
   originalDescription?: string;
   twilightsFallName?: string;
   twilightsFallDescription?: string;
+  factionIconPath?: string;
+  imagePath?: string;
+  twilightsFallImagePath?: string;
+  technologyTypes?: string[];
+  fleet?: { unit: string; count: number }[];
+  unit?: {
+    type: string;
+    stats: { label: string; value: string }[];
+    abilities: string[];
+    text: string;
+  };
 };
 
 export const CATEGORY_LABELS: Record<BagItemCategory, string> = {

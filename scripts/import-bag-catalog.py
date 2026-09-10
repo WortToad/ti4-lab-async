@@ -5,6 +5,8 @@ import argparse
 import json
 import pathlib
 import re
+import shutil
+from urllib.parse import unquote, urlparse
 
 
 parser = argparse.ArgumentParser(description=__doc__)
@@ -12,6 +14,11 @@ parser.add_argument("checkout", nargs="?", default="TI4_map_generator_bot")
 args = parser.parse_args()
 resources = pathlib.Path(args.checkout) / "src/main/resources"
 destination = pathlib.Path(__file__).resolve().parents[1] / "app/draft/bag/catalog.json"
+project = destination.parents[3]
+public = project / "public"
+faction_aliases = json.loads((destination.parent / "visualAliases.json").read_text())
+faction_icons = dict(re.findall(r'^  (\w+): \{\s+id: "[^"]+",\s+iconPath: "([^"]+)"', (project / "app/data/factionData.ts").read_text(), re.M))
+copied_assets = set()
 
 
 def read_models(directory):
@@ -47,6 +54,65 @@ faction_components = {}
 
 def clean(value):
     return re.sub(r"<a?:([^:>]+):\d+>", r"\1", str(value or "")).strip()
+
+
+def copy_asset(source, target):
+    if not source.is_file():
+        return None
+    path = public / target
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not path.exists() or path.read_bytes() != source.read_bytes():
+        shutil.copyfile(source, path)
+    copied_assets.add(target)
+    return "/" + target
+
+
+def original_card_image(url, unit_upgrade=False):
+    resource_path = unquote(urlparse(url or "").path).partition("/src/main/resources/")[2]
+    if not resource_path.startswith("hover_images/") or "/paradigm/" in resource_path:
+        return None
+    if not unit_upgrade and not resource_path.startswith("hover_images/twilights_fall/"):
+        return None
+    return copy_asset(resources / resource_path, "draft/cards/" + resource_path.removeprefix("hover_images/"))
+
+
+def faction_icon(alias):
+    existing = faction_icons.get(faction_aliases.get(alias, alias))
+    if existing:
+        return existing
+    return copy_asset(resources / "factions" / f"{alias}.png", f"draft/factions/{alias}.png")
+
+
+def system_image(alias):
+    normalized = str(int(alias)) if alias.isdigit() else alias
+    existing = f"tiles/ST_{normalized}.png"
+    if (public / existing).is_file():
+        return "/" + existing
+    model = models["systems"].get(alias, {})
+    filename = model.get("imagePath")
+    if filename:
+        return copy_asset(resources / "tiles" / filename, f"draft/tiles/{filename}")
+    return None
+
+
+def unit_visual(unit):
+    stats = []
+    for field, label in [("cost", "Cost"), ("combatHitsOn", "Combat"), ("moveValue", "Move"), ("capacityValue", "Capacity")]:
+        if unit.get(field) is not None:
+            value = str(unit[field])
+            if field == "combatHitsOn" and unit.get("combatDieCount", 1) > 1:
+                value += f" × {unit['combatDieCount']}"
+            stats.append({"label": label, "value": value})
+    abilities = []
+    for field, label in [("sustainDamage", "Sustain Damage"), ("planetaryShield", "Planetary Shield"), ("deepSpaceCannon", "Deep Space Cannon")]:
+        if unit.get(field):
+            abilities.append(label)
+    for prefix, label in [("afb", "Anti-Fighter Barrage"), ("bombard", "Bombardment"), ("spaceCannon", "Space Cannon")]:
+        if unit.get(prefix + "DieCount", 0) > 0:
+            abilities.append(f"{label} {unit.get(prefix + 'HitsOn')} × {unit[prefix + 'DieCount']}")
+    if unit.get("productionValue"):
+        abilities.append(f"Production {unit['productionValue']}")
+    return {"type": "monument" if unit.get("isMonument") else unit["baseType"], "stats": stats, "abilities": abilities, "text": clean(unit.get("ability"))}
 
 
 def unit_text(unit):
@@ -91,6 +157,19 @@ def fleet_text(fleet):
     return ", ".join(result)
 
 
+def fleet_units(fleet):
+    names = {"cv": "carrier", "cr": "cruiser", "ca": "cruiser", "ff": "fighter", "inf": "infantry", "gf": "infantry", "pds": "pds", "pd": "pds", "sd": "spacedock", "dd": "destroyer", "dn": "dreadnought", "ws": "warsun", "fs": "flagship", "mf": "mech", "mech": "mech"}
+    result = {}
+    for part in fleet.split(","):
+        match = re.match(r"\s*(\d*)\s*([a-z]+)(?:\s+.*)?$", part)
+        if match and match[2] in names:
+            unit = names[match[2]]
+            result[unit] = result.get(unit, 0) + int(match[1] or 1)
+        elif part.strip():
+            raise ValueError(f"Unrecognized starting unit: {part}")
+    return [{"unit": unit, "count": count} for unit, count in result.items()]
+
+
 def make_item(category, alias, faction_alias=None):
     key = f"{category}:{alias}"
     if key in catalog:
@@ -116,10 +195,23 @@ def make_item(category, alias, faction_alias=None):
                 item["twilightsFallDescription"] = " ".join(filter(None, [model.get("tfAbilityWindow", model.get("abilityWindow")), model.get("tfAbilityText", model.get("abilityText"))]))
         elif category in {"UNIT", "MECH", "FLAGSHIP", "MONUMENT"}:
             item["description"] = unit_text(model)
+            item["unit"] = unit_visual(model)
         else:
             item["description"] = model.get("text", "")
             if model.get("requirements"):
                 item["description"] += f"\nPrerequisites: {model['requirements']}"
+        if category == "TECH":
+            item["technologyTypes"] = model.get("types", [])
+            upgrade = next((unit for unit in models["units"].values() if unit.get("requiredTechId") == alias), None)
+            if upgrade:
+                item["unit"] = unit_visual(upgrade)
+                image = original_card_image(model.get("imageURL"), unit_upgrade=True) or original_card_image(upgrade.get("imageURL"), unit_upgrade=True)
+                if image:
+                    item["imagePath"] = image
+        for source_field, target_field in [("imageURL", "imagePath"), ("tfImageURL", "twilightsFallImagePath")]:
+            image = original_card_image(model.get(source_field))
+            if image:
+                item[target_field] = image
     elif category in {"BLUETILE", "REDTILE"}:
         model = models["systems"][alias]
         item.update(name=f"{model['name']} ({alias})", source=model["source"], systemId=alias)
@@ -135,6 +227,7 @@ def make_item(category, alias, faction_alias=None):
         name = faction.get("shortName", faction["factionName"])
         if category == "FACTION":
             item.update(name=faction["factionName"], description=f"{faction.get('commodities', 0)} commodities; {fleet_text(faction.get('startingFleet', ''))}")
+            item["fleet"] = fleet_units(faction.get("startingFleet", ""))
         elif category == "MAHACTKING":
             details = [f"{faction['commodities']} commodities"]
             for unit_id in faction["units"]:
@@ -153,6 +246,7 @@ def make_item(category, alias, faction_alias=None):
             item.update(name=f"{name} home system", description="\n".join(planets), systemId=faction["homeSystem"])
         elif category == "STARTINGFLEET":
             item.update(name=f"{name} starting fleet", description=fleet_text(faction["startingFleet"]))
+            item["fleet"] = fleet_units(faction["startingFleet"])
         else:
             special = {"winnu": "Choose any 1 technology that has no prerequisites.", "keleresa": "Choose 2 non-faction technologies owned by other players.", "deepwrought": "Research 2 technologies.", "edyn": "Choose any 3 technologies that have different colors and no prerequisites.", "kjalengard": "Choose 1 non-faction unit upgrade."}
             tech_names = [models["technologies"][tech]["name"] for tech in faction.get("startingTech", faction.get("startingTechOptions", []))]
@@ -165,6 +259,13 @@ def make_item(category, alias, faction_alias=None):
     if faction_alias and faction_alias in factions:
         faction = factions[faction_alias]
         item.update(faction=faction_alias, factionName=faction["factionName"], factionSource=faction["source"])
+        icon = faction_icon(faction_alias)
+        if icon:
+            item["factionIconPath"] = icon
+    if item.get("systemId"):
+        image = system_image(item["systemId"])
+        if image:
+            item["imagePath"] = image
     item["name"] = clean(item["name"]).replace("\n", " ")
     item["description"] = clean(item["description"])
     correction = errata.get(key, {})
@@ -272,6 +373,10 @@ if len(ban_presets) != 2:
     raise ValueError("Expected both bot Franken ban presets")
 
 output = {"items": sorted(catalog.values(), key=lambda value: value["id"]), "factionComponents": faction_components, "banPresets": ban_presets}
+for unit in ["carrier", "cruiser", "destroyer", "dreadnought", "fighter", "flagship", "infantry", "mech", "pds", "spacedock", "warsun", "monument"]:
+    filename = "Monument.png" if unit == "monument" else f"{unit}.png"
+    copy_asset(resources / "emojis/units" / filename, f"units/{unit}.png")
 destination.parent.mkdir(parents=True, exist_ok=True)
 destination.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n")
 print(f"Imported {len(catalog)} components from {len(legal_factions)} factions to {destination}")
+print(f"Bundled {len(copied_assets)} original card, tile, faction and unit assets")

@@ -12,12 +12,24 @@ type Props = {
 };
 
 export function FactionHelpInfo({ faction }: Props) {
-  const [opened, { open, close }] = useDisclosure();
   const showMonumentImagesInFactionInfo = useDraft(
     (state) => state.draft.settings.showMonumentImagesInFactionInfo,
   );
-  const showMonumentImage =
-    !!showMonumentImagesInFactionInfo && !!faction.monument;
+  return (
+    <FactionReference
+      faction={faction}
+      showMonumentImages={showMonumentImagesInFactionInfo}
+    />
+  );
+}
+
+/** Faction reference controls that can also be used outside the slice draft store. */
+export function FactionReference({
+  faction,
+  showMonumentImages = false,
+}: Props & { showMonumentImages?: boolean }) {
+  const [opened, { open, close }] = useDisclosure();
+  const showMonumentImage = showMonumentImages && !!faction.monument;
   const kingReference = mahactKingReferences[faction.id];
 
   return (
@@ -30,7 +42,7 @@ export function FactionHelpInfo({ faction }: Props) {
           style={{ borderRadius: 0 }}
           leftSection={<IconEye size={14} />}
           color="gray"
-          onMouseDown={open}
+          onClick={open}
         >
           Info
         </Button>
@@ -87,7 +99,9 @@ export function FactionHelpInfo({ faction }: Props) {
                 </Text>
                 <Box>
                   <img
-                    src={faction.monument ? appPath(faction.monument) : undefined}
+                    src={
+                      faction.monument ? appPath(faction.monument) : undefined
+                    }
                     alt={`${faction.name} monument art`}
                     style={{
                       objectFit: "contain",

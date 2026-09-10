@@ -37,6 +37,8 @@ Shared controls include player shuffling, category draft/keep counts, first and 
 
 The catalog includes ordinary official factions, Thunder's Edge, Discordant Stars, Blue Reverie, Lost Legacies, and monuments. The complete imported catalog and refresh instructions are documented in [the bag catalog README](../app/draft/bag/README.md). Bags use unique cards and report insufficient pools; they do not silently duplicate components to fill large drafts. In particular, six FrankenDraz factions per player requires additional factions for a six-player game.
 
+Bag components reuse the application's faction and Mahact king icons, tile rendering, typography, and card surfaces. Abilities and genomes carry their originating faction's emblem; fleets show unit icons and counts, and unit cards show combat statistics. Lab Art and Original Art apply to tiles and available card artwork, with enlarged original-card and king references available during picking and assembly. Missing assets are bundled from the bot checkout by the catalog importer; drafts do not require a running bot or remote image requests. Mantis uses the same faction, speaker, reference, and tile components.
+
 ## Boundaries and remaining bot features
 
 - Bag drafts provide component and tile selections plus an export. Compatible completed drafts can continue into the application's Mantis map builder. They do not execute Discord game setup, place drafted fleets into an active game, or apply technologies to Discord game objects.

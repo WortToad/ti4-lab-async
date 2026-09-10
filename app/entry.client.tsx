@@ -3,8 +3,9 @@ import { startTransition, StrictMode, useEffect } from "react";
 import { hydrateRoot } from "react-dom/client";
 import posthog from "posthog-js";
 
-// Initialize PostHog
-function PosthogInit() {
+// Keep the router as the only rendered child, matching the server tree so
+// React useId values (including Mantine responsive selectors) hydrate correctly.
+function ClientApp() {
   useEffect(() => {
     const key = import.meta.env.VITE_POSTHOG_KEY;
     if (!key) return;
@@ -31,14 +32,13 @@ function PosthogInit() {
     });
   }, []);
 
-  return null;
+  return <HydratedRouter />;
 }
 startTransition(() => {
   hydrateRoot(
     document,
     <StrictMode>
-      <HydratedRouter />
-      <PosthogInit />
+      <ClientApp />
     </StrictMode>,
   );
 });

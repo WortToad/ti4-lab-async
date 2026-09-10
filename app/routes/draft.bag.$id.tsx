@@ -31,6 +31,7 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 import { BagItemCard, bagCategoryLabel } from "~/draft/bag/BagComponents";
+import { OriginalArtToggle } from "~/components/OriginalArtToggle";
 import {
   getBagDraftView,
   getCompletedBagDraft,
@@ -164,7 +165,11 @@ function CollectedItems({
           <Accordion.Panel>
             <SimpleGrid cols={{ base: 1, sm: 2 }}>
               {cards.map((item) => (
-                <BagItemCard key={item.id} item={item} />
+                <BagItemCard
+                  key={item.id}
+                  item={item}
+                  variant={view.settings.variant}
+                />
               ))}
             </SimpleGrid>
           </Accordion.Panel>
@@ -296,6 +301,7 @@ function DraftPicking({
                     <BagItemCard
                       key={item.id}
                       item={item}
+                      variant={view.settings.variant}
                       selected={selected}
                       disabled={
                         busy ||
@@ -480,6 +486,7 @@ function FactionAssembly({
               <BagItemCard
                 key={item.id}
                 item={item}
+                variant={view.settings.variant}
                 selected={selectedIds.includes(item.id)}
                 disabled={busy}
                 onSelect={(checked) =>
@@ -517,6 +524,7 @@ function FactionAssembly({
                 <BagItemCard
                   key={item.id}
                   item={item}
+                  variant={view.settings.variant}
                   note={
                     seat.assemblyOptions.some((parent) =>
                       parent.optionalSwaps?.includes(item.id),
@@ -632,12 +640,15 @@ export default function BagDraftPage() {
               : "Spectator"}
         </Badge>
       </Group>
-      <div>
-        <Title order={1}>{variant?.name ?? "Bag draft"}</Title>
-        <Text c="dimmed" mt="xs">
-          {variant?.description}
-        </Text>
-      </div>
+      <Group justify="space-between" align="flex-start">
+        <div>
+          <Title order={1}>{variant?.name ?? "Bag draft"}</Title>
+          <Text c="dimmed" mt="xs">
+            {variant?.description}
+          </Text>
+        </div>
+        <OriginalArtToggle />
+      </Group>
       {fetcher.data?.error && (
         <Alert color="red" title="Could not save your change">
           {fetcher.data.error}
