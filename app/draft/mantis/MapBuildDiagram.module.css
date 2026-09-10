@@ -65,6 +65,58 @@
   color: var(--mantine-color-dimmed);
 }
 
+.sliceControls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: var(--mantine-spacing-sm) 0;
+}
+
+.seatButton {
+  --slice-color: var(--mantine-color-gray-5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-sm);
+  background: var(--mantine-color-body);
+  color: inherit;
+  font: inherit;
+  font-size: var(--mantine-font-size-xs);
+  cursor: pointer;
+}
+
+.seatButton[aria-pressed="true"] {
+  border-color: var(--slice-color);
+  box-shadow: inset 0 0 0 1px var(--slice-color);
+  font-weight: 700;
+}
+
+.seatButton:hover {
+  background: var(--mantine-color-default-hover);
+}
+
+.seatButton:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 2px;
+}
+
+.seatSwatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--slice-color);
+  flex-shrink: 0;
+}
+
+.sliceExplanation {
+  margin: 0 0 var(--mantine-spacing-xs);
+}
+
 .bag {
   fill: var(--mantine-color-dark-6);
   stroke: var(--mantine-color-default-border);

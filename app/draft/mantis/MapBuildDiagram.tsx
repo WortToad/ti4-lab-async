@@ -1,3 +1,4 @@
+import { useState, type CSSProperties } from "react";
 import { hexSides, hexVertices } from "~/components/Hex/hexUtils";
 import { HyperlaneLine } from "~/components/Hex/HyperlaneLine";
 import { systemData } from "~/data/systemData";
@@ -7,7 +8,17 @@ import { getHexPosition } from "~/utils/positioning";
 import { MANTIS_MAPS } from "./engine";
 import classes from "./MapBuildDiagram.module.css";
 
-type TileColor = "blue" | "red" | "violet" | "gray" | "yellow";
+const seatColors = [
+  "violet",
+  "teal",
+  "orange",
+  "pink",
+  "blue",
+  "lime",
+  "red",
+  "cyan",
+] as const;
+type TileColor = (typeof seatColors)[number] | "gray" | "yellow";
 
 // The builder fills slice indices [4], then [1, 3], then [0, 2].
 const placementStages = [3, 2, 3, 2, 1];
@@ -21,6 +32,7 @@ function Tile({
   title,
   hyperlanes,
   rotation = 0,
+  dimmed = false,
 }: {
   x: number;
   y: number;
@@ -29,9 +41,10 @@ function Tile({
   title?: string;
   hyperlanes?: number[][];
   rotation?: number;
+  dimmed?: boolean;
 }) {
   return (
-    <g transform={`translate(${x} ${y})`}>
+    <g transform={`translate(${x} ${y})`} opacity={dimmed ? 0.2 : 1}>
       {title && <title>{title}</title>}
       <polygon
         points="24,0 12,-20.785 -12,-20.785 -24,0 -12,20.785 12,20.785"
@@ -58,7 +71,16 @@ function Tile({
   );
 }
 
-function PlacementMap({ playerCount }: { playerCount: number }) {
+function PlacementMap({
+  playerCount,
+  playerSeat,
+}: {
+  playerCount: number;
+  playerSeat?: number;
+}) {
+  const [selectedSeat, setSelectedSeat] = useState<number | null>(
+    playerSeat ?? 0,
+  );
   const mapType = MANTIS_MAPS[playerCount];
   if (!mapType) return null;
   const config = draftConfig[mapType];
@@ -92,6 +114,14 @@ function PlacementMap({ playerCount }: { playerCount: number }) {
       >
         {tiles.map((tile, index) => {
           const placement = stages.get(`${tile.position.x},${tile.position.y}`);
+          const seat =
+            tile.type === "HOME"
+              ? config.homeIdxInMapString.indexOf(tile.idx)
+              : placement?.seat;
+          const dimmed =
+            selectedSeat !== null &&
+            seat !== undefined &&
+            seat !== selectedSeat;
           const hyperlanes =
             tile.type === "SYSTEM"
               ? systemData[tile.systemId]?.hyperlanes
@@ -100,8 +130,8 @@ function PlacementMap({ playerCount }: { playerCount: number }) {
             tile.idx === 0
               ? "M"
               : tile.type === "HOME"
-                ? "H"
-                : placement
+                ? `H${seat! + 1}`
+                : placement && !dimmed
                   ? String(placement.stage)
                   : "";
           const title =
@@ -117,15 +147,59 @@ function PlacementMap({ playerCount }: { playerCount: number }) {
               key={tile.idx}
               {...positions[index]}
               label={label}
-              color={tile.idx === 0 ? "yellow" : placement ? "violet" : "gray"}
+              color={
+                tile.idx === 0
+                  ? "yellow"
+                  : seat !== undefined
+                    ? seatColors[seat]
+                    : "gray"
+              }
               title={title}
+              dimmed={dimmed}
               hyperlanes={hyperlanes}
               rotation={tile.type === "SYSTEM" ? tile.rotation : undefined}
             />
           );
         })}
       </svg>
+      <div
+        className={classes.sliceControls}
+        role="group"
+        aria-label="View a player's slice"
+      >
+        <button
+          type="button"
+          className={classes.seatButton}
+          aria-pressed={selectedSeat === null}
+          onClick={() => setSelectedSeat(null)}
+        >
+          All slices
+        </button>
+        {config.homeIdxInMapString.map((_, seat) => (
+          <button
+            key={seat}
+            type="button"
+            className={classes.seatButton}
+            style={
+              {
+                "--slice-color": `var(--mantine-color-${seatColors[seat]}-5)`,
+              } as CSSProperties
+            }
+            aria-pressed={selectedSeat === seat}
+            onClick={() => setSelectedSeat(seat)}
+          >
+            <span className={classes.seatSwatch} aria-hidden />
+            Seat {seat + 1}
+            {seat === playerSeat ? " (you)" : ""}
+          </button>
+        ))}
+      </div>
       <figcaption>
+        <p className={classes.sliceExplanation} aria-live="polite">
+          {selectedSeat === null
+            ? "Each color links a numbered home to its five placement spaces."
+            : `Seat ${selectedSeat + 1}: home H${selectedSeat + 1} and the five matching spaces form this player’s slice. Place tiles only in this slice’s numbered spaces.`}
+        </p>
         {playerCount}-player map · H: home · M: Mecatol Rex
         {Object.keys(config.presetTiles).length > 0 && (
           <span>Blue lines: fixed hyperlanes</span>
@@ -138,12 +212,14 @@ function PlacementMap({ playerCount }: { playerCount: number }) {
 /** Shared by bag drafts and Mantis, which use the same tile-placement phase. */
 export function MapBuildDiagram({
   playerCount,
+  playerSeat,
   draftBlues = 3,
   draftReds = 2,
   source = "bags",
   mulligans = 1,
 }: {
   playerCount: number;
+  playerSeat?: number;
   draftBlues?: number;
   draftReds?: number;
   source?: "bags" | "pool" | "kept";
@@ -204,7 +280,11 @@ export function MapBuildDiagram({
         </li>
         <li className={classes.step}>
           <strong>3. Place them on the map</strong>
-          <PlacementMap playerCount={playerCount} />
+          <PlacementMap
+            key={`${playerCount}:${playerSeat}`}
+            playerCount={playerCount}
+            playerSeat={playerSeat}
+          />
           <span>
             Draw one of your remaining tiles at random each turn. Place it in a
             highlighted space in your section. Fill your one space marked 1,
