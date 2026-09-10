@@ -20,8 +20,8 @@ export function useNotifyActivePlayer() {
   const handleNotify = () => {
     const title = "It's your turn to draft!";
     const options = {
-      icon: appPath("/favicon-32x32.png"),
-      badge: appPath("/favicon-32x32.png"),
+      icon: appPath("/icon.png?v=2"),
+      badge: appPath("/badge.png?v=2"),
     };
     showNotification(title, options);
     playNotificationSound();
