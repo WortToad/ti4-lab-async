@@ -170,23 +170,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="application-name" content="TI4Toad" />
-        <link rel="apple-touch-icon" sizes="180x180" href={appPath("/apple-touch-icon.png?v=2")} />
-        <link rel="icon" type="image/x-icon" href={appPath("/favicon.ico?v=2")} />
-        <link rel="icon" type="image/png" sizes="32x32" href={appPath("/favicon-32x32.png?v=2")} />
-        <link rel="icon" type="image/png" sizes="16x16" href={appPath("/favicon-16x16.png?v=2")} />
-        <link rel="manifest" href={appPath("/site.webmanifest?v=2")} />
+        <link rel="apple-touch-icon" sizes="180x180" href={appPath("/apple-touch-icon.png?v=3")} />
+        <link rel="icon" type="image/x-icon" href={appPath("/favicon.ico?v=3")} />
+        <link rel="icon" type="image/png" sizes="32x32" href={appPath("/favicon-32x32.png?v=3")} />
+        <link rel="icon" type="image/png" sizes="16x16" href={appPath("/favicon-16x16.png?v=3")} />
+        <link rel="manifest" href={appPath("/site.webmanifest?v=3")} />
         <meta name="theme-color" content="#1d1e30" />
         <meta name="msapplication-TileColor" content="#1d1e30" />
-        <meta name="msapplication-TileImage" content={appPath("/mstile-150x150.png?v=2")} />
-        <meta name="msapplication-config" content={appPath("/browserconfig.xml?v=2")} />
+        <meta name="msapplication-TileImage" content={appPath("/mstile-150x150.png?v=3")} />
+        <meta name="msapplication-config" content={appPath("/browserconfig.xml?v=3")} />
         <meta property="og:site_name" content="TI4Toad" />
-        <meta property="og:image" content={appUrl("/ti4toad.png?v=2")} />
+        <meta property="og:image" content={appUrl("/ti4toad.png?v=3")} />
         <meta property="og:image:type" content="image/png" />
-        <meta property="og:image:width" content="412" />
-        <meta property="og:image:height" content="418" />
+        <meta property="og:image:width" content="1241" />
+        <meta property="og:image:height" content="1241" />
         <meta property="og:image:alt" content="TI4Toad logo" />
         <meta name="twitter:card" content="summary" />
-        <meta name="twitter:image" content={appUrl("/ti4toad.png?v=2")} />
+        <meta name="twitter:image" content={appUrl("/ti4toad.png?v=3")} />
         <meta name="twitter:image:alt" content="TI4Toad logo" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link

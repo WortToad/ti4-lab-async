@@ -24,7 +24,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
         url: appUrl(`/draft/${draftId}`),
         type: "website",
         siteName: "TI4Toad",
-        image: appUrl("/ti4toad.png?v=2"),
+        image: appUrl("/ti4toad.png?v=3"),
       },
       { headers: { "Cache-Control": "no-store" } },
     );
@@ -38,7 +38,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return data({
     title: `${draftId} - TI4Toad`,
     description: `${draftTypeDisplay} on TI4Toad`,
-    image: appUrl("/ti4toad.png?v=2"),
+    image: appUrl("/ti4toad.png?v=3"),
     url: appUrl(`/draft/${draftId}`),
     type: "website",
     siteName: "TI4Toad",
