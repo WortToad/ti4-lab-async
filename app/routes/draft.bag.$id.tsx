@@ -276,7 +276,8 @@ function DraftPicking({
           <Text size="sm" c="dimmed">
             The collection maximum applies across all bags. Once you reach it,
             you cannot collect more of that category. After drafting ends, you
-            choose which collected components to keep for your final faction.
+            choose which collected components to keep for your final faction
+            and any tiles for the map.
           </Text>
         </Stack>
       </Paper>
@@ -481,8 +482,8 @@ function FactionAssembly({
           </Title>
           <Text>
             Collection is complete. Choose which components to keep for your
-            final faction from those you collected. Categories with no choices
-            are already selected.
+            final faction and any tiles to use for the map. Categories with no
+            choices are already selected.
           </Text>
           <Text size="sm" c="dimmed">
             Your completed faction becomes public when everyone has finished.
@@ -771,9 +772,14 @@ export default function BagDraftPage() {
           </Table.ScrollContainer>
         </Stack>
       </Paper>
-      {view.phase !== "drafting" && (
-        <BagMapSetup view={view} mapPath={`${publicPath}?${mapSearch}`} />
-      )}
+      <BagMapSetup
+        rules={view.rules}
+        playerCount={view.players.length}
+        phase={view.phase}
+        mapRoomId={view.mapRoomId}
+        mapBuildError={view.mapBuildError}
+        mapPath={`${publicPath}?${mapSearch}`}
+      />
       {view.viewer.isAdmin && (
         <Paper withBorder p="lg" radius="md">
           <Stack>

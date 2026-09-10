@@ -50,19 +50,19 @@ export const BAG_VARIANTS: {
     id: "twilights_fall",
     name: "Twilight’s Fall · Bag Draft of Everything",
     description:
-      "The bot’s Twilight’s Fall Franken draft: pick three cards from your first bag, then two per pass. Draft kings, abilities, genomes, unit upgrades, homes, fleets, tiles and speaker order; choose your final faction, then build the map.",
+      "The bot’s Twilight’s Fall Franken draft. By default, pick three cards from your first bag, then two per pass, collecting kings, abilities, genomes, unit upgrades, homes, fleets, map tiles and speaker order. Confirm your final faction and kept tiles before map building begins.",
   },
   {
     id: "inaugural_splice",
     name: "Inaugural Splice",
     description:
-      "Twilight’s Fall opening splice: seven-card bags with three abilities, two genomes and two unit upgrades. Pick one at a time, then keep two abilities, one genome and one unit upgrade.",
+      "Twilight’s Fall opening splice: seven-card bags with three abilities, two genomes and two unit upgrades. Pick one at a time, then keep two abilities, one genome and one unit upgrade. Map tiles are not included; arrange the map separately.",
   },
   {
     id: "standard_bag_draft",
     name: "Standard bag draft",
     description:
-      "Pass bags containing three blue tiles, two red tiles, a home system and speaker order. Keep all seven drafted items.",
+      "By default, pass bags containing three blue tiles, two red tiles, a home system and speaker order. Confirm all seven items after bag picking, then use the five tiles to build your section of the map.",
   },
 ];
 

@@ -162,12 +162,14 @@ export default function MantisNew() {
             />
           </Group>
           <Text size="sm" c="dimmed">
-            Extra tiles are drafted, then discarded before map building.
+            Extra tiles are drafted, then discarded before map building. Once
+            everyone keeps 3 blue and 2 red tiles, those five tiles fill their
+            own section of the shared map.
           </Text>
           <NumberInput
             name="mulligans"
             label="Mulligans per player"
-            description="Redraw a different tile from your remaining hand during map building."
+            description="Total redraws per player for the whole map build. Draw a different tile from your remaining hand; the original stays to be placed later."
             min={0}
             max={3}
             defaultValue={1}

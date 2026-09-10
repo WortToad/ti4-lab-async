@@ -39,7 +39,9 @@ Use **Rules as written (RAW)** on the setup page (or **Build a RAW galaxy** in t
 
 The draft setup includes Milty (3–8 players), Milty-EQ, Nucleus (3–8 players), Texas, and Twilight's Fall reference packs. Twilight's Fall supports king bans/priorities and custom or faction-filtered reference packs.
 
-Use **Bag / Franken / Twilight’s Fall** on the setup page for standard bag drafts, Franken, Powered, One-pick, Overdraft, their combinations, FrankenDraz, Twilight's Fall bags, or Inaugural Splice. The host receives private player links; bags pass when everyone confirms. Players assemble their final factions using the selected variant's keep limits, then export the results.
+Use **Bag / Franken / Twilight’s Fall** on the setup page for standard bag drafts, Franken, Powered, One-pick, Overdraft, their combinations, FrankenDraz, Twilight's Fall bags, or Inaugural Splice. The host receives private player links; bags pass when everyone confirms. With map tiles enabled, players spend normal bag picks collecting their own tiles alongside faction components, keeping three blue and two red tiles by default. After everyone confirms their final faction and kept tiles, compatible drafts automatically open a shared map room.
+
+Each player's five tiles fill their own section of the map: the builder draws from their remaining hand at random for placement from the center outward. Speaker order determines seating and breaks placement-turn ties; home systems are separate from the five tiles. Each player has one mulligan for the entire map build, which draws a different tile without discarding the original. Completed factions and maps can be exported. Inaugural Splice and drafts with tiles disabled use a separately prepared map; automatic map building requires 3–8 players and exactly three blue and two red kept tiles per player.
 
 Use **Mantis draft** to draft individual tiles, factions, and speaker positions, discard extra tiles, and build the map with random draws and limited mulligans. Completed bag drafts with suitable tile hands can continue into this map-building flow.
 

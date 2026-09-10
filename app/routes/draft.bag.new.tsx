@@ -36,6 +36,7 @@ import {
   type BagItemCategory,
 } from "~/draft/bag/catalog";
 import { bagCategoryLabel } from "~/draft/bag/BagComponents";
+import { BagMapSetup } from "~/draft/bag/BagMapSetup";
 import { createBagDraft } from "~/draft/bag/bagDraft.server";
 import { BAG_VARIANTS, getBagRules } from "~/draft/bag/rules";
 
@@ -313,6 +314,7 @@ export default function NewBagDraft() {
                 {variant !== "inaugural_splice" && (
                   <Switch
                     label="Draft map tiles and speaker order"
+                    description="Tiles use your normal bag picks and are placed after final faction choices. Turn off to arrange the map and speaker order separately."
                     checked={includeTiles}
                     onChange={(event) => {
                       setIncludeTiles(event.currentTarget.checked);
@@ -333,6 +335,7 @@ export default function NewBagDraft() {
               </SimpleGrid>
             </Stack>
           </Paper>
+          <BagMapSetup rules={rules} playerCount={players.length} />
           <Accordion variant="separated">
             <Accordion.Item value="limits">
               <Accordion.Control>
@@ -343,7 +346,9 @@ export default function NewBagDraft() {
                   <Text size="sm" c="dimmed">
                     The draft limit controls how many components of each type a
                     player can collect. The keep limit controls the final
-                    faction. Changing the variant restores its defaults.
+                    faction and map tiles. Automatic map building needs 3 blue
+                    and 2 red tiles kept per player. Changing the variant
+                    restores its defaults.
                   </Text>
                   <SimpleGrid cols={{ base: 1, sm: 2 }}>
                     <NumberInput
@@ -503,7 +508,8 @@ export default function NewBagDraft() {
           <Alert color="blue" title="Playing with friends">
             After creating the draft, save your host link and send each player
             their private seat link. Bags pass automatically when everyone
-            submits their picks. Finish by choosing which components to keep.
+            submits their picks. Then everyone confirms their final faction
+            and any map tiles to keep; see the map setup steps above.
           </Alert>
           <Button
             type="submit"

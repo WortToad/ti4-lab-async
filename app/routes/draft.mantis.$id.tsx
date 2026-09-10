@@ -270,8 +270,10 @@ export default function MantisRoom() {
           {draft.factionLabels
             ? "Build the map with the tiles, home systems, and speaker order from your completed bag draft. "
             : "Public snake draft → discard extras → build your own slice. "}
-          Map building draws from your hand at random; a mulligan keeps the
-          original tile in your hand.
+          Your kept tiles fill your own section of the shared map. On each
+          placement turn, the builder randomly draws from your remaining hand;
+          a mulligan draws a different tile and leaves the original in your hand
+          to place later.
         </Text>
         <Group>
           <Badge size="lg">{draft.phase}</Badge>
@@ -562,9 +564,11 @@ export default function MantisRoom() {
               </Button>
             </Group>
             <Text>
-              Place the drawn tile in a highlighted position. Each player fills
-              the inner ring, then their two middle positions, then their two
-              outer positions.
+              Place the drawn tile in a highlighted position in your section
+              of the map. Everyone fills their inner position near Mecatol Rex
+              before moving to the two middle positions, then the two outer
+              positions. Within each group, the player with the most empty
+              spaces places next, with ties resolved in speaker order.
             </Text>
           </Stack>
         )}
