@@ -6,6 +6,7 @@ import { shuffle } from "~/draft/helpers/randomization";
 import { getPlaceableTileIndices } from "~/utils/texasMapBuild";
 import { getFactionBanError } from "~/utils/factionSourceValidation";
 import { canCompleteFactionDraft } from "~/draft/factionFeasibility";
+import { getTexasFactionConflict } from "~/draft/texas/factionConflict";
 
 /** Apply one owned selection to authoritative state; ignore client state edits. */
 export function applyBaseSelection(
@@ -13,6 +14,10 @@ export function applyBaseSelection(
   selection: DraftSelection,
   playerId: number,
 ): Draft {
+  if (getTexasFactionConflict(server))
+    throw new Error(
+      "Resolve the revealed faction conflict before continuing the map build.",
+    );
   if (
     !selection ||
     !("playerId" in selection) ||

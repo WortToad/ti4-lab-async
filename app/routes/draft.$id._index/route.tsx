@@ -70,6 +70,8 @@ import { applyBaseSelection } from "~/drizzle/baseDraftSync.server";
 import { broadcastDraftUpdate } from "~/websocket/broadcast.server";
 import { withBaseDraftLock } from "~/draft/baseDraftLock.server";
 import { createOrderedLoader } from "~/hooks/orderedLoader";
+import { getTexasFactionConflict } from "~/draft/texas/factionConflict";
+import { TexasFactionConflict } from "~/draft/texas/TexasFactionConflict";
 
 export function headers() {
   return { "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" };
@@ -146,6 +148,7 @@ export default function RunningDraft() {
                 paused={result.lobby?.paused}
                 complete={
                   !pendingAction &&
+                  !getTexasFactionConflict(currentDraft) &&
                   currentDraft.selections.length >=
                     currentDraft.pickOrder.length
                 }
@@ -256,7 +259,16 @@ function DraftBoard({
     undoLastPick,
   };
 
-  if (draftFinished) {
+  const factionConflict = getTexasFactionConflict(draft);
+  if (factionConflict && selectedPlayer !== undefined) {
+    return (
+      <SyncDraftContext.Provider value={syncDraftContextValue}>
+        <TexasFactionConflict />
+      </SyncDraftContext.Provider>
+    );
+  }
+
+  if (draftFinished && !factionConflict) {
     return (
       <SyncDraftContext.Provider value={syncDraftContextValue}>
         <FinalizedDraft />
@@ -532,6 +544,11 @@ async function runBaseAction({ request, params }: ActionFunctionArgs) {
     if (!draft || !Array.isArray(draft.selections))
       throw new Error("Invalid draft selection.");
     const existing = JSON.parse(routeDraft.data as string) as Draft;
+    if (getTexasFactionConflict(existing))
+      throw new Response(
+        "Resolve the revealed faction conflict before continuing this draft.",
+        { status: 409 },
+      );
     const lobby = getBaseLobby(id);
     const viewer = await readBaseViewer(id, request);
     const projected = lobby

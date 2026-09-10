@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { getBagPendingAction, getBasePendingAction } from "./turn";
 import { rememberDraftTurn } from "./turnNotifications";
-import { HOME_PHASE, PRIORITY_PHASE, type Draft } from "~/types";
+import {
+  HOME_PHASE,
+  PRIORITY_PHASE,
+  type Draft,
+  type FactionId,
+} from "~/types";
+import { replaceTexasConflictingFaction } from "./texas/factionConflict";
 import type { BagDraftView } from "./bag/types";
 
 const draft = {
@@ -15,6 +21,66 @@ const draft = {
 } as unknown as Draft;
 
 describe("pending draft actions", () => {
+  it("asks only affected Texas players with a legal alternative to resolve revealed conflicts before other picks", () => {
+    const factions: FactionId[] = [
+      "keleres",
+      "mentak",
+      "xxcha",
+      "argent",
+      "hacan",
+    ];
+    const conflicted = {
+      settings: {
+        type: "milty",
+        draftGameMode: "texasStyle",
+        texasAllowFactionRedraw: false,
+      },
+      players: factions.map((_, id) => ({ id, name: `Player ${id}` })),
+      selections: [
+        {
+          type: "COMMIT_SIMULTANEOUS",
+          phase: "texasFaction",
+          selections: factions.map((value, playerId) => ({ playerId, value })),
+        },
+      ],
+      pickOrder: [
+        { kind: "simultaneous", phase: "texasFaction" },
+        { kind: "simultaneous", phase: "texasBlueKeep1" },
+      ],
+      texasDraft: {
+        factionOptions: {
+          0: ["keleres", "sol"],
+          1: ["mentak", "yin"],
+          2: ["xxcha"],
+          3: ["argent"],
+          4: ["hacan", "sardakk"],
+        },
+      },
+      availableFactions: [...factions, "sol", "yin", "sardakk"],
+      presetMap: [],
+      slices: [],
+    } as unknown as Draft;
+    expect(getBasePendingAction(conflicted, 0)?.label).toBe(
+      "Resolve the faction conflict",
+    );
+    expect(getBasePendingAction(conflicted, 1)?.label).toBe(
+      "Resolve the faction conflict",
+    );
+    expect(getBasePendingAction(conflicted, 2)).toBeUndefined();
+    expect(getBasePendingAction(conflicted, 4)).toBeUndefined();
+    const completed = {
+      ...conflicted,
+      pickOrder: conflicted.pickOrder.slice(0, 1),
+    };
+    expect(getBasePendingAction(completed, 0)?.label).toBe(
+      "Resolve the faction conflict",
+    );
+    const resolved = replaceTexasConflictingFaction(completed, 1, "yin");
+    expect(getBasePendingAction(resolved, 0)?.label).toBe(
+      "Choose your Keleres home and hero",
+    );
+    expect(getBasePendingAction(resolved, 1)).toBeUndefined();
+  });
   it("only identifies a participant's own turn and distinguishes consecutive picks", () => {
     expect(getBasePendingAction(draft, 0)?.key).toBe("0:pick");
     expect(getBasePendingAction(draft, 1)).toBeUndefined();

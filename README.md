@@ -71,6 +71,8 @@ Unsubmitted bag picks and faction assembly choices survive refresh in the same t
 
 Standard and Texas drafts also ask the Keleres player to choose an available home and matching hero before exporting the completed map. Standard draft refreshes preserve open controls and replay position, and delayed reads cannot overwrite newer submitted choices.
 
+If simultaneous Texas faction choices leave Keleres without an unused home, the revealed factions open a correction step before tile drafting continues. An affected player can explicitly choose a legal alternative from their original hand, or draw a legal fresh replacement when redraw is enabled. Other factions, seats, tile picks and map placements remain intact, including in older saved drafts. Choices remain private until the original simultaneous reveal. Only a configured pool with no legal replacement requires the admin to revise setup.
+
 Drafts persist in SQLite. New tables are created by the existing startup migration process. Run locally with integrations disabled if you do not have Discord/R2 configured:
 
 ```shell

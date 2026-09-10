@@ -40,7 +40,16 @@ export function draftSelectionToMessage(
       return "Home system selection complete";
     }
     if (selection.phase === "texasFaction") {
-      return "Texas Style faction selection complete";
+      const replacements = selection.factionReplacements?.map((replacement) => {
+        const player = draft.players.find(
+          (player) => player.id === replacement.playerId,
+        );
+        return `${player?.name ?? "Player"} changed ${factions[replacement.previousFactionId].name} to ${factions[replacement.factionId].name}${replacement.redrawn ? " (redraw)" : ""} to resolve the Keleres home conflict`;
+      });
+      return [
+        "Texas Style faction selection complete",
+        ...(replacements ?? []),
+      ].join(". ");
     }
     if (selection.phase === "texasBlueKeep1") {
       return "Texas Style blue keep (round 1) complete";

@@ -419,6 +419,12 @@ export type DraftSelection =
       type: "COMMIT_SIMULTANEOUS";
       phase: SimultaneousPickType;
       selections: { playerId: PlayerId; value: string }[];
+      factionReplacements?: {
+        playerId: PlayerId;
+        previousFactionId: FactionId;
+        factionId: FactionId;
+        redrawn: boolean;
+      }[];
     }
   | {
       type: "SELECT_SEAT";
@@ -443,6 +449,8 @@ export type TexasDraftState = {
   speakerId: PlayerId;
   factionOptions?: Record<PlayerId, FactionId[]>;
   factionDrawPile?: FactionId[];
+  /** Viewer-specific permission to draw a legal replacement after reveal. */
+  canRedrawFactionConflict?: boolean;
   tileHands?: {
     blue: Record<PlayerId, SystemId[]>;
     red: Record<PlayerId, SystemId[]>;

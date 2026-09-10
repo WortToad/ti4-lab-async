@@ -18,6 +18,7 @@ import {
   validRecoveryToken,
 } from "~/draft/lobby.server";
 import { appPath } from "~/utils/appUrl";
+import { canRedrawTexasConflictingFaction } from "~/draft/texas/factionConflict";
 
 type Snapshot = {
   draft: Draft;
@@ -228,7 +229,13 @@ export function projectBaseDraft(draft: Draft, playerId?: number): Draft {
     }
   if (result.texasDraft) {
     const texas = result.texasDraft;
-    texas.factionOptions = own(texas.factionOptions);
+    texas.canRedrawFactionConflict =
+      playerId !== undefined &&
+      canRedrawTexasConflictingFaction(draft, playerId);
+    texas.factionOptions = own({
+      ...texas.initialFactionOptions,
+      ...texas.factionOptions,
+    });
     delete texas.factionDrawPile;
     delete texas.initialFactionDrawPile;
     delete texas.initialFactionOptions;

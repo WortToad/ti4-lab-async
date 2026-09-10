@@ -29,6 +29,7 @@ import {
   applyTexasFactionCommit,
   applyTexasTileCommit,
 } from "~/draft/texas/texasDraft";
+import { getTexasFactionConflict } from "~/draft/texas/factionConflict";
 
 function applySimultaneousCommit(
   draft: Draft,
@@ -125,6 +126,16 @@ async function handleAction({ request, params }: ActionFunctionArgs) {
         { status: 404 },
       );
     const draft = JSON.parse(existingDraft.data as string) as Draft;
+
+    if (getTexasFactionConflict(draft))
+      return data(
+        {
+          success: false,
+          error:
+            "Resolve the revealed faction conflict before continuing the tile draft.",
+        },
+        { status: 409 },
+      );
 
     const currentPick = draft.pickOrder[draft.selections.length];
     const isLegacyPhase =

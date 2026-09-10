@@ -6,6 +6,11 @@ import {
 } from "~/types";
 import type { BagDraftView } from "./bag/types";
 import { getBaseKeleresSetup } from "./keleres";
+import {
+  canRedrawTexasConflictingFaction,
+  getTexasFactionConflict,
+  getTexasFactionReplacementOptions,
+} from "./texas/factionConflict";
 
 export type PendingDraftAction = { key: string; label: string };
 
@@ -27,6 +32,20 @@ export function getBasePendingAction(
     !draft.players.some((player) => player.id === playerId)
   )
     return;
+  const conflict = getTexasFactionConflict(draft);
+  if (conflict) {
+    if (
+      conflict.affectedPlayerIds.includes(playerId) &&
+      (getTexasFactionReplacementOptions(draft, playerId).length > 0 ||
+        (draft.texasDraft?.canRedrawFactionConflict ??
+          canRedrawTexasConflictingFaction(draft, playerId)))
+    )
+      return {
+        key: `${draft.selections.length}:texas-faction-conflict`,
+        label: "Resolve the faction conflict",
+      };
+    return;
+  }
   const keleres = getBaseKeleresSetup(draft);
   if (keleres?.ready && !keleres.chosen && keleres.playerId === playerId)
     return { key: "keleres-home", label: "Choose your Keleres home and hero" };

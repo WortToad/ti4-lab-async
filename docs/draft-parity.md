@@ -8,7 +8,7 @@ All shared-lobby setup pages ask for player count rather than names. Players nam
 
 All draft formats share pending-action indicators, tab-title updates and optional sound/browser alerts, including simultaneous ready states. Returning to the tab or reconnecting refreshes the lobby immediately when no submission is pending. Opted-in alerts allow background refresh; delivery requires the tab to remain open.
 
-Standard and Texas results include an owned, undoable Keleres home-and-hero choice before map export. Played primary and minor factions occupy their homes. Standard faction and slice choices preserve a feasible completion across shared, separate and preassigned pools. Incompatible older results and simultaneous Texas choices that occupy all three homes retain their picks, block export and explain how the admin can recover. This is separate from Twilight's Fall home-system drafting.
+Standard and Texas results include an owned, undoable Keleres home-and-hero choice before map export. Played primary and minor factions occupy their homes. Standard faction and slice choices preserve a feasible completion across shared, separate and preassigned pools. Conflicting simultaneous Texas factions open a correction step after reveal: an affected player chooses a legal alternative from their original hand or explicitly redraws when enabled. The correction preserves all other factions, seats, drafted tiles and placements, including in older saved Texas drafts. Private hands stay private. Incompatible older standard drafts and Texas pools with no legal replacement still require admin setup recovery. This is separate from Twilight's Fall home-system drafting.
 
 ## Mini-Milty
 
