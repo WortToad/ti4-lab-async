@@ -24,6 +24,17 @@ function renderSetup(overrides: Partial<Props> = {}) {
 }
 
 describe("the next map step after a bag draft", () => {
+  it.each([3, 4, 5, 6, 7, 8])(
+    "shows the %i-player map selected for the bag draft",
+    (playerCount) => {
+      const html = renderSetup({ playerCount });
+      expect(html).toContain(
+        `aria-label="${playerCount}-player map placement stages"`,
+      );
+      expect(html).not.toContain("standard six-player map");
+    },
+  );
+
   it("tells players that map building starts automatically after their final choices", () => {
     const html = renderSetup({
       phase: "assembling",

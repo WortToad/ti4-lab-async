@@ -8,10 +8,8 @@ import {
   Group,
   Modal,
   Paper,
-  Progress,
   SimpleGrid,
   Stack,
-  Table,
   Text,
   Title,
 } from "@mantine/core";
@@ -32,6 +30,8 @@ import {
 import { BagItemCard, bagCategoryLabel } from "~/draft/bag/BagComponents";
 import { BagMapSetup } from "~/draft/bag/BagMapSetup";
 import { BagDraftGuide } from "~/draft/bag/BagDraftGuide";
+import { BagDraftProgress } from "~/draft/bag/BagDraftProgress";
+import { BagSelectionConfirmation } from "~/draft/bag/BagSelectionConfirmation";
 import { LobbyPanel, type LobbyOperation } from "~/draft/LobbyPanel";
 import { OriginalArtToggle } from "~/components/OriginalArtToggle";
 import {
@@ -228,6 +228,7 @@ function DraftPicking({
   submit: SubmitOperation;
 }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [confirmSelection, setConfirmSelection] = useState(false);
   const seatIndex = view.players.findIndex((player) => player.id === seat.id);
   // Each seat receives the next seat's bag and passes to the previous seat.
   const receivingFrom = view.players[(seatIndex + 1) % view.players.length];
@@ -239,48 +240,24 @@ function DraftPicking({
       .map((item) => item.category),
   );
   const legalIds = new Set(seat.draftableItemIds);
+  const selectedItems = seat.bag.filter((item) =>
+    selectedIds.includes(item.id),
+  );
   return (
     <Stack gap="lg">
-      <Paper withBorder p="lg" radius="md">
+      <BagDraftProgress view={view}>
         <Stack gap="sm">
           <Group justify="space-between">
-            <Title order={2} size="h3">
-              Your current bag
+            <Title order={3} size="h4">
+              {seat.ready ? "Your bag is ready" : "Choose from your bag"}
             </Title>
-            <Badge variant="light">{seat.bag.length} components</Badge>
+            <Badge variant="light">
+              {seat.bag.length} components in your bag
+            </Badge>
           </Group>
-          <Paper withBorder p="sm" radius="sm">
-            <Text
-              size="sm"
-              ta="center"
-              fw={600}
-              style={{ overflowWrap: "anywhere" }}
-            >
-              {receivingFrom.name} → your bag → {passingTo.name}
-            </Text>
-            <Text size="xs" c="dimmed" ta="center">
-              Keep your selected components; pass the rest when everyone is
-              ready.
-            </Text>
-          </Paper>
-          <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
-            <div>
-              <Text size="sm" c="dimmed">
-                Receiving from
-              </Text>
-              <Text fw={600} style={{ overflowWrap: "anywhere" }}>
-                {receivingFrom.name}
-              </Text>
-            </div>
-            <div>
-              <Text size="sm" c="dimmed">
-                Passing to
-              </Text>
-              <Text fw={600} style={{ overflowWrap: "anywhere" }}>
-                {passingTo.name}
-              </Text>
-            </div>
-          </SimpleGrid>
+          <Text size="sm" c="dimmed" style={{ overflowWrap: "anywhere" }}>
+            Receiving from {receivingFrom.name} · Passing to {passingTo.name}
+          </Text>
           {seat.ready ? (
             <>
               <Text>
@@ -328,8 +305,9 @@ function DraftPicking({
                 .
               </Text>
               <Text size="sm" c="dimmed">
-                Submit your picks to add them to your collection. The remaining
-                components pass to the next player when everyone is ready.
+                Submit your picks to review and confirm your selection. The
+                remaining components pass to the next player when everyone is
+                ready.
               </Text>
               <Text size="sm" fw={600} role="status">
                 Selected {selectedIds.length} of {seat.picksRequired} picks for
@@ -354,13 +332,7 @@ function DraftPicking({
                 </Group>
               )}
               <Button
-                onClick={() =>
-                  submit({
-                    action: "pick",
-                    round: view.round,
-                    itemIds: selectedIds,
-                  })
-                }
+                onClick={() => setConfirmSelection(true)}
                 disabled={busy || selectedIds.length !== seat.picksRequired}
                 loading={busy}
                 style={{ alignSelf: "flex-start" }}
@@ -378,7 +350,19 @@ function DraftPicking({
             any tiles for the map.
           </Text>
         </Stack>
-      </Paper>
+      </BagDraftProgress>
+      <BagSelectionConfirmation
+        opened={confirmSelection}
+        onClose={() => setConfirmSelection(false)}
+        onConfirm={() => {
+          setConfirmSelection(false);
+          submit({ action: "pick", round: view.round, itemIds: selectedIds });
+        }}
+        items={selectedItems}
+        variant={view.settings.variant}
+        passingTo={passingTo.name}
+        busy={busy || selectedIds.length !== seat.picksRequired}
+      />
       {!seat.ready &&
         groupedItems(seat.bag).map(([category, items]) => {
           const collected = seat.hand.filter(
@@ -499,6 +483,7 @@ function FactionAssembly({
   busy: boolean;
   submit: SubmitOperation;
 }) {
+  const [confirmSelection, setConfirmSelection] = useState(false);
   const twilightsFall =
     view.settings.variant === "twilights_fall" ||
     view.settings.variant === "inaugural_splice";
@@ -599,7 +584,7 @@ function FactionAssembly({
             </Text>
           )}
           <Button
-            onClick={() => submit({ action: "assemble", itemIds: selectedIds })}
+            onClick={() => setConfirmSelection(true)}
             disabled={busy || !complete}
             loading={busy}
             style={{ alignSelf: "flex-start" }}
@@ -615,6 +600,20 @@ function FactionAssembly({
           )}
         </Stack>
       </Paper>
+      <BagSelectionConfirmation
+        opened={confirmSelection}
+        onClose={() => setConfirmSelection(false)}
+        onConfirm={() => {
+          setConfirmSelection(false);
+          submit({ action: "assemble", itemIds: selectedIds });
+        }}
+        items={seat.assemblyOptions.filter((item) =>
+          selectedIds.includes(item.id),
+        )}
+        variant={view.settings.variant}
+        assembling
+        busy={busy || !complete}
+      />
       {genericOptions.length > 0 && (
         <Stack gap="sm">
           <Title order={3} size="h4">
@@ -726,9 +725,6 @@ export default function BagDraftPage() {
     (player) => player.id === view.viewer.playerId,
   )?.name;
   const publicPath = `/draft/bag/${view.id}`;
-  const donePlayers = view.players.filter((player) =>
-    view.phase === "drafting" ? player.ready : player.finished,
-  ).length;
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -878,72 +874,17 @@ export default function BagDraftPage() {
       />
       {view.phase !== "lobby" && (
         <>
-          <Paper withBorder p="lg" radius="md">
-            <Stack>
-              <Group justify="space-between">
-                <Title order={2} size="h3">
-                  {view.phase === "drafting"
-                    ? `Collect components · Round ${view.round + 1}`
-                    : view.phase === "assembling"
-                      ? "Final faction choices"
-                      : "Draft complete"}
-                </Title>
-                <Text size="sm" c="dimmed">
-                  {donePlayers} / {view.players.length}{" "}
-                  {view.phase === "drafting" ? "ready to pass" : "finished"}
-                </Text>
-              </Group>
-              <Progress
-                value={(donePlayers / view.players.length) * 100}
-                aria-label="Players ready"
-              />
-              <Table.ScrollContainer minWidth={340}>
-                <Table>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Player</Table.Th>
-                      <Table.Th>Components</Table.Th>
-                      <Table.Th>Status</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {view.players.map((player) => (
-                      <Table.Tr key={player.id}>
-                        <Table.Td>
-                          {player.name}
-                          {player.id === view.viewer.playerId ? " (you)" : ""}
-                        </Table.Td>
-                        <Table.Td>{player.draftedCount}</Table.Td>
-                        <Table.Td>
-                          <Badge
-                            size="sm"
-                            color={
-                              (
-                                view.phase === "drafting"
-                                  ? player.ready
-                                  : player.finished
-                              )
-                                ? "green"
-                                : "gray"
-                            }
-                            variant="light"
-                          >
-                            {view.phase === "drafting"
-                              ? player.ready
-                                ? "Ready"
-                                : "Choosing"
-                              : player.finished
-                                ? "Finished"
-                                : "Building faction"}
-                          </Badge>
-                        </Table.Td>
-                      </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
-              </Table.ScrollContainer>
-            </Stack>
-          </Paper>
+          {seat && view.phase === "drafting" ? (
+            <DraftPicking
+              key={`${view.id}:${seat.id}:${view.round}:${seat.ready}:${seat.hand.map((item) => item.id).join(",")}:${seat.bag.map((item) => item.id).join(",")}`}
+              view={view}
+              seat={seat}
+              busy={busy || view.lobby.paused}
+              submit={submit}
+            />
+          ) : (
+            <BagDraftProgress view={view} />
+          )}
           <BagMapSetup
             rules={view.rules}
             playerCount={view.players.length}
@@ -962,15 +903,6 @@ export default function BagDraftPage() {
             >
               Rewind draft round
             </Button>
-          )}
-          {seat && view.phase === "drafting" && (
-            <DraftPicking
-              key={`${view.id}:${seat.id}:${view.round}:${seat.ready}:${seat.hand.map((item) => item.id).join(",")}:${seat.bag.map((item) => item.id).join(",")}`}
-              view={view}
-              seat={seat}
-              busy={busy || view.lobby.paused}
-              submit={submit}
-            />
           )}
           {seat && view.phase === "assembling" && (
             <FactionAssembly

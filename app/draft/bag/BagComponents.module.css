@@ -45,6 +45,19 @@
   line-height: 1.6;
 }
 
+.inlineStats,
+.inlineSymbols {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.inlineSymbols > * {
+  flex-shrink: 0;
+}
+
 .fleetUnit {
   padding: 8px;
   border-radius: var(--mantine-radius-sm);

@@ -41,6 +41,30 @@
   font-size: 14px;
 }
 
+.mapFigure {
+  margin: 0;
+  text-align: center;
+}
+
+.mapArt {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 300px;
+  margin: var(--mantine-spacing-xs) auto;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.mapFigure figcaption {
+  font-size: var(--mantine-font-size-xs);
+}
+
+.mapFigure figcaption span {
+  display: block;
+  color: var(--mantine-color-dimmed);
+}
+
 .bag {
   fill: var(--mantine-color-dark-6);
   stroke: var(--mantine-color-default-border);

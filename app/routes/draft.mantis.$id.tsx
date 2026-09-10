@@ -602,6 +602,7 @@ function ActiveMantisRoom({
               </Accordion.Control>
               <Accordion.Panel>
                 <MapBuildDiagram
+                  playerCount={draft.players.length}
                   source={draft.bagDraftId ? "kept" : "pool"}
                   draftBlues={3 + draft.settings.extraBlues}
                   draftReds={2 + draft.settings.extraReds}

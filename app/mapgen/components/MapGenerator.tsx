@@ -20,6 +20,8 @@ import { Map, MAP_INTERACTIONS } from "~/components/Map";
 import { MainAppShell } from "~/components/MainAppShell";
 import { RawSystemTile } from "~/components/tiles/SystemTile";
 import { OriginalArtTile } from "~/components/tiles/OriginalArtTile";
+import { OriginalArtToggle } from "~/components/OriginalArtToggle";
+import { TileArtContext } from "~/contexts/TileArtContext";
 import { useSafeOutletContext } from "~/useSafeOutletContext";
 import { useState, useMemo, useEffect } from "react";
 import { Tile, GameSet } from "~/types";
@@ -633,6 +635,7 @@ function MapGeneratorContent() {
           <AppShell.Main p={0} h="calc(100vh - 60px)" mih="calc(100vh - 60px)">
             <Box bg="dark.7" px="sm" py={8}>
               <Group gap="sm" wrap="wrap">
+                <OriginalArtToggle />
                 <Select
                   data={Object.values(mapConfigs).map((config) => ({
                     value: config.id,
@@ -801,11 +804,15 @@ function MapGeneratorContent() {
 }
 
 export default function MapGenerator() {
+  const [originalArt, setOriginalArt] = useState(false);
+
   return (
-    <MainAppShell>
-      <ClientOnly fallback={<Box w="100%" h="calc(100vh - 60px)" />}>
-        {() => <MapGeneratorContent />}
-      </ClientOnly>
-    </MainAppShell>
+    <TileArtContext.Provider value={{ originalArt, setOriginalArt }}>
+      <MainAppShell>
+        <ClientOnly fallback={<Box w="100%" h="calc(100vh - 60px)" />}>
+          {() => <MapGeneratorContent />}
+        </ClientOnly>
+      </MainAppShell>
+    </TileArtContext.Provider>
   );
 }

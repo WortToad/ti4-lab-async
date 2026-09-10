@@ -65,7 +65,11 @@ export function BagMapSetup({
           </Text>
         )}
         {includesTiles && !unavailableReason && (
-          <MapBuildDiagram draftBlues={draftBlues} draftReds={draftReds} />
+          <MapBuildDiagram
+            playerCount={playerCount}
+            draftBlues={draftBlues}
+            draftReds={draftReds}
+          />
         )}
         {includesTiles && (
           <List type="ordered" spacing="xs" size="sm">
@@ -114,14 +118,11 @@ export function BagMapSetup({
               <Accordion.Panel>
                 <Stack gap="xs">
                   <Text size="sm">
-                    Everyone fills their one stage 1 space first, then their
-                    two stage 2 spaces, then their two stage 3 spaces. In a
-                    standard six-player map these are the inner, middle, and
-                    outer rings. Other layouts can include hyperlanes and
-                    different tile positions. On your turn, the
-                    highlighted spaces show your available choices in the
-                    current group. The player with the most empty spaces in that
-                    group places next.{" "}
+                    Everyone fills their one stage 1 space first, then their two
+                    stage 2 spaces, then their two stage 3 spaces, as numbered
+                    in the diagram. On your turn, the highlighted spaces show
+                    your available choices in the current group. The player with
+                    the most empty spaces in that group places next.{" "}
                     {rules.keepLimits.DRAFTORDER
                       ? "Your kept speaker position sets your seat on the map and breaks ties for placement turns."
                       : "Without a drafted speaker order, the listed player order sets seating and breaks ties for placement turns."}

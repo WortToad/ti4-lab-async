@@ -1,39 +1,56 @@
+import { hexSides, hexVertices } from "~/components/Hex/hexUtils";
+import { HyperlaneLine } from "~/components/Hex/HyperlaneLine";
+import { systemData } from "~/data/systemData";
+import { draftConfig } from "~/draft/draftConfig";
+import { generateEmptyMap } from "~/utils/map";
 import { getHexPosition } from "~/utils/positioning";
+import { MANTIS_MAPS } from "./engine";
 import classes from "./MapBuildDiagram.module.css";
 
 type TileColor = "blue" | "red" | "violet" | "gray" | "yellow";
 
-// Standard Milty section facing upward, matching milty.seatTilePlacement[3].
 // The builder fills slice indices [4], then [1, 3], then [0, 2].
-const sectionTiles: { q: number; r: number; label: string; color: TileColor }[] = [
-  { q: 0, r: -3, label: "M", color: "yellow" },
-  { q: 0, r: -2, label: "1", color: "violet" },
-  { q: 0, r: -1, label: "2", color: "violet" },
-  { q: -1, r: -1, label: "2", color: "violet" },
-  { q: -1, r: 0, label: "3", color: "violet" },
-  { q: 1, r: -1, label: "3", color: "violet" },
-  { q: 0, r: 0, label: "H", color: "gray" },
-];
+const placementStages = [3, 2, 3, 2, 1];
+const tileSides = hexSides(hexVertices(24));
 
 function Tile({
   x,
   y,
   label,
   color,
+  title,
+  hyperlanes,
+  rotation = 0,
 }: {
   x: number;
   y: number;
   label: string;
   color: TileColor;
+  title?: string;
+  hyperlanes?: number[][];
+  rotation?: number;
 }) {
   return (
     <g transform={`translate(${x} ${y})`}>
+      {title && <title>{title}</title>}
       <polygon
         points="24,0 12,-20.785 -12,-20.785 -24,0 -12,20.785 12,20.785"
         fill={`var(--mantine-color-${color}-light)`}
         stroke={`var(--mantine-color-${color}-5)`}
         strokeWidth="2"
       />
+      {hyperlanes && (
+        <g transform={`rotate(${rotation})`}>
+          {hyperlanes.map(([start, end], index) => (
+            <HyperlaneLine
+              key={index}
+              p1={tileSides[start]}
+              p2={tileSides[end]}
+              color="var(--mantine-color-blue-4)"
+            />
+          ))}
+        </g>
+      )}
       <text textAnchor="middle" dominantBaseline="central" fill="currentColor">
         {label}
       </text>
@@ -41,13 +58,92 @@ function Tile({
   );
 }
 
+function PlacementMap({ playerCount }: { playerCount: number }) {
+  const mapType = MANTIS_MAPS[playerCount];
+  if (!mapType) return null;
+  const config = draftConfig[mapType];
+  const map = generateEmptyMap(config);
+  const stages = new Map<string, { stage: number; seat: number }>();
+  config.homeIdxInMapString.forEach((homeIndex, seat) => {
+    const home = map[homeIndex].position;
+    config.seatTilePlacement[seat].forEach(([x, y], index) => {
+      stages.set(`${home.x + x},${home.y + y}`, {
+        stage: placementStages[index],
+        seat,
+      });
+    });
+  });
+  const tiles = map.filter((tile) => tile.type !== "CLOSED");
+  const positions = tiles.map((tile) =>
+    getHexPosition(tile.position.x, tile.position.y, 24, 2),
+  );
+  const minX = Math.min(...positions.map(({ x }) => x)) - 27;
+  const minY = Math.min(...positions.map(({ y }) => y)) - 24;
+  const width = Math.max(...positions.map(({ x }) => x)) + 27 - minX;
+  const height = Math.max(...positions.map(({ y }) => y)) + 24 - minY;
+
+  return (
+    <figure className={classes.mapFigure}>
+      <svg
+        viewBox={`${minX} ${minY} ${width} ${height}`}
+        role="img"
+        aria-label={`${playerCount}-player map placement stages`}
+        className={classes.mapArt}
+      >
+        {tiles.map((tile, index) => {
+          const placement = stages.get(`${tile.position.x},${tile.position.y}`);
+          const hyperlanes =
+            tile.type === "SYSTEM"
+              ? systemData[tile.systemId]?.hyperlanes
+              : undefined;
+          const label =
+            tile.idx === 0
+              ? "M"
+              : tile.type === "HOME"
+                ? "H"
+                : placement
+                  ? String(placement.stage)
+                  : "";
+          const title =
+            tile.idx === 0
+              ? "Mecatol Rex"
+              : tile.type === "HOME"
+                ? `Seat ${config.homeIdxInMapString.indexOf(tile.idx) + 1} home`
+                : placement
+                  ? `Seat ${placement.seat + 1}, stage ${placement.stage}, map position ${tile.idx}`
+                  : "Fixed hyperlane";
+          return (
+            <Tile
+              key={tile.idx}
+              {...positions[index]}
+              label={label}
+              color={tile.idx === 0 ? "yellow" : placement ? "violet" : "gray"}
+              title={title}
+              hyperlanes={hyperlanes}
+              rotation={tile.type === "SYSTEM" ? tile.rotation : undefined}
+            />
+          );
+        })}
+      </svg>
+      <figcaption>
+        {playerCount}-player map · H: home · M: Mecatol Rex
+        {Object.keys(config.presetTiles).length > 0 && (
+          <span>Blue lines: fixed hyperlanes</span>
+        )}
+      </figcaption>
+    </figure>
+  );
+}
+
 /** Shared by bag drafts and Mantis, which use the same tile-placement phase. */
 export function MapBuildDiagram({
+  playerCount,
   draftBlues = 3,
   draftReds = 2,
   source = "bags",
   mulligans = 1,
 }: {
+  playerCount: number;
   draftBlues?: number;
   draftReds?: number;
   source?: "bags" | "pool" | "kept";
@@ -108,41 +204,23 @@ export function MapBuildDiagram({
         </li>
         <li className={classes.step}>
           <strong>3. Place them on the map</strong>
-          <svg viewBox="0 0 240 230" aria-hidden="true" className={classes.art}>
-            <text x="120" y="17" textAnchor="middle" fill="currentColor">
-              Mecatol Rex
-            </text>
-            {sectionTiles.map(({ q, r, label, color }) => {
-              const { x, y } = getHexPosition(q, r, 24, 2);
-              return (
-                <Tile
-                  key={`${q},${r}`}
-                  x={120 + x}
-                  y={178 + y}
-                  label={label}
-                  color={color}
-                />
-              );
-            })}
-            <text x="120" y="225" textAnchor="middle" fill="currentColor">
-              Your home (separate)
-            </text>
-          </svg>
+          <PlacementMap playerCount={playerCount} />
           <span>
             Draw one of your remaining tiles at random each turn. Place it in a
-            highlighted space in your section. Everyone completes stage 1
-            before stage 2, then stage 3.
+            highlighted space in your section. Fill your one space marked 1,
+            then your two spaces marked 2, then your two spaces marked 3.
+            Everyone completes each stage before the next stage begins.
           </span>
           <span>
             {mulligans > 0 ? (
               <>
                 <strong>Optional mulligan.</strong> Each player gets {mulligans}{" "}
                 {mulligans === 1 ? "mulligan" : "mulligans"} for the entire map
-                build. Before placing your drawn tile, press <strong>Mulligan</strong>{" "}
-                to draw a different tile at random from your remaining hand.
-                The original stays in your hand to place later. You keep your
-                turn and the same highlighted spaces. You need at least two
-                unplaced tiles and a mulligan left.
+                build. Before placing your drawn tile, press{" "}
+                <strong>Mulligan</strong> to draw a different tile at random
+                from your remaining hand. The original stays in your hand to
+                place later. You keep your turn and the same highlighted spaces.
+                You need at least two unplaced tiles and a mulligan left.
               </>
             ) : (
               <>
@@ -150,11 +228,6 @@ export function MapBuildDiagram({
                 the tile you draw each turn.
               </>
             )}
-          </span>
-          <span>
-            Six-player example: home → 2 → 1 → Mecatol Rex form a straight line.
-            Numbers mark placement stages. Other player counts can use a
-            different layout; follow the highlighted spaces on your map.
           </span>
         </li>
       </ol>

@@ -36,6 +36,7 @@ import {
 } from "./definitions";
 import type { BagVariant } from "./types";
 import { getBagFaction, unitIconPath, unitLabel } from "./visuals";
+import { BagItemDescription } from "./BagItemDescription";
 import classes from "./BagComponents.module.css";
 
 const sourceNames: Record<string, string> = {
@@ -183,9 +184,7 @@ function UnitDetails({
         </Group>
       )}
       {showText && unit.text && (
-        <Text size="sm" className={classes.rules}>
-          {unit.text}
-        </Text>
+        <BagItemDescription description={unit.text} />
       )}
     </Stack>
   );
@@ -311,15 +310,14 @@ export function BagItemCard({
           <>
             <UnitDetails unit={item.unit} showText={item.category !== "TECH"} />
             {item.category === "TECH" && (
-              <Text size="sm" className={classes.rules}>
-                {item.description}
-              </Text>
+              <BagItemDescription description={item.description} />
             )}
           </>
         ) : item.description ? (
-          <Text size="sm" className={classes.rules}>
-            {item.description}
-          </Text>
+          <BagItemDescription
+            description={item.description}
+            planetStats={Boolean(item.systemId)}
+          />
         ) : null}
         {note && (
           <Text size="xs" c="dimmed" className={classes.note}>
