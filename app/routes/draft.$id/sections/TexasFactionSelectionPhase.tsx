@@ -171,7 +171,7 @@ export function TexasFactionSelectionPhase() {
                   onClick={() => {
                     if (
                       confirm(
-                        "Discard both factions and draw one you must play?",
+                        "Discard your faction hand and draw one you must play?",
                       )
                     ) {
                       stageSimultaneousPick(
@@ -188,7 +188,7 @@ export function TexasFactionSelectionPhase() {
                         : undefined,
                   }}
                 >
-                  Discard Both &amp; Redraw
+                  Discard Hand &amp; Redraw
                 </Button>
               )}
             </Stack>

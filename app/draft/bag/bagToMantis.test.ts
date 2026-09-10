@@ -84,7 +84,7 @@ describe("completed bag to map building", () => {
     ).toBe(true);
   });
 
-  it("maps bot faction aliases and home IDs to the existing Creuss and Axis homes", () => {
+  it("maps bot faction aliases to the Creuss gate and Axis home without changing drafted homes", () => {
     const bag = completedBag();
     bag.seats[0].keptItemIds.push("HOMESYSTEM:ghost");
     bag.seats[1].keptItemIds.push("HOMESYSTEM:axis");
@@ -92,12 +92,13 @@ describe("completed bag to map building", () => {
     const homes = draftConfig[map.mapType].homeIdxInMapString;
     expect(map.map[homes[map.seats[0]]]).toMatchObject({
       type: "SYSTEM",
-      systemId: "51",
+      systemId: "17",
     });
     expect(map.map[homes[map.seats[1]]]).toMatchObject({
       type: "SYSTEM",
       systemId: "4204",
     });
+    expect(bag.seats[0].keptItemIds).toContain("HOMESYSTEM:ghost");
   });
 
   it("falls back to listed seating when speaker order was not drafted", () => {

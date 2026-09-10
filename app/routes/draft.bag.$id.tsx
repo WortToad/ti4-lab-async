@@ -13,7 +13,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import {
   data,
   isRouteErrorResponse,
@@ -22,9 +22,9 @@ import {
   useFetcher,
   useLoaderData,
   useLocation,
-  useRevalidator,
   useRouteError,
   type ActionFunctionArgs,
+  type ClientLoaderFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router";
 import { BagItemCard, bagCategoryLabel } from "~/draft/bag/BagComponents";
@@ -32,7 +32,17 @@ import { BagMapSetup } from "~/draft/bag/BagMapSetup";
 import { BagDraftGuide } from "~/draft/bag/BagDraftGuide";
 import { BagDraftProgress } from "~/draft/bag/BagDraftProgress";
 import { BagSelectionConfirmation } from "~/draft/bag/BagSelectionConfirmation";
+import { BagSelectionActions } from "~/draft/bag/BagSelectionActions";
+import { usePendingBagSelections } from "~/draft/bag/usePendingBagSelections";
+import {
+  availableAssemblyItemIds,
+  includeAssemblyCompanions,
+} from "~/draft/bag/assembly";
 import { LobbyPanel, type LobbyOperation } from "~/draft/LobbyPanel";
+import { DraftTurnStatus } from "~/draft/DraftTurnStatus";
+import { getBagPendingAction } from "~/draft/turn";
+import { useLobbyRefresh } from "~/hooks/useLobbyRefresh";
+import { createOrderedLoader } from "~/hooks/orderedLoader";
 import { OriginalArtToggle } from "~/components/OriginalArtToggle";
 import {
   bagCookie,
@@ -66,6 +76,16 @@ export function meta() {
   ];
 }
 
+const loadClientDraft = createOrderedLoader<
+  Exclude<Awaited<ReturnType<typeof loader>>, Response>["data"]
+>();
+
+export function clientLoader({ request, serverLoader }: ClientLoaderFunctionArgs) {
+  return loadClientDraft(new URL(request.url).pathname, () =>
+    serverLoader<typeof loader>(),
+  );
+}
+
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const id = params.id!;
   const url = new URL(request.url);
@@ -97,7 +117,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     );
     view = await getBagDraftView(id, undefined, adminKey);
     accessError =
-      "Your saved slot UUID has changed. Ask the admin for your current UUID and rejoin below.";
+      "Your player recovery code has changed. Ask the admin for your current code and rejoin below.";
   }
   if (view.mapRoomId && url.searchParams.get("map") === "1")
     return redirectToMap(id, accessError ? undefined : key, adminKey);
@@ -221,13 +241,16 @@ function DraftPicking({
   seat,
   busy,
   submit,
+  selectedIds,
+  setSelectedIds,
 }: {
   view: BagDraftView;
   seat: PrivateSeat;
   busy: boolean;
   submit: SubmitOperation;
+  selectedIds: string[];
+  setSelectedIds: Dispatch<SetStateAction<string[]>>;
 }) {
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [confirmSelection, setConfirmSelection] = useState(false);
   const seatIndex = view.players.findIndex((player) => player.id === seat.id);
   // Each seat receives the next seat's bag and passes to the previous seat.
@@ -309,38 +332,6 @@ function DraftPicking({
                 remaining components pass to the next player when everyone is
                 ready.
               </Text>
-              <Text size="sm" fw={600} role="status">
-                Selected {selectedIds.length} of {seat.picksRequired} picks for
-                this bag
-              </Text>
-              {selectedIds.length > 0 && (
-                <Group align="flex-start" justify="space-between">
-                  <Text size="sm">
-                    {seat.bag
-                      .filter((item) => selectedIds.includes(item.id))
-                      .map((item) => item.name)
-                      .join(" · ")}
-                  </Text>
-                  <Button
-                    variant="subtle"
-                    size="xs"
-                    disabled={busy}
-                    onClick={() => setSelectedIds([])}
-                  >
-                    Clear selection
-                  </Button>
-                </Group>
-              )}
-              <Button
-                onClick={() => setConfirmSelection(true)}
-                disabled={busy || selectedIds.length !== seat.picksRequired}
-                loading={busy}
-                style={{ alignSelf: "flex-start" }}
-              >
-                {seat.picksRequired === 0
-                  ? "Pass this bag"
-                  : `Submit ${seat.picksRequired} ${seat.picksRequired === 1 ? "pick" : "picks"}`}
-              </Button>
             </>
           )}
           <Text size="sm" c="dimmed">
@@ -351,6 +342,32 @@ function DraftPicking({
           </Text>
         </Stack>
       </BagDraftProgress>
+      {!seat.ready && (
+        <BagSelectionActions
+          status={`Selected ${selectedIds.length} of ${seat.picksRequired} picks for this bag`}
+          detail={selectedItems.map((item) => item.name).join(" · ")}
+        >
+          {selectedIds.length > 0 && (
+            <Button
+              variant="subtle"
+              size="xs"
+              disabled={busy}
+              onClick={() => setSelectedIds([])}
+            >
+              Clear selection
+            </Button>
+          )}
+          <Button
+            onClick={() => setConfirmSelection(true)}
+            disabled={busy || selectedIds.length !== seat.picksRequired}
+            loading={busy}
+          >
+            {seat.picksRequired === 0
+              ? "Pass this bag"
+              : `Submit ${seat.picksRequired} ${seat.picksRequired === 1 ? "pick" : "picks"}`}
+          </Button>
+        </BagSelectionActions>
+      )}
       <BagSelectionConfirmation
         opened={confirmSelection}
         onClose={() => setConfirmSelection(false)}
@@ -477,11 +494,15 @@ function FactionAssembly({
   seat,
   busy,
   submit,
+  selectedIds,
+  setSelectedIds,
 }: {
   view: BagDraftView;
   seat: PrivateSeat;
   busy: boolean;
   submit: SubmitOperation;
+  selectedIds: string[];
+  setSelectedIds: Dispatch<SetStateAction<string[]>>;
 }) {
   const [confirmSelection, setConfirmSelection] = useState(false);
   const twilightsFall =
@@ -495,15 +516,6 @@ function FactionAssembly({
   );
   const groups = groupedItems(
     seat.assemblyOptions.filter((item) => !genericTechIds.has(item.id)),
-  );
-  const [selectedIds, setSelectedIds] = useState<string[]>(() =>
-    seat.keptItemIds.length > 0
-      ? seat.keptItemIds
-      : groups.flatMap(([category, items]) =>
-          items.length <= (view.rules.keepLimits[category] ?? 0)
-            ? items.map((item) => item.id)
-            : [],
-        ),
   );
   const requirements = groups.filter(
     ([category]) => (view.rules.keepLimits[category] ?? 0) > 0,
@@ -522,7 +534,27 @@ function FactionAssembly({
   const genericCount = selectedIds.filter((id) =>
     genericTechIds.has(id),
   ).length;
+  const availableIds = twilightsFall
+    ? new Set(seat.assemblyOptions.map((item) => item.id))
+    : availableAssemblyItemIds(
+        seat.assemblyOptions,
+        seat.assemblyBaseItemIds,
+        selectedIds,
+      );
+  const unavailableSelections = seat.assemblyOptions.filter(
+    (item) => selectedIds.includes(item.id) && !availableIds.has(item.id),
+  );
+  const selectedItems = seat.assemblyOptions.filter((item) =>
+    selectedIds.includes(item.id),
+  );
+  const finalItems = twilightsFall
+    ? selectedItems
+    : includeAssemblyCompanions(selectedItems);
+  const companionIds = finalItems
+    .filter((item) => !selectedIds.includes(item.id))
+    .map((item) => item.id);
   const complete =
+    unavailableSelections.length === 0 &&
     genericCount === replacementSlots &&
     requirements.every(([category, items]) => {
       const selected = items.filter((item) =>
@@ -551,12 +583,7 @@ function FactionAssembly({
         >
           Revise your faction
         </Button>
-        <CollectedItems
-          items={seat.assemblyOptions.filter((item) =>
-            seat.keptItemIds.includes(item.id),
-          )}
-          view={view}
-        />
+        <CollectedItems items={finalItems} view={view} />
       </Stack>
     );
   }
@@ -583,14 +610,6 @@ function FactionAssembly({
               are included automatically in the final faction.
             </Text>
           )}
-          <Button
-            onClick={() => setConfirmSelection(true)}
-            disabled={busy || !complete}
-            loading={busy}
-            style={{ alignSelf: "flex-start" }}
-          >
-            Finalize faction
-          </Button>
           {!complete && (
             <Text size="sm" c="dimmed">
               {twilightsFall
@@ -598,8 +617,49 @@ function FactionAssembly({
                 : "Fill each category’s keep limit to finalize."}
             </Text>
           )}
+          {unavailableSelections.length > 0 && (
+            <Alert
+              color="orange"
+              title="A replacement needs its granting component"
+            >
+              Keep the component that grants{" "}
+              {unavailableSelections.map((item) => item.name).join(", ")}, or
+              deselect the replacement before finalizing.
+            </Alert>
+          )}
         </Stack>
       </Paper>
+      <BagSelectionActions
+        status={`${selectedIds.length} components selected${complete ? " · Ready to finalize" : ""}`}
+        detail={
+          complete
+            ? "Review your final faction before submitting."
+            : requirements
+                .map(([category, items]) => {
+                  const count = items.filter((item) =>
+                    selectedIds.includes(item.id),
+                  ).length;
+                  const limit = Math.min(
+                    items.length,
+                    view.rules.keepLimits[category] ?? 0,
+                  );
+                  return count < limit
+                    ? `${bagCategoryLabel(category, view.settings.variant)} ${count}/${limit}`
+                    : null;
+                })
+                .filter(Boolean)
+                .join(" · ") ||
+              "Check your replacements to finish this faction."
+        }
+      >
+        <Button
+          onClick={() => setConfirmSelection(true)}
+          disabled={busy || !complete}
+          loading={busy}
+        >
+          Finalize faction
+        </Button>
+      </BagSelectionActions>
       <BagSelectionConfirmation
         opened={confirmSelection}
         onClose={() => setConfirmSelection(false)}
@@ -607,9 +667,8 @@ function FactionAssembly({
           setConfirmSelection(false);
           submit({ action: "assemble", itemIds: selectedIds });
         }}
-        items={seat.assemblyOptions.filter((item) =>
-          selectedIds.includes(item.id),
-        )}
+        items={finalItems}
+        automaticItemIds={companionIds}
         variant={view.settings.variant}
         assembling
         busy={busy || !complete}
@@ -678,10 +737,11 @@ function FactionAssembly({
                   item={item}
                   variant={view.settings.variant}
                   note={
+                    !seat.assemblyBaseItemIds.includes(item.id) &&
                     seat.assemblyOptions.some((parent) =>
                       parent.optionalSwaps?.includes(item.id),
                     )
-                      ? `Optional replacement offered by ${seat.assemblyOptions
+                      ? `${availableIds.has(item.id) ? "Optional replacement offered by" : "Keep a granting component to unlock:"} ${seat.assemblyOptions
                           .filter((parent) =>
                             parent.optionalSwaps?.includes(item.id),
                           )
@@ -691,7 +751,9 @@ function FactionAssembly({
                   }
                   selected={selectedIds.includes(item.id)}
                   disabled={
-                    busy || (!selectedIds.includes(item.id) && count >= limit)
+                    busy ||
+                    (!selectedIds.includes(item.id) &&
+                      (count >= limit || !availableIds.has(item.id)))
                   }
                   onSelect={(checked) =>
                     setSelectedIds((current) =>
@@ -712,8 +774,9 @@ function FactionAssembly({
 
 export default function BagDraftPage() {
   const view = useLoaderData<typeof loader>();
+  const [selectedIds, setSelectedIds] = usePendingBagSelections(view);
   const fetcher = useFetcher<typeof action>();
-  const revalidator = useRevalidator();
+  useLobbyRefresh();
   const location = useLocation();
   const [confirmUndo, setConfirmUndo] = useState(false);
   const busy = fetcher.state !== "idle";
@@ -725,18 +788,6 @@ export default function BagDraftPage() {
     (player) => player.id === view.viewer.playerId,
   )?.name;
   const publicPath = `/draft/bag/${view.id}`;
-
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      if (
-        document.visibilityState === "visible" &&
-        revalidator.state === "idle" &&
-        fetcher.state === "idle"
-      )
-        void revalidator.revalidate();
-    }, 4000);
-    return () => window.clearInterval(interval);
-  }, [revalidator, fetcher.state]);
 
   function submit(
     operation:
@@ -866,6 +917,15 @@ export default function BagDraftPage() {
         exportState={fetcher.data?.backup}
         onOperation={lobbyOperation}
       />
+      {view.phase !== "lobby" && view.viewer.playerId !== undefined && (
+        <DraftTurnStatus
+          roomKey={`bag:${view.id}`}
+          playerId={view.viewer.playerId}
+          pending={getBagPendingAction(view)}
+          paused={view.lobby.paused}
+          complete={view.phase === "complete"}
+        />
+      )}
       <BagDraftGuide
         rules={view.rules}
         variant={view.settings.variant}
@@ -880,6 +940,8 @@ export default function BagDraftPage() {
               seat={seat}
               busy={busy || view.lobby.paused}
               submit={submit}
+              selectedIds={selectedIds}
+              setSelectedIds={setSelectedIds}
             />
           ) : (
             <BagDraftProgress view={view} />
@@ -910,6 +972,8 @@ export default function BagDraftPage() {
               seat={seat}
               busy={busy || view.lobby.paused}
               submit={submit}
+              selectedIds={selectedIds}
+              setSelectedIds={setSelectedIds}
             />
           )}
           {!seat && view.phase !== "complete" && (
@@ -920,8 +984,8 @@ export default function BagDraftPage() {
               }
             >
               {view.viewer.isAdmin
-                ? "Join the lobby or rejoin with your UUID above if you are also playing. You can manage the draft here while other players’ hands stay private."
-                : "This page updates automatically. Rejoin with your saved UUID above to see your own bag and make picks."}
+                ? "Join the lobby or rejoin with your recovery code above if you are also playing. You can manage the draft here while other players’ hands stay private."
+                : "This page updates automatically. Rejoin with your saved recovery code above to see your own bag and make picks."}
             </Alert>
           )}
           {view.phase === "complete" && (

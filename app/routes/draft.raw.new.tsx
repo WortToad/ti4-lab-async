@@ -4,13 +4,11 @@ import {
   Button,
   Checkbox,
   Container,
-  Group,
   Paper,
   Select,
   SegmentedControl,
   Stack,
   Text,
-  NumberInput,
   Title,
 } from "@mantine/core";
 import { useState } from "react";
@@ -27,6 +25,8 @@ import {
 import { createRawRoom, rawCookie } from "~/drizzle/rawDraft.server";
 import type { RawSettings } from "~/draft/raw/engine";
 import { getRawLayouts } from "~/draft/raw/layouts";
+import { LobbyPlayerCount } from "~/draft/LobbyPlayerCount";
+import { makeLobbyPlayers, parseLobbyPlayerCount } from "~/draft/lobbySetup";
 
 export async function action({ request }: ActionFunctionArgs) {
   try {
@@ -36,10 +36,9 @@ export async function action({ request }: ActionFunctionArgs) {
       throw new Error("Choose normal TI4 or Twilight’s Fall.");
     const count = Number(form.get("playerCount"));
     if (!Number.isInteger(count) || count < 3 || count > 8)
-      throw new Error("Choose between 3 and 8 player slots.");
-    const names = Array.from({ length: count }, (_, i) => `Slot ${i + 1}`);
+      throw new Error("Choose between 3 and 8 players.");
     const settings: RawSettings = {
-      players: names.map((name, id) => ({ id, name })),
+      players: makeLobbyPlayers(count),
       mode,
       pok: form.has("pok"),
       te: mode === "twilightsFall" || form.has("te"),
@@ -73,12 +72,14 @@ export default function RawNew() {
   const [pok, setPok] = useState(true);
   const [te, setTe] = useState(true);
   const [selectedLayout, setSelectedLayout] = useState<string | null>(null);
-  const [count, setCount] = useState(6);
+  const [count, setCount] = useState(() =>
+    parseLobbyPlayerCount(search.get("playerCount"), 3, 8),
+  );
   const result = useActionData<typeof action>();
   const navigation = useNavigation();
   const twilight = mode === "twilightsFall";
   const layouts = getRawLayouts({
-    players: Array.from({ length: count }, (_, id) => ({ id, name: "" })),
+    players: makeLobbyPlayers(count),
     pok,
     te: twilight || te,
   });
@@ -88,7 +89,11 @@ export default function RawNew() {
   return (
     <Container size="sm" py="xl">
       <Stack gap="lg">
-        <Anchor component={Link} to="/draft/prechoice" size="sm">
+        <Anchor
+          component={Link}
+          to={`/draft/prechoice?playerCount=${count}`}
+          size="sm"
+        >
           ← All draft formats
         </Anchor>
         <div>
@@ -135,24 +140,14 @@ export default function RawNew() {
                 </Text>
               </Stack>
             </Paper>
-            <NumberInput
-              name="playerCount"
-              label="Player slots"
+            <input type="hidden" name="playerCount" value={count} />
+            <LobbyPlayerCount
               description="Share one lobby link. Each player enters their name and joins before the admin starts."
-              value={count}
-              onChange={(value) =>
-                setCount(typeof value === "number" ? value : 0)
-              }
+              count={count}
+              onChange={setCount}
               min={3}
               max={8}
-              allowDecimal={false}
-              required
             />
-            <Group>
-              <Text size="sm" c="dimmed">
-                {count} players · 3–8 supported
-              </Text>
-            </Group>
             <Stack gap="sm">
               <Checkbox
                 name="pok"
@@ -185,16 +180,16 @@ export default function RawNew() {
               allowDeselect={false}
               description={
                 layout?.description ??
-                "Enter 3–6 players, or enable Prophecy of Kings for 7–8 players."
+                "Choose 3–6 players, or enable Prophecy of Kings for 7–8 players."
               }
             />
             <Alert color="blue" title="One lobby link for everyone">
-              Share the lobby link. Players enter their name, join, and save
-              their recovery UUID. The host starts once everyone has joined.
-              Seating and cards stay hidden until then. Admin
-              recovery controls include undo, checkpoints, and private save
-              files; only your own hidden hands are visible when you also join
-              as a player.
+              Create the lobby and share its link. Everyone enters their own
+              name to join, including you if you are playing. Start once
+              everyone has joined. Save your recovery code to return later.
+              Seating and cards stay hidden until then. Admin recovery controls
+              include undo, checkpoints, and private save files; only your own
+              hidden hands are visible when you also join as a player.
             </Alert>
             <Button
               type="submit"
@@ -202,7 +197,7 @@ export default function RawNew() {
               loading={navigation.state === "submitting"}
               disabled={!layout}
             >
-              Create RAW setup
+              Create RAW lobby
             </Button>
             <Text size="xs" c="dimmed">
               Rules: Living Rules Reference v2.0, pp. 4–6; Thunder’s Edge, p. 7;

@@ -14,6 +14,7 @@ import {
 import { Draft } from "~/types";
 import { broadcastDraftUpdate } from "~/websocket/broadcast.server";
 import { rebuildTexasDraftState } from "~/draft/texas/texasDraft";
+import { getBaseKeleresSetup } from "~/draft/keleres";
 
 const privateHeaders = {
   "Cache-Control": "no-store",
@@ -98,7 +99,15 @@ async function handleAction({ request, params }: ActionFunctionArgs) {
       );
     }
 
-    const removedSelection = draft.selections.pop();
+    const keleres = getBaseKeleresSetup(draft);
+    const hasHomeChoice =
+      keleres &&
+      draft.players.find((p) => p.id === keleres.playerId)?.homeSystemFactionId;
+    if (hasHomeChoice) {
+      const player = draft.players.find((p) => p.id === keleres.playerId)!;
+      delete player.homeSystemFactionId;
+    }
+    const removedSelection = hasHomeChoice ? undefined : draft.selections.pop();
 
     if (draft.settings.draftGameMode === "texasStyle" && removedSelection) {
       if (

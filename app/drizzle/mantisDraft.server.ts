@@ -7,6 +7,7 @@ import { mantisDrafts } from "./schema.server";
 import { newBackupSecret, validRecoveryToken } from "~/draft/lobby.server";
 import {
   createMantisDraft,
+  normalizeMantisState,
   type MantisSettings,
   type MantisState,
 } from "~/draft/mantis/engine";
@@ -114,6 +115,9 @@ export function getMantisRoom(id: string) {
     .get();
   if (!row) throw new Response("Mantis draft not found", { status: 404 });
   const room = JSON.parse(row.data) as MantisRoomData;
+  const normalizedDraft = normalizeMantisState(room.draft);
+  let migrated = normalizedDraft !== room.draft;
+  room.draft = normalizedDraft;
   if (!room.lobby) {
     room.lobby = {
       started: true,
@@ -121,9 +125,12 @@ export function getMantisRoom(id: string) {
       seatKeys: {},
       backupSecret: newBackupSecret(),
     };
-    const migrated = db
+    migrated = true;
+  }
+  if (migrated) {
+    const updated = db
       .update(mantisDrafts)
-      .set({ data: JSON.stringify(room) })
+      .set({ data: JSON.stringify(room), revision: row.revision + 1 })
       .where(
         and(
           eq(mantisDrafts.id, id),
@@ -132,7 +139,8 @@ export function getMantisRoom(id: string) {
         ),
       )
       .run();
-    if (!migrated.changes) return getMantisRoom(id);
+    if (!updated.changes) return getMantisRoom(id);
+    row.revision++;
   }
   return { ...row, room };
 }
@@ -169,6 +177,7 @@ export function saveMantisRoom(
   revision: number,
   room: MantisRoomData,
 ) {
+  room.draft = normalizeMantisState(room.draft);
   const result = db
     .update(mantisDrafts)
     .set({ data: JSON.stringify(room), revision: revision + 1 })

@@ -4,6 +4,8 @@ import { getDraftableFactions, randomizeFactions } from "~/draftStore";
 import { dealTexasFactionOptions } from "~/draft/texas/texasDraft";
 import { shuffle } from "~/draft/helpers/randomization";
 import { getPlaceableTileIndices } from "~/utils/texasMapBuild";
+import { getFactionBanError } from "~/utils/factionSourceValidation";
+import { canCompleteFactionDraft } from "~/draft/factionFeasibility";
 
 /** Apply one owned selection to authoritative state; ignore client state edits. */
 export function applyBaseSelection(
@@ -60,6 +62,10 @@ export function applyBaseSelection(
         );
       break;
     case "SELECT_MINOR_FACTION":
+      if (selection.minorFactionId === "keleres")
+        throw new Error(
+          "Keleres has no fixed home system and cannot be drafted as a minor faction.",
+        );
       valid =
         (server.settings.numMinorFactions !== undefined ||
           !!server.settings.minorFactionsInSharedPool) &&
@@ -132,17 +138,12 @@ export function applyBaseSelection(
             s.type === "SELECT_PLAYER_COLOR" && s.color === selection.color,
         );
       break;
-    case "BAN_FACTION":
-      valid =
-        (
-          server.settings.allowedFactions ??
-          getFactionPool(server.settings.factionGameSets)
-        ).includes(selection.factionId) &&
-        !previous.some(
-          (s) =>
-            s.type === "BAN_FACTION" && s.factionId === selection.factionId,
-        );
+    case "BAN_FACTION": {
+      const error = getFactionBanError(server, selection.factionId);
+      if (error) throw new Error(error);
+      valid = true;
       break;
+    }
     case "PLACE_TILE": {
       const tiles = result.texasDraft?.playerTiles?.[playerId];
       const tile = result.presetMap[selection.mapIdx];
@@ -175,6 +176,15 @@ export function applyBaseSelection(
     );
   result.selections.push(selection);
   if (
+    (selection.type === "SELECT_FACTION" ||
+      selection.type === "SELECT_MINOR_FACTION" ||
+      selection.type === "SELECT_SLICE") &&
+    !canCompleteFactionDraft(result)
+  )
+    throw new Error(
+      "Keep a legal faction for every remaining main and minor pick. Keleres needs an unplayed Mentak, Xxcha, or Argent home. Choose another option or restore before the conflicting pick.",
+    );
+  if (
     selection.type === "BAN_FACTION" &&
     result.selections.length === bansNeeded
   ) {
@@ -187,35 +197,42 @@ export function applyBaseSelection(
       result.settings.allowedFactions,
       banned,
     );
-    if (result.settings.draftGameMode === "texasStyle" && result.texasDraft) {
-      Object.assign(
-        result.texasDraft,
-        dealTexasFactionOptions(
+    for (let attempt = 0; attempt < 20; attempt++) {
+      if (result.settings.draftGameMode === "texasStyle" && result.texasDraft) {
+        Object.assign(
+          result.texasDraft,
+          dealTexasFactionOptions(
+            pool,
+            result.players,
+            result.settings.texasFactionHandSize ?? 2,
+          ),
+        );
+        result.availableFactions = pool;
+      } else {
+        result.availableFactions = randomizeFactions(
+          result.settings.numFactions,
           pool,
-          result.players,
-          result.settings.texasFactionHandSize ?? 2,
-        ),
-      );
-      result.availableFactions = pool;
-    } else {
-      result.availableFactions = randomizeFactions(
-        result.settings.numFactions,
-        pool,
-        result.settings.requiredFactions?.filter((f) => !banned.includes(f)),
-        result.settings.factionStratification,
-      );
-      if (
-        result.playerFactionPool &&
-        result.settings.numPreassignedFactions !== undefined
-      ) {
-        const available = shuffle([...result.availableFactions]);
-        for (const p of result.players)
-          result.playerFactionPool[p.id] = available.splice(
-            0,
-            result.settings.numPreassignedFactions,
-          );
+          result.settings.requiredFactions?.filter((f) => !banned.includes(f)),
+          result.settings.factionStratification,
+        );
+        if (
+          result.playerFactionPool &&
+          result.settings.numPreassignedFactions !== undefined
+        ) {
+          const available = shuffle([...result.availableFactions]);
+          for (const p of result.players)
+            result.playerFactionPool[p.id] = available.splice(
+              0,
+              result.settings.numPreassignedFactions,
+            );
+        }
       }
+      if (canCompleteFactionDraft(result)) break;
     }
+    if (!canCompleteFactionDraft(result))
+      throw new Error(
+        "The faction pool after bans cannot complete this draft with a legal Keleres home. The ban was not saved. Choose a different ban or restore a checkpoint to revise the pools.",
+      );
   }
   return result;
 }

@@ -284,6 +284,7 @@ export type DraftSettings = {
   presetSlices?: SystemId[][];
   /** Pre-seeded map from map generator (for center tiles/equidistants) */
   presetMap?: Map;
+  presetMapFormat?: "miniMilty";
 
   /**
    * If true, slices have fixed map positions (nucleus-style layout).
@@ -328,6 +329,7 @@ export type DraftIntegrations = {
 export type Player = {
   id: number;
   name: string;
+  homeSystemFactionId?: FactionId;
 };
 
 export type Slice = {
@@ -473,7 +475,9 @@ export type Draft = {
   bannedFactions?: Record<PlayerId, FactionId[]>;
 
   texasDraft?: TexasDraftState;
-  stagedSelections?: Partial<Record<SimultaneousPickType, Record<PlayerId, string>>>;
+  stagedSelections?: Partial<
+    Record<SimultaneousPickType, Record<PlayerId, string>>
+  >;
 };
 
 export type HydratedPlayer = {

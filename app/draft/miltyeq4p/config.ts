@@ -88,6 +88,6 @@ export const miltyeq4p: DraftConfig = {
     ],
     3: rotateSlice(slice, 1),
   } as Record<number, [number, number][]>,
-  generateMap,
-  generateSlices,
+  generateMap: (...args) => generateMap(...args),
+  generateSlices: (...args) => generateSlices(...args),
 };

@@ -16,7 +16,12 @@ import {
   Title,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { Link, useFetcher, useLoaderData, useRevalidator } from "react-router";
+import {
+  Link,
+  useFetcher,
+  useLoaderData,
+  type ClientLoaderFunctionArgs,
+} from "react-router";
 import { Map as DraftMap, MAP_INTERACTIONS } from "~/components/Map";
 import { SystemTileCard } from "~/components/SystemTileCard";
 import { StartingUnitsTable } from "~/components/StartingUnitsTable";
@@ -40,9 +45,22 @@ import {
 import { NewDraftReferenceCard } from "~/routes/draft.new/components/NewDraftReferenceCard";
 import type { FactionId } from "~/types";
 import { LobbyPanel, type LobbyOperation } from "~/draft/LobbyPanel";
+import { DraftTurnStatus } from "~/draft/DraftTurnStatus";
+import { useLobbyRefresh } from "~/hooks/useLobbyRefresh";
+import { createOrderedLoader } from "~/hooks/orderedLoader";
 
 export const loader = loadRawRoom;
 export const action = actRawRoom;
+
+const loadClientDraft = createOrderedLoader<
+  Awaited<ReturnType<typeof loader>>["data"]
+>();
+
+export function clientLoader({ request, serverLoader }: ClientLoaderFunctionArgs) {
+  return loadClientDraft(new URL(request.url).pathname, () =>
+    serverLoader<typeof loader>(),
+  );
+}
 
 const phases: Record<RawPhase, { title: string; instructions: string }> = {
   factions: {
@@ -108,18 +126,7 @@ type RawRoomData = Awaited<ReturnType<typeof loader>>["data"];
 export default function RawRoom() {
   const room = useLoaderData<typeof loader>();
   const fetcher = useFetcher<typeof action>();
-  const revalidator = useRevalidator();
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      if (
-        document.visibilityState === "visible" &&
-        revalidator.state === "idle" &&
-        fetcher.state === "idle"
-      )
-        void revalidator.revalidate();
-    }, 3000);
-    return () => window.clearInterval(timer);
-  }, [revalidator, fetcher.state]);
+  useLobbyRefresh();
   const operation = (op: LobbyOperation) => {
     const { type, ...extra } = op;
     const intent =
@@ -168,11 +175,9 @@ function RawGame({
 }) {
   const { draft } = room;
   const fetcher = useFetcher<typeof action>();
-  const revalidator = useRevalidator();
   const [selectedTile, setSelectedTile] = useState<string | null>(null);
   const [kept, setKept] = useState<string[]>([]);
   const [undoOpen, setUndoOpen] = useState(false);
-  const [shareMessage, setShareMessage] = useState("");
   const activeId = rawActivePlayer(draft);
   const playerId = room.ownPlayers[0];
   const player = draft.players.find((entry) => entry.id === playerId);
@@ -193,6 +198,9 @@ function RawGame({
   const reference =
     playerId === undefined ? undefined : draft.references[playerId];
   const splice = playerId === undefined ? undefined : draft.splice[playerId];
+  const handKey = hand.join(",");
+  const draftedSpliceKey = splice?.drafted.join(",") ?? "";
+  const committedSpliceKey = splice?.kept?.join(",") ?? "";
   const tile =
     selectedTile && hand.includes(selectedTile) ? selectedTile : null;
   const positions =
@@ -230,21 +238,12 @@ function RawGame({
           : false;
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      if (
-        document.visibilityState === "visible" &&
-        revalidator.state === "idle" &&
-        fetcher.state === "idle"
-      )
-        revalidator.revalidate();
-    }, 3000);
-    return () => window.clearInterval(timer);
-  }, [revalidator, fetcher.state]);
+    setSelectedTile(null);
+  }, [playerId, draft.phase, handKey]);
 
   useEffect(() => {
-    setSelectedTile(null);
-    setKept([]);
-  }, [playerId, draft.phase, room.revision]);
+    setKept(committedSpliceKey ? committedSpliceKey.split(",") : []);
+  }, [playerId, draft.phase, draftedSpliceKey, committedSpliceKey]);
 
   const submit = (intent: string, extra: Record<string, string> = {}) => {
     fetcher.submit(
@@ -273,8 +272,26 @@ function RawGame({
     ) && kept.length === 4;
 
   return (
-    <Container size="xl" py="lg" className="ph-no-capture">
+    <Container size="xl" w="100%" miw={0} py="lg" className="ph-no-capture">
       <Stack gap="lg">
+        {playerId !== undefined && (
+          <DraftTurnStatus
+            roomKey={`raw:${room.id}`}
+            playerId={playerId}
+            paused={room.lobby.paused}
+            complete={draft.phase === "complete"}
+            pending={
+              !ready &&
+              (activeId === undefined || activeId === playerId) &&
+              draft.phase !== "complete"
+                ? {
+                    key: `${draft.phase}:${draft.turn}:${draft.referenceRound}:${draft.spliceRound}`,
+                    label: details.title,
+                  }
+                : undefined
+            }
+          />
+        )}
         <Anchor component={Link} to="/draft/prechoice" size="sm">
           ← All draft formats
         </Anchor>
@@ -291,23 +308,6 @@ function RawGame({
             </Text>
           </div>
           <Group gap="xs">
-            <Button
-              variant="light"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(window.location.href);
-                  setShareMessage(
-                    "Room link copied. Players can choose their name and join.",
-                  );
-                } catch {
-                  setShareMessage(
-                    "Share this page’s address with your players.",
-                  );
-                }
-              }}
-            >
-              Copy invite link
-            </Button>
             {room.isHost && (
               <Button
                 color="red"
@@ -320,7 +320,6 @@ function RawGame({
             )}
           </Group>
         </Group>
-        {shareMessage && <Text size="sm">{shareMessage}</Text>}
         {fetcher.data?.error && <Alert color="red">{fetcher.data.error}</Alert>}
         <Paper withBorder p="lg" radius="md">
           <Stack gap="sm">
@@ -348,8 +347,8 @@ function RawGame({
         </Paper>
         {!controlled && draft.phase !== "complete" && (
           <Text size="sm" c="dimmed">
-            Join the lobby above, or rejoin with your UUID, to see your
-            private hand and make choices. Spectators can watch the shared map.
+            Join the lobby above, or use your recovery code, to see your private
+            hand and make choices. Spectators can watch the shared map.
           </Text>
         )}
         <Table.ScrollContainer minWidth={650}>
@@ -412,7 +411,9 @@ function RawGame({
                       {draft.phase === "complete"
                         ? "Complete"
                         : entry.id === activeId
-                          ? "Your turn"
+                          ? entry.id === playerId
+                            ? "Your turn"
+                            : "Taking their turn"
                           : isReady
                             ? "Ready"
                             : "—"}

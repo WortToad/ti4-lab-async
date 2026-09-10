@@ -1,127 +1,96 @@
-import { ActionFunctionArgs, MetaFunction } from "react-router";
-import { Outlet, redirect } from "react-router";
-import { MainAppShell } from "~/components/MainAppShell";
 import {
-  initializeMap,
-  initializeSlices,
-  randomizeFactions,
-} from "~/draftStore";
+  type ActionFunctionArgs,
+  type MetaFunction,
+  Outlet,
+  redirect,
+  data,
+  Link,
+  useActionData,
+} from "react-router";
+import { MainAppShell } from "~/components/MainAppShell";
+import { Alert, Button, Stack, Text } from "@mantine/core";
 import { createDraft } from "~/drizzle/draft.server";
 import { baseCookie } from "~/drizzle/baseDraftLobby.server";
 import { createMultiDraft } from "~/drizzle/multiDraft.server";
-import { shuffle } from "~/draft/helpers/randomization";
-import {
-  DiscordData,
-  Draft,
-  DraftSettings,
-  FactionId,
-  Player,
-  TexasDraftState,
-} from "~/types";
-import { createDraftOrder } from "~/utils/draftOrder.server";
-
-import { getFactionPool } from "~/utils/factions";
-import { getSystemPool } from "~/utils/system";
-import {
-  createTexasSeatAssignments,
-  dealTexasFactionOptions,
-  dealTexasTiles,
-} from "~/draft/texas/texasDraft";
-
-const parseIfDefined = (v: unknown | null | undefined): unknown => {
-  if (v === null || v === undefined || v === "") return undefined;
-  return JSON.parse(v as string);
-};
+import type { DiscordData, Draft, DraftSettings, Player } from "~/types";
+import { prepareMultidraft } from "./prepareDraft.server";
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
-
-  const settings = parseIfDefined(
-    formData.get("draftSettings"),
-  ) as DraftSettings;
-  const players = parseIfDefined(formData.get("players")) as Player[];
-  const discordData = parseIfDefined(formData.get("discordData")) as
-    | DiscordData
-    | undefined;
-  const numDrafts = parseInt(formData.get("numDrafts") as string);
-
-  const draftUrlNames: string[] = [];
-  const headers = new Headers();
-  for (let i = 0; i < numDrafts; i++) {
-    const factionPool = getFactionPool(settings.factionGameSets);
-    const systemPool = getSystemPool(settings.tileGameSets);
-
-    const availableFactions = randomizeFactions(
-      settings.numFactions,
-      factionPool,
-      undefined,
-    );
-
-    const numMinorFactions = settings.numMinorFactions;
-    let availableMinorFactions: FactionId[] | undefined = undefined;
-    if (numMinorFactions !== undefined) {
-      const otherFactions = factionPool.filter(
-        (f) => !availableFactions.includes(f),
+  let prepared: Draft[];
+  let playerCount = 6;
+  try {
+    let settings: DraftSettings;
+    let players: Player[];
+    let discordData: DiscordData | undefined;
+    try {
+      settings = JSON.parse(String(formData.get("draftSettings")));
+      players = JSON.parse(String(formData.get("players")));
+      discordData = formData.get("discordData")
+        ? JSON.parse(String(formData.get("discordData")))
+        : undefined;
+    } catch {
+      throw new Error(
+        "The draft setup could not be read. Return to setup and try again.",
       );
-      availableMinorFactions = shuffle(otherFactions, numMinorFactions);
     }
-
-    const slices = initializeSlices(settings, systemPool);
-    if (!slices) return;
-    const presetMap = initializeMap(settings, slices, systemPool);
-
-    let texasDraft: TexasDraftState | undefined = undefined;
-    if (settings.draftGameMode === "texasStyle") {
-      texasDraft = {
-        ...createTexasSeatAssignments(players),
-        ...dealTexasTiles(systemPool, players),
-      };
-
-      if (!settings.modifiers?.banFactions) {
-        const handSize = settings.texasFactionHandSize ?? 2;
-        const {
-          factionOptions,
-          factionDrawPile,
-          initialFactionOptions,
-          initialFactionDrawPile,
-        } = dealTexasFactionOptions(availableFactions, players, handSize);
-        texasDraft.factionOptions = factionOptions;
-        texasDraft.factionDrawPile = factionDrawPile;
-        texasDraft.initialFactionOptions = initialFactionOptions;
-        texasDraft.initialFactionDrawPile = initialFactionDrawPile;
-      }
-    }
-
-    const draft: Draft = {
+    if (Array.isArray(players)) playerCount = players.length;
+    prepared = prepareMultidraft(
       settings,
-      integrations: { discord: discordData },
-      availableFactions,
-      availableMinorFactions,
-      presetMap,
-      slices,
-      texasDraft,
-      ...createDraftOrder({
-        players,
-        settings,
-        availableFactions,
-        presetMap,
-        texasDraft,
-      }),
-    };
-    const { prettyUrl, id, adminUuid } = await createDraft(draft);
-    headers.append("Set-Cookie", await baseCookie(id, "admin").serialize(adminUuid));
-    draftUrlNames.push(prettyUrl);
+      players,
+      Number(formData.get("numDrafts")),
+      discordData,
+    );
+  } catch (error) {
+    return data(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "The lobbies could not be prepared. Check the selected content and settings.",
+        playerCount,
+      },
+      { status: 400, headers: { "Cache-Control": "no-store" } },
+    );
   }
 
+  // Prepare and validate every lobby before creating any persistent drafts.
+  const draftUrlNames: string[] = [];
+  const headers = new Headers();
+  for (const draft of prepared) {
+    const { prettyUrl, id, adminUuid } = await createDraft(draft);
+    headers.append(
+      "Set-Cookie",
+      await baseCookie(id, "admin").serialize(adminUuid),
+    );
+    draftUrlNames.push(prettyUrl);
+  }
   const multiDraftUrlName = await createMultiDraft(draftUrlNames);
-
   return redirect(`/multidraft/${multiDraftUrlName}`, { headers });
 }
 
 export default function MultiDraft() {
+  const result = useActionData<typeof action>();
   return (
     <MainAppShell>
-      <Outlet />
+      {result?.error ? (
+        <Stack p="lg" maw={700} mx="auto">
+          <Alert color="red" title="Lobbies could not be created">
+            {result.error}
+          </Alert>
+          <Text>
+            No lobbies were created. Your setup is still available to adjust.
+          </Text>
+          <Button
+            component={Link}
+            to={`/draft/prechoice?playerCount=${Math.min(8, Math.max(3, result.playerCount))}`}
+          >
+            Return to setup
+          </Button>
+        </Stack>
+      ) : (
+        <Outlet />
+      )}
     </MainAppShell>
   );
 }

@@ -8,6 +8,7 @@ export function BagSelectionConfirmation({
   onClose,
   onConfirm,
   items,
+  automaticItemIds = [],
   variant,
   assembling = false,
   passingTo,
@@ -17,6 +18,7 @@ export function BagSelectionConfirmation({
   onClose: () => void;
   onConfirm: () => void;
   items: BagDraftItem[];
+  automaticItemIds?: string[];
   variant: BagVariant;
   assembling?: boolean;
   passingTo?: string;
@@ -46,6 +48,8 @@ export function BagSelectionConfirmation({
                 </Text>
                 <Text size="xs" c="dimmed">
                   {bagCategoryLabel(item.category, variant)}
+                  {automaticItemIds.includes(item.id) &&
+                    " · Included automatically"}
                 </Text>
               </List.Item>
             ))}

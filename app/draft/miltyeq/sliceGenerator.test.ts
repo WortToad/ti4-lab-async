@@ -1,92 +1,76 @@
-import { expect, test } from "vitest";
-import { generateMap } from "./sliceGenerator";
-import { DraftSettings } from "~/types";
+import { afterEach, expect, test, vi } from "vitest";
+import { generateMap, generateSlices } from "./sliceGenerator";
 import { getSystemPool } from "~/utils/system";
+import {
+  expectCompleteMap,
+  generatorTestSettings,
+  seedRandom,
+} from "../common/generationTestUtils";
+import { systemData } from "~/data/systemData";
+import { isAlpha, isBeta, isLegendary } from "../helpers/sliceGeneration";
 
-const defaultTestSettings = {
-  type: "miltyeq",
-  draftSpeaker: false,
-  allowEmptyTiles: false,
-  allowHomePlanetSearch: false,
-  numFactions: 2,
-  numSlices: 6,
-  randomizeMap: false,
-  randomizeSlices: false,
-  numPreassignedFactions: 0,
-  numMinorFactions: 0,
-  minorFactionsInSharedPool: false,
-} as const;
+afterEach(() => vi.restoreAllMocks());
 
-test("properly generates maps", () => {
-  const settings: DraftSettings = {
-    factionGameSets: ["base", "pok"],
-    tileGameSets: ["base", "pok"],
-    ...defaultTestSettings,
-  };
+for (const numSlices of [6, 8, 10]) {
+  test.each([1, 2, 3, 7, 19, 42, 1337, 20260910])(
+    `generates complete unique maps with ${numSlices} slices (seed %i)`,
+    (seed) => {
+      seedRandom(seed);
+      const settings = { ...generatorTestSettings, numSlices };
+      const pool = getSystemPool(settings.tileGameSets);
+      const result = generateMap(settings, pool);
+      expectCompleteMap(result, settings, pool);
+      const systems = result!.slices.flat().map((id) => systemData[id]);
+      expect(systems.filter(isAlpha).length).toBeGreaterThanOrEqual(2);
+      expect(systems.filter(isBeta).length).toBeGreaterThanOrEqual(2);
+      expect(systems.filter(isLegendary).length).toBeGreaterThanOrEqual(1);
+    },
+  );
+}
 
-  const systemPool = getSystemPool(["base", "pok"]);
-  const iterations = 10000;
-  for (let i = 0; i < iterations; i++) {
-    try {
-      const result = generateMap(settings, [...systemPool]);
-      expect(result, `Failed on iteration ${i + 1}`).toBeDefined();
-      expect(result?.valid, `Map was invalid on iteration ${i + 1}`).toBe(true);
-    } catch (e) {
-      console.log(`Failed on iteration ${i + 1}`);
-      throw e;
-    }
-  }
+test.each([1, 19, 42, 1337])(
+  "generates with every expansion enabled (seed %i)",
+  (seed) => {
+    seedRandom(seed);
+    const settings = {
+      ...generatorTestSettings,
+      tileGameSets: [
+        "base",
+        "pok",
+        "discordant",
+        "discordantexp",
+        "unchartedstars",
+      ] as const,
+    };
+    const mutableSettings = {
+      ...settings,
+      tileGameSets: [...settings.tileGameSets],
+    };
+    const pool = getSystemPool(mutableSettings.tileGameSets);
+    expectCompleteMap(
+      generateMap(mutableSettings, pool),
+      mutableSettings,
+      pool,
+    );
+  },
+);
+
+test("rejects a pool too small to fill both slices and the fixed map without sampling", () => {
+  const random = seedRandom(42, true);
+  expect(
+    generateMap(
+      generatorTestSettings,
+      getSystemPool(["base", "pok"]).slice(0, 25),
+    ),
+  ).toBeUndefined();
+  expect(random).not.toHaveBeenCalled();
 });
 
-test("properly generates maps with 8 slices", () => {
-  const settings: DraftSettings = {
-    ...defaultTestSettings,
-    factionGameSets: ["base", "pok"],
-    tileGameSets: ["base", "pok"],
-    numSlices: 8,
-  };
-  const systemPool = getSystemPool(["base", "pok"]);
-  const iterations = 10000;
-  for (let i = 0; i < iterations; i++) {
-    try {
-      const result = generateMap(settings, [...systemPool]);
-      expect(result, `Failed on iteration ${i + 1}`).toBeDefined();
-      expect(result?.valid, `Map was invalid on iteration ${i + 1}`).toBe(true);
-    } catch (e) {
-      console.log(`Failed on iteration ${i + 1}`);
-      throw e;
-    }
-  }
-});
-
-test("Milty-EQ generates with discordant stars", () => {
-  const settings: DraftSettings = {
-    factionGameSets: ["base", "pok", "discordant", "discordantexp"],
-    tileGameSets: [
-      "base",
-      "pok",
-      "discordant",
-      "discordantexp",
-      "unchartedstars",
-    ],
-    ...defaultTestSettings,
-  };
-  const systemPool = getSystemPool([
-    "base",
-    "pok",
-    "discordant",
-    "discordantexp",
-    "unchartedstars",
-  ]);
-  const iterations = 10000;
-  for (let i = 0; i < iterations; i++) {
-    try {
-      const result = generateMap(settings, [...systemPool]);
-      expect(result, `Failed on iteration ${i + 1}`).toBeDefined();
-      expect(result?.valid, `Map was invalid on iteration ${i + 1}`).toBe(true);
-    } catch (e) {
-      console.log(`Failed on iteration ${i + 1}`);
-      throw e;
-    }
-  }
+test("rejects a missing wormhole supply before shuffling tiles", () => {
+  const random = seedRandom(42, true);
+  const pool = getSystemPool(["base", "pok"]).filter(
+    (id) => !isAlpha(systemData[id]),
+  );
+  expect(generateSlices(6, pool)).toBeUndefined();
+  expect(random).not.toHaveBeenCalled();
 });

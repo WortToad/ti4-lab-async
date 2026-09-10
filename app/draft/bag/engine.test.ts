@@ -4,6 +4,7 @@ import {
   assemblyOptions,
   createBagState,
   draftableItems,
+  getBagSetupError,
   keptBagItems,
   requiredBagPicks,
 } from "./engine";
@@ -55,6 +56,62 @@ function finalPicks(state: BagDraftState, seat: BagSeat) {
 }
 
 describe("bag draft rules", () => {
+  it("reports an impossible FrankenDraz setup before dealing and clears it when the pool fits", () => {
+    const settings: CreateBagDraftInput = {
+      ...input,
+      variant: "frankendraz",
+      players: ["A", "B", "C", "D", "E", "F"],
+    };
+    expect(getBagSetupError(settings)).toContain("need 36 items");
+    expect(getBagSetupError(settings)).toContain("only 30 are available");
+    expect(() => createBagState(settings)).toThrow(getBagSetupError(settings));
+    expect(
+      getBagSetupError({ ...settings, includeDiscordantStars: true }),
+    ).toBeUndefined();
+    expect(
+      getBagSetupError({ ...settings, players: settings.players.slice(0, 5) }),
+    ).toBeUndefined();
+    expect(
+      getBagSetupError({
+        ...settings,
+        categoryLimits: { FACTION: { draft: 5, keep: 0 } },
+      }),
+    ).toBeUndefined();
+    expect(settings.categoryLimits).toBeUndefined();
+  });
+
+  it("preflights custom tile counts, banned cards, priorities and invalid keep counts", () => {
+    expect(
+      getBagSetupError({
+        ...input,
+        variant: "standard_bag_draft",
+        players: Array.from({ length: 8 }, (_, index) => `Player ${index + 1}`),
+        categoryLimits: { BLUETILE: { draft: 12, keep: 3 } },
+      }),
+    ).toMatch(/Blue tile: need 96/);
+    expect(
+      getBagSetupError({
+        ...input,
+        variant: "frankendraz",
+        priorityFactions: ["hacan"],
+        bannedItemIds: ["FACTION:hacan"],
+      }),
+    ).toMatch(/Prioritized factions/);
+    expect(
+      getBagSetupError({
+        ...input,
+        categoryLimits: { ABILITY: { draft: 1, keep: 2 } },
+      }),
+    ).toMatch(/keep limit cannot exceed/);
+  });
+
+  it.each(BAG_VARIANTS)(
+    "accepts an available $name pool during setup without dealing it",
+    ({ id }) => {
+      expect(getBagSetupError({ ...input, variant: id })).toBeUndefined();
+    },
+  );
+
   it("requires the keep count, reduced only when fewer choices are available", () => {
     const state = createBagState(input, random);
     state.phase = "assembling";

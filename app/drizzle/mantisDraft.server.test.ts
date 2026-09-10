@@ -3,9 +3,11 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { afterAll, beforeAll, expect, test, vi } from "vitest";
 import {
   createMantisMapBuild,
+  createMantisDraft,
   type MantisSettings,
 } from "~/draft/mantis/engine";
-import { systemData } from "~/data/systemData";
+import { factionSystems, systemData } from "~/data/systemData";
+import { draftConfig } from "~/draft/draftConfig";
 
 const settings: MantisSettings = {
   players: Array.from({ length: 4 }, (_, id) => ({
@@ -303,6 +305,137 @@ test("map rooms start active, preserve transferred UUIDs, and hide random draws 
     (await get(id, await cookies(id, undefined, token))).data.draft?.drawnTile,
   ).toBeUndefined();
   expect((await get(id, await cookies(id, token))).data.isHost).toBe(true);
+});
+
+test("legacy completed Keleres rooms persist the pending home choice and support ownership, undo, and backup recovery", async () => {
+  const state = createMantisDraft(settings, () => 0);
+  state.phase = "complete";
+  state.chosenFactions = { 0: "keleres", 1: "mentak", 2: "xxcha", 3: "sol" };
+  state.seats = { 0: 0, 1: 1, 2: 2, 3: 3 };
+  state.hands = { 0: [], 1: [], 2: [], 3: [] };
+  const homeIdx = draftConfig[state.mapType].homeIdxInMapString;
+  let tile = 0;
+  state.map = state.map.map((entry) =>
+    entry.type === "OPEN"
+      ? { ...entry, type: "SYSTEM", systemId: state.pool[tile++] }
+      : entry,
+  );
+  for (const playerId of [1, 2, 3]) {
+    const idx = homeIdx[playerId];
+    state.map[idx] = {
+      ...state.map[idx],
+      type: "SYSTEM",
+      systemId: factionSystems[state.chosenFactions[playerId]].id,
+    };
+  }
+  const seats = Object.fromEntries(
+    settings.players.map(({ id }) => [id, service.newMantisToken()]),
+  );
+  const claims = Object.fromEntries(
+    Object.entries(seats).map(([id, token]) => [
+      id,
+      service.mantisTokenHash(token),
+    ]),
+  );
+  const { id, token } = service.createMantisRoomFromState(state, claims, {
+    seatKeys: seats,
+  });
+  const admin = await cookies(id, undefined, token);
+  const own = await cookies(id, seats[0]);
+  const migrated = service.getMantisRoom(id);
+  expect(migrated.room.draft.phase).toBe("home");
+  expect(migrated.revision).toBe(1);
+  expect(service.getMantisRoom(id).revision).toBe(1);
+  expect((await get(id, own)).data.draft?.phase).toBe("home");
+  const pick = {
+    intent: "pick",
+    playerId: "0",
+    action: JSON.stringify({ type: "home", factionId: "argent" }),
+  };
+  expect((await post(id, pick, admin)).data.error).toContain(
+    "Join as this player",
+  );
+  expect(
+    (await post(id, { ...pick, playerId: "1" }, await cookies(id, seats[1])))
+      .data.error,
+  ).toContain("Only the Keleres player");
+  expect(
+    (
+      await post(
+        id,
+        {
+          ...pick,
+          action: JSON.stringify({ type: "home", factionId: "mentak" }),
+        },
+        own,
+      )
+    ).data.error,
+  ).toContain("unplayed");
+  expect((await post(id, pick, own)).data.error).toBeNull();
+  const completed = service.getMantisRoom(id).room.draft;
+  expect(completed.phase).toBe("complete");
+  expect(completed.chosenHomes?.[0]).toBe("argent");
+  expect(completed.map[homeIdx[0]]).toMatchObject({
+    type: "SYSTEM",
+    systemId: factionSystems.argent.id,
+  });
+  expect(completed.map.filter((tile) => tile.idx !== homeIdx[0])).toEqual(
+    state.map.filter((tile) => tile.idx !== homeIdx[0]),
+  );
+  const saved = (await post(id, { intent: "export" }, admin)).data.exportState!;
+  expect((await post(id, { intent: "undo" }, admin)).data.error).toBeNull();
+  expect(service.getMantisRoom(id).room.draft.phase).toBe("home");
+  expect(service.getMantisRoom(id).room.draft.chosenHomes).toBeUndefined();
+  expect((await post(id, pick, own)).data.error).toContain("paused");
+  expect(
+    (await post(id, { intent: "import", state: saved }, admin)).data.error,
+  ).toBeNull();
+  expect(service.getMantisRoom(id).room.draft).toEqual(completed);
+  expect(service.getMantisRoom(id).room.lobby.seatKeys).toEqual(seats);
+});
+
+test("automatic placements persist as individual recoverable actions and do not repeat on load or resume", async () => {
+  const draft = createMantisDraft(settings, () => 0);
+  const blues = draft.pool.filter((id) => systemData[id].type === "BLUE");
+  const reds = draft.pool.filter((id) => systemData[id].type === "RED");
+  const state = createMantisMapBuild(
+    {
+      players: settings.players,
+      hands: Object.fromEntries(
+        settings.players.map(({ id }) => [
+          id,
+          [
+            ...blues.slice(id * 3, id * 3 + 3),
+            ...reds.slice(id * 2, id * 2 + 2),
+          ],
+        ]),
+      ),
+      seatOrder: [0, 1, 2, 3],
+      mulligans: 0,
+    },
+    () => 0,
+  );
+  expect(state.history).toHaveLength(4);
+  expect(Object.values(state.hands).flat()).toHaveLength(16);
+  const seats = Object.fromEntries(
+    settings.players.map(({ id }) => [id, service.newMantisToken()]),
+  );
+  const claims = Object.fromEntries(
+    Object.entries(seats).map(([id, token]) => [
+      id,
+      service.mantisTokenHash(token),
+    ]),
+  );
+  const { id, token } = service.createMantisRoomFromState(state, claims, {
+    seatKeys: seats,
+  });
+  const admin = await cookies(id, undefined, token);
+  expect((await post(id, { intent: "undo" }, admin)).data.error).toBeNull();
+  const undone = structuredClone(service.getMantisRoom(id).room.draft);
+  expect(Object.values(undone.hands).flat()).toHaveLength(17);
+  await get(id, admin);
+  expect((await post(id, { intent: "resume" }, admin)).data.error).toBeNull();
+  expect(service.getMantisRoom(id).room.draft).toEqual(undone);
 });
 
 test("persists state atomically and rejects malformed cookies", async () => {

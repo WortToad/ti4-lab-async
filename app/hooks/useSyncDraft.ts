@@ -1,9 +1,9 @@
-import { appPath } from "~/utils/appUrl";
 import { useFetcher } from "react-router";
 import { createContext, useContext, useEffect } from "react";
 import { draftStore } from "~/draftStore";
 import { notifications } from "@mantine/notifications";
 import { FactionId, PlayerId, SimultaneousPickType } from "~/types";
+import { useDraftApiMutation } from "./useDraftApiMutation";
 
 type UndoResult = { success: boolean; removedSelection?: unknown };
 
@@ -50,6 +50,7 @@ export function useSyncDraft() {
 
 export function useSyncDraftFetcher() {
   const fetcher = useFetcher({ key: "sync-draft" });
+  const mutation = useDraftApiMutation();
 
   useEffect(() => {
     const data = fetcher.data as {
@@ -81,7 +82,6 @@ export function useSyncDraftFetcher() {
         window.location.reload();
       }
     }
-
   }, [fetcher.data]);
 
   const stageSimultaneousPick = async (
@@ -89,17 +89,17 @@ export function useSyncDraftFetcher() {
     playerId: PlayerId,
     value: string,
   ) => {
-    const { draftId, draftActions } = draftStore.getState();
+    const { draftId } = draftStore.getState();
     if (!draftId) return;
 
-    const response = await fetch(appPath(`/api/draft/${draftId}/stage`), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ playerId, value, phase }),
+    const result = await mutation.submit(`/api/draft/${draftId}/stage`, {
+      playerId,
+      value,
+      phase,
     });
 
-    if (!response.ok) {
-      const error = await response.json();
+    if (!result.success) {
+      const error = result;
       console.error("Failed to stage pick:", error);
       notifications.show({
         title: "Error",
@@ -107,11 +107,6 @@ export function useSyncDraftFetcher() {
         color: "red",
       });
       return;
-    }
-
-    const data = await response.json();
-    if (data.success && data.draft) {
-      draftActions.update(draftId, data.draft);
     }
   };
 
@@ -133,20 +128,16 @@ export function useSyncDraftFetcher() {
     },
     stageSimultaneousPick,
     undoStagedPick: async (phase: SimultaneousPickType, playerId: PlayerId) => {
-      const { draftId, draftActions } = draftStore.getState();
+      const { draftId } = draftStore.getState();
       if (!draftId) return { success: false };
 
-      const response = await fetch(
-        appPath(`/api/draft/${draftId}/simultaneous-undo-pick`),
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phase, playerId }),
-        },
+      const result = await mutation.submit(
+        `/api/draft/${draftId}/simultaneous-undo-pick`,
+        { phase, playerId },
       );
 
-      if (!response.ok) {
-        const error = await response.json();
+      if (!result.success) {
+        const error = result;
         console.error("Failed to undo staged pick:", error);
         notifications.show({
           title: "Error",
@@ -156,38 +147,27 @@ export function useSyncDraftFetcher() {
         return { success: false };
       }
 
-      const data = await response.json();
-      if (data.success && data.draft) {
-        draftActions.update(draftId, data.draft);
-        notifications.show({
-          title: "Pick Undone",
-          message: "The staged pick has been removed.",
-          color: "green",
-          autoClose: 3000,
-        });
-      }
+      notifications.show({
+        title: "Pick Undone",
+        message: "The staged pick has been removed.",
+        color: "green",
+        autoClose: 3000,
+      });
       return { success: true };
     },
     undoSimultaneousPhase: async (phase: SimultaneousPickType) => {
-      const { draftId, draft, draftActions } = draftStore.getState();
+      const { draftId, draft } = draftStore.getState();
       if (!draftId || !draft) return { success: false };
 
       const expectedSelectionCount = draft.selections.length;
 
-      const response = await fetch(
-        appPath(`/api/draft/${draftId}/simultaneous-undo-phase`),
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            phase,
-            expectedSelectionCount,
-          }),
-        },
+      const result = await mutation.submit(
+        `/api/draft/${draftId}/simultaneous-undo-phase`,
+        { phase, expectedSelectionCount },
       );
 
-      if (!response.ok) {
-        const error = await response.json();
+      if (!result.success) {
+        const error = result;
         console.error("Failed to undo phase:", error);
 
         if (error.error === "out_of_sync") {
@@ -210,32 +190,26 @@ export function useSyncDraftFetcher() {
         return { success: false };
       }
 
-      const data = await response.json();
-      if (data.success && data.draft) {
-        draftActions.update(draftId, data.draft);
-        notifications.show({
-          title: "Phase Undone",
-          message: "The simultaneous phase has been cleared.",
-          color: "green",
-          autoClose: 3000,
-        });
-      }
-      return { success: true, removedSelection: data.removedSelection };
+      notifications.show({
+        title: "Phase Undone",
+        message: "The simultaneous phase has been cleared.",
+        color: "green",
+        autoClose: 3000,
+      });
+      return { success: true, removedSelection: result.removedSelection };
     },
     undoLastPick: async () => {
-      const { draftId, draft, draftActions } = draftStore.getState();
+      const { draftId, draft } = draftStore.getState();
       if (!draftId || !draft) return { success: false };
 
       const expectedSelectionCount = draft.selections.length;
 
-      const response = await fetch(appPath(`/api/draft/${draftId}/undo`), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ expectedSelectionCount }),
+      const result = await mutation.submit(`/api/draft/${draftId}/undo`, {
+        expectedSelectionCount,
       });
 
-      if (!response.ok) {
-        const error = await response.json();
+      if (!result.success) {
+        const error = result;
         console.error("Failed to undo:", error);
 
         if (error.error === "out_of_sync") {
@@ -258,19 +232,15 @@ export function useSyncDraftFetcher() {
         return { success: false };
       }
 
-      const data = await response.json();
-      if (data.success && data.draft) {
-        draftActions.update(draftId, data.draft);
-        notifications.show({
-          title: "Pick Undone",
-          message: "The last selection has been removed.",
-          color: "green",
-          autoClose: 3000,
-        });
-      }
-      return { success: true, removedSelection: data.removedSelection };
+      notifications.show({
+        title: "Pick Undone",
+        message: "The last selection has been removed.",
+        color: "green",
+        autoClose: 3000,
+      });
+      return { success: true, removedSelection: result.removedSelection };
     },
-    syncing: fetcher.state === "submitting",
+    syncing: fetcher.state !== "idle" || mutation.busy,
   };
 }
 

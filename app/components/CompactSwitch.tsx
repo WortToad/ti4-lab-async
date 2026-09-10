@@ -60,8 +60,9 @@ export function CompactSwitch({
                 size="sm"
                 variant="subtle"
                 color="gray"
-                disabled={decreaseDisabled}
-                onMouseDown={(e) => {
+                disabled={disabled || decreaseDisabled}
+                aria-label={`Decrease ${label}`}
+                onClick={(e) => {
                   e.stopPropagation();
                   onDecrease();
                 }}
@@ -77,8 +78,9 @@ export function CompactSwitch({
                 size="sm"
                 variant="subtle"
                 color="gray"
-                disabled={increaseDisabled}
-                onMouseDown={(e) => {
+                disabled={disabled || increaseDisabled}
+                aria-label={`Increase ${label}`}
+                onClick={(e) => {
                   e.stopPropagation();
                   onIncrease();
                 }}
@@ -89,6 +91,7 @@ export function CompactSwitch({
           )}
 
           <Switch
+            aria-label={label}
             size="sm"
             checked={checked}
             onChange={(e) => onChange(e.currentTarget.checked)}

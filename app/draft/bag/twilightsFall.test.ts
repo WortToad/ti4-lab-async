@@ -121,7 +121,14 @@ describe("Twilight's Fall Bag Draft of Everything", () => {
         );
         placements++;
       }
-      expect(placements).toBe(playerCount * 5);
+      const automatic = map.log.filter((entry) =>
+        entry.includes("automatically"),
+      ).length;
+      expect(placements + automatic).toBe(playerCount * 5);
+      expect(
+        map.history.filter((snapshot) => snapshot.phase === "build"),
+      ).toHaveLength(playerCount * 5 + 1);
+      expect(new Set(draftedTiles).size).toBe(playerCount * 5);
       expect(map.phase).toBe("complete");
       expect(Object.values(map.hands).flat()).toEqual([]);
       expect(

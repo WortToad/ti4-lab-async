@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Draft } from "~/types";
+import { getDiscordMemberId } from "~/discord/playerResolver";
 
 const directory = mkdtempSync(join(tmpdir(), "ti4-base-lobby-"));
 let service: typeof import("./baseDraftLobby.server");
@@ -84,6 +85,207 @@ async function joinedRoom() {
 }
 
 describe("managed base draft lobbies", () => {
+  it("binds Discord notifications to the account chosen at join, even when players join out of roster order", async () => {
+    const draft = fixture();
+    draft.integrations.discord = {
+      guildId: "guild",
+      channelId: "channel",
+      players: [
+        {
+          type: "identified",
+          playerId: 0,
+          username: "alice",
+          memberId: "alice-id",
+        },
+        {
+          type: "identified",
+          playerId: 1,
+          username: "bob",
+          memberId: "bob-id",
+        },
+      ],
+    };
+    const room = await drafts.createDraft(draft);
+    const anonymous = await request(room.id);
+    const bob = await service.mutateBaseLobby(room.id, anonymous, {
+      type: "join",
+      name: "Bobby",
+      discordPlayerId: 1,
+    });
+    const bobViewer = await service.readBaseViewer(
+      room.id,
+      await request(room.id, bob.issued!.uuid),
+    );
+    expect(bobViewer.playerId).toBe(0);
+    expect(
+      service.baseLobbyView(service.getBaseLobby(room.id)!, bobViewer)
+        .discordPlayers,
+    ).toEqual([{ id: 0, name: "@alice" }]);
+    await expect(
+      service.mutateBaseLobby(room.id, anonymous, {
+        type: "join",
+        name: "Someone else",
+        discordPlayerId: 1,
+      }),
+    ).rejects.toThrow(/already joined/);
+    await service.mutateBaseLobby(room.id, anonymous, {
+      type: "join",
+      name: "Al",
+      discordPlayerId: 0,
+    });
+    const saved = JSON.parse(
+      (await drafts.draftById(room.id)).data as string,
+    ) as Draft;
+    expect(
+      saved.players.map((player) => [
+        player.name,
+        getDiscordMemberId(player, saved.integrations.discord!),
+      ]),
+    ).toEqual([
+      ["Al", "alice-id"],
+      ["Bobby", "bob-id"],
+    ]);
+    expect(saved.pickOrder).toEqual(draft.pickOrder);
+  });
+
+  it("does not inherit Discord mentions on name-only joins or when replacing a player and restoring a checkpoint", async () => {
+    const draft = fixture();
+    draft.integrations.discord = {
+      guildId: "guild",
+      channelId: "channel",
+      players: [
+        {
+          type: "identified",
+          playerId: 0,
+          username: "alice",
+          memberId: "alice-id",
+        },
+        {
+          type: "identified",
+          playerId: 1,
+          username: "bob",
+          memberId: "bob-id",
+        },
+      ],
+    };
+    const room = await drafts.createDraft(draft);
+    const anonymous = await request(room.id);
+    const admin = await request(room.id, undefined, room.adminUuid);
+    await service.mutateBaseLobby(room.id, anonymous, {
+      type: "join",
+      name: "Offline player",
+    });
+    await service.mutateBaseLobby(room.id, anonymous, {
+      type: "join",
+      name: "Alice",
+      discordPlayerId: 0,
+    });
+    await service.mutateBaseLobby(room.id, admin, { type: "start" });
+    await service.mutateBaseLobby(room.id, admin, { type: "checkpoint" });
+    const checkpointId = service.getBaseLobby(room.id)!.checkpoints.at(-1)!.id;
+    const read = async () =>
+      JSON.parse((await drafts.draftById(room.id)).data as string) as Draft;
+    const joined = await read();
+    expect(
+      getDiscordMemberId(
+        joined.players.find((player) => player.id === 0)!,
+        joined.integrations.discord!,
+      ),
+    ).toBeUndefined();
+    expect(
+      getDiscordMemberId(
+        joined.players.find((player) => player.id === 1)!,
+        joined.integrations.discord!,
+      ),
+    ).toBe("alice-id");
+    await service.mutateBaseLobby(room.id, admin, {
+      type: "release",
+      playerId: 1,
+    });
+    await service.mutateBaseLobby(room.id, anonymous, {
+      type: "join",
+      name: "Replacement",
+    });
+    await service.mutateBaseLobby(room.id, admin, {
+      type: "restore",
+      checkpointId,
+    });
+    const restored = await read();
+    expect(
+      restored.integrations.discord?.players.every(
+        (player) => player.type === "unidentified",
+      ),
+    ).toBe(true);
+    const view = service.baseLobbyView(
+      service.getBaseLobby(room.id)!,
+      await service.readBaseViewer(room.id, anonymous),
+    );
+    expect(view.discordPlayers?.map((player) => player.id)).toEqual([0, 1]);
+  });
+
+  it("preserves joined Discord identities when an older lobby adopts explicit account selection", async () => {
+    const draft = fixture();
+    draft.integrations.discord = {
+      guildId: "guild",
+      channelId: "channel",
+      players: [
+        {
+          type: "identified",
+          playerId: 0,
+          username: "alice",
+          memberId: "alice-id",
+        },
+        {
+          type: "identified",
+          playerId: 1,
+          username: "bob",
+          memberId: "bob-id",
+        },
+      ],
+    };
+    const room = await drafts.createDraft(draft);
+    const legacyLobby = service.getBaseLobby(room.id)!;
+    delete legacyLobby.discordPlayers;
+    const joinedSlot = legacyLobby.slots.find((slot) => slot.id === 0)!;
+    joinedSlot.name = "Alice";
+    joinedSlot.uuid = "11111111-1111-4111-8111-111111111111";
+    const [{ db }, { baseDraftLobbies }, { eq }] = await Promise.all([
+      import("./config.server"),
+      import("./schema.server"),
+      import("drizzle-orm"),
+    ]);
+    db.update(baseDraftLobbies)
+      .set({ data: JSON.stringify(legacyLobby) })
+      .where(eq(baseDraftLobbies.id, room.id))
+      .run();
+    const anonymous = await request(room.id);
+    const upgraded = service.getBaseLobby(room.id)!;
+    const view = service.baseLobbyView(
+      upgraded,
+      await service.readBaseViewer(room.id, anonymous),
+    );
+    expect(view.discordPlayers).toEqual([{ id: 1, name: "@bob" }]);
+    await service.mutateBaseLobby(room.id, anonymous, {
+      type: "join",
+      name: "Offline player",
+    });
+    const saved = JSON.parse(
+      (await drafts.draftById(room.id)).data as string,
+    ) as Draft;
+    expect(
+      getDiscordMemberId(
+        saved.players.find((player) => player.id === 0)!,
+        saved.integrations.discord!,
+      ),
+    ).toBe("alice-id");
+    expect(
+      getDiscordMemberId(
+        saved.players.find((player) => player.id === 1)!,
+        saved.integrations.discord!,
+      ),
+    ).toBeUndefined();
+  });
+
   it("automatically assigns separate players from the same loaded lobby revision without changing draft order", async () => {
     const room = await drafts.createDraft(fixture());
     const anonymous = await request(room.id);
@@ -342,7 +544,7 @@ describe("managed base draft lobbies", () => {
     expect(service.findBaseRecovery(room.bob)).toBeUndefined();
     await expect(
       service.mutateBaseLobby(room.id, room.admin, { type: "resume" }),
-    ).rejects.toThrow(/Fill all slots/);
+    ).rejects.toThrow(/every player to join/);
     const replacement = await service.mutateBaseLobby(
       room.id,
       await request(room.id),

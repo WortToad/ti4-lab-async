@@ -18,6 +18,7 @@ import { draftConfig } from "~/draft";
 import { factionSystems } from "~/data/systemData";
 import { factions as allFactions } from "~/data/factionData";
 import { useSafeOutletContext } from "~/useSafeOutletContext";
+import { availableKeleresHomes, getBaseKeleresSetup } from "~/draft/keleres";
 import {
   encodeAsyncMapString,
   encodeTtpgMapString,
@@ -61,19 +62,21 @@ export function hydratePlayers(
   });
 
   if (texasDraft?.seatAssignments) {
-    Object.entries(texasDraft.seatAssignments).forEach(([playerId, seatIdx]) => {
-      const idx = hydratedPlayers.findIndex((p) => p.id === Number(playerId));
-      if (idx !== -1) {
-        hydratedPlayers[idx] = {
-          ...hydratedPlayers[idx],
-          seatIdx,
-          speakerOrder: seatIdx,
-        };
-      }
-    });
+    Object.entries(texasDraft.seatAssignments).forEach(
+      ([playerId, seatIdx]) => {
+        const idx = hydratedPlayers.findIndex((p) => p.id === Number(playerId));
+        if (idx !== -1) {
+          hydratedPlayers[idx] = {
+            ...hydratedPlayers[idx],
+            seatIdx,
+            speakerOrder: seatIdx,
+          };
+        }
+      },
+    );
   }
 
-  return selections.reduce(
+  const result = selections.reduce(
     (acc, selection) => {
       let playerIdx = -1;
       if (draftSelectionHasPlayerId(selection)) {
@@ -305,6 +308,19 @@ export function hydratePlayers(
     },
     [...hydratedPlayers],
   );
+  const homes = availableKeleresHomes(
+    result.flatMap((p) =>
+      [p.faction, p.minorFaction].filter((id): id is FactionId => !!id),
+    ),
+  );
+  for (const player of result) {
+    if (
+      player.faction === "keleres" &&
+      !homes.some((id) => id === player.homeSystemFactionId)
+    )
+      delete player.homeSystemFactionId;
+  }
+  return result;
 }
 
 export const computePlayerSelections = (hydratedPlayers: HydratedPlayer[]) =>
@@ -346,6 +362,8 @@ export const hydratedMapAtom = atom((get) => {
 });
 
 export const hydratedMapStringsAtom = atom((get) => {
+  const keleres = getBaseKeleresSetup(get(draftStoreAtom).draft);
+  if (keleres && !keleres.chosen) return { ttpg: "", async: "" };
   const hydratedMap = get(hydratedMapAtom);
   const hydratedPlayers = get(hydratedPlayersAtom);
 

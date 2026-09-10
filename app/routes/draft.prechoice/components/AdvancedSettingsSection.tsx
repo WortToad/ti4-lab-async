@@ -23,7 +23,7 @@ export function AdvancedSettingsSection() {
           rightSection={
             showAdvancedSettings ? <IconChevronDown /> : <IconChevronUp />
           }
-          onMouseDown={() => setShowAdvancedSettings((v) => !v)}
+          onClick={() => setShowAdvancedSettings((v) => !v)}
         >
           Show advanced settings
         </Button>

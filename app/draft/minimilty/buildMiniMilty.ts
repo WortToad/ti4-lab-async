@@ -66,6 +66,31 @@ export function buildMiniMiltySettings(
     );
 
   const type = mapTypes[count];
+  const map = generateMiniMiltyMap(count, random);
+
+  return {
+    type,
+    draftGameMode: "presetMap",
+    presetMapFormat: "miniMilty",
+    factionGameSets: ["base"],
+    tileGameSets: ["base"],
+    numFactions,
+    allowedFactions: allowed,
+    requiredFactions: required,
+    numSlices: 0,
+    draftSpeaker: false,
+    draftPlayerColors: false,
+    randomizeMap: false,
+    randomizeSlices: false,
+    allowEmptyTiles: false,
+    allowHomePlanetSearch: false,
+    presetMap: map,
+  };
+}
+
+export function generateMiniMiltyMap(count: number, random = Math.random) {
+  if (!mapTypes[count]) throw new Error("Mini-Milty supports 3–6 players.");
+  const type = mapTypes[count];
   const config = draftConfig[type];
   const map = generateEmptyMap(config);
   const pool = getSystemPool(["base"]);
@@ -99,21 +124,5 @@ export function buildMiniMiltySettings(
     });
   });
 
-  return {
-    type,
-    draftGameMode: "presetMap",
-    factionGameSets: ["base"],
-    tileGameSets: ["base"],
-    numFactions,
-    allowedFactions: allowed,
-    requiredFactions: required,
-    numSlices: 0,
-    draftSpeaker: false,
-    draftPlayerColors: false,
-    randomizeMap: false,
-    randomizeSlices: false,
-    allowEmptyTiles: false,
-    allowHomePlanetSearch: false,
-    presetMap: map,
-  };
+  return map;
 }

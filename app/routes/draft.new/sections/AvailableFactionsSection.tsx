@@ -6,6 +6,7 @@ import { IconDice6Filled, IconSettings } from "@tabler/icons-react";
 import { NewDraftFaction } from "../components/NewDraftFaction";
 import { useDraft, useHasBanPhase } from "~/draftStore";
 import type { FactionId } from "~/types";
+import { getMinimumFactionCount } from "~/utils/draftValidation";
 
 export function AvailableFactionsSection() {
   const {
@@ -20,14 +21,17 @@ export function AvailableFactionsSection() {
 
   const factionPool = useDraft((state) =>
     state.factionPool.filter(
-      (f: FactionId) => !state.draft.availableMinorFactions?.includes(f),
+      (f: FactionId) =>
+        !state.draft.availableMinorFactions?.includes(f) &&
+        (!state.draft.settings.allowedFactions ||
+          state.draft.settings.allowedFactions.includes(f)),
     ),
   );
 
-  const { numFactions, availableFactions, playerCount } = useDraft((state) => ({
+  const { numFactions, availableFactions, minFactions } = useDraft((state) => ({
     numFactions: state.draft.settings.numFactions,
     availableFactions: state.draft.availableFactions,
-    playerCount: state.draft.players.length,
+    minFactions: getMinimumFactionCount(state.draft),
   }));
 
   const draftGameMode = useDraft((state) => state.draft.settings.draftGameMode);
@@ -35,9 +39,6 @@ export function AvailableFactionsSection() {
   const isTwilightsFall = draftGameMode === "twilightsFall";
   const requiredFactions = useDraft(
     (state) => state.draft.settings.requiredFactions ?? [],
-  );
-  const allowedFactions = useDraft(
-    (state) => state.draft.settings.allowedFactions,
   );
 
   if (hasBanPhase) {
@@ -56,7 +57,7 @@ export function AvailableFactionsSection() {
             <NumberStepper
               decrease={removeLastFaction}
               increase={addRandomFaction}
-              decreaseDisabled={numFactions <= 6}
+              decreaseDisabled={numFactions <= minFactions}
               increaseDisabled={numFactions >= factionPool.length}
             />
           </Group>
@@ -69,16 +70,7 @@ export function AvailableFactionsSection() {
     );
   }
 
-  const minFactions = isTwilightsFall
-    ? Math.max(playerCount, requiredFactions.length)
-    : draftGameMode === "presetMap"
-      ? playerCount
-      : 6;
-  const maxFactions = isTwilightsFall
-    ? factionPool.filter(
-        (id) => !allowedFactions || allowedFactions.includes(id),
-      ).length
-    : factionPool.length;
+  const maxFactions = factionPool.length;
 
   const isPresetMap = draftGameMode === "presetMap";
 
@@ -96,7 +88,8 @@ export function AvailableFactionsSection() {
                 size="sm"
                 variant="subtle"
                 color="gray"
-                onMouseDown={randomizeFactions}
+                aria-label={isTwilightsFall ? "Randomize kings" : "Randomize factions"}
+                onClick={randomizeFactions}
               >
                 <IconDice6Filled size={16} />
               </ActionIcon>
@@ -108,7 +101,8 @@ export function AvailableFactionsSection() {
                   size="sm"
                   variant="subtle"
                   color="gray"
-                  onMouseDown={openFactionSettings}
+                  aria-label="Configure faction pool"
+                  onClick={openFactionSettings}
                 >
                   <IconSettings size={16} />
                 </ActionIcon>
@@ -147,7 +141,7 @@ export function AvailableFactionsSection() {
             onRemove={() => removeFaction(factionId)}
             removeEnabled={
               availableFactions.length > minFactions &&
-              !(isTwilightsFall && requiredFactions.includes(factionId))
+              !requiredFactions.includes(factionId)
             }
           />
         ))}

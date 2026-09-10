@@ -1,4 +1,12 @@
-import { Badge, Box, Button, Group, SimpleGrid, Stack, Text } from "@mantine/core";
+import {
+  Badge,
+  Box,
+  Button,
+  Group,
+  SimpleGrid,
+  Stack,
+  Text,
+} from "@mantine/core";
 import {
   IconAlienFilled,
   IconDice,
@@ -59,7 +67,8 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
 
   const { withDrahn } = content.flags;
 
-  const showMinorFactions = isMiltyVariant(mapType) || isMiltyEqVariant(mapType);
+  const showMinorFactions =
+    isMiltyVariant(mapType) || isMiltyEqVariant(mapType);
 
   return (
     <>
@@ -80,10 +89,17 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
         {/* Core Draft Settings - Factions & Slices side by side */}
         <div className={classes.twoColGrid}>
           <ConfigSection title="Factions" icon={<IconAlienFilled size={12} />}>
-            <Box py={6} style={{ borderBottom: "1px dashed var(--mantine-color-default-border)" }}>
+            <Box
+              py={6}
+              style={{
+                borderBottom: "1px dashed var(--mantine-color-default-border)",
+              }}
+            >
               <Group justify="space-between" wrap="nowrap" gap="xs">
                 <Box style={{ flex: 1 }}>
-                  <Text size="sm" fw={500}>In Pool</Text>
+                  <Text size="sm" fw={500}>
+                    In Pool
+                  </Text>
                 </Box>
                 <Group gap={2}>
                   <Button
@@ -94,7 +110,7 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
                       !!faction.preassignedFactions ||
                       faction.numFactions <= factionConstraints.minNumFactions
                     }
-                    onMouseDown={faction.decrementNumFactions}
+                    onClick={faction.decrementNumFactions}
                   >
                     -
                   </Button>
@@ -109,7 +125,7 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
                       !!faction.preassignedFactions ||
                       faction.numFactions >= factionConstraints.maxNumFactions
                     }
-                    onMouseDown={faction.incrementNumFactions}
+                    onClick={faction.incrementNumFactions}
                   >
                     +
                   </Button>
@@ -122,7 +138,7 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
                 color="orange"
                 size="xs"
                 fullWidth
-                onMouseDown={openFactionSettings}
+                onClick={openFactionSettings}
               >
                 Configure Pool
               </Button>
@@ -133,8 +149,12 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
             <Box py={6}>
               <Group justify="space-between" wrap="nowrap" gap="xs">
                 <Box style={{ flex: 1 }}>
-                  <Text size="sm" fw={500}>In Pool</Text>
-                  <Text size="xs" c="dimmed">Up to {maxSlices} with current tiles</Text>
+                  <Text size="sm" fw={500}>
+                    In Pool
+                  </Text>
+                  <Text size="xs" c="dimmed">
+                    Up to {maxSlices} with current tiles
+                  </Text>
                 </Box>
                 <Group gap={2}>
                   <Button
@@ -142,7 +162,7 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
                     variant="subtle"
                     color="gray"
                     disabled={slices.numSlices <= playerCount}
-                    onMouseDown={() => slices.setNumSlices(slices.numSlices - 1)}
+                    onClick={() => slices.setNumSlices(slices.numSlices - 1)}
                   >
                     -
                   </Button>
@@ -154,7 +174,7 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
                     variant="subtle"
                     color="gray"
                     disabled={slices.numSlices >= maxSlices}
-                    onMouseDown={() => slices.setNumSlices(slices.numSlices + 1)}
+                    onClick={() => slices.setNumSlices(slices.numSlices + 1)}
                   >
                     +
                   </Button>
@@ -190,7 +210,7 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
                       icon={<IconDice size={18} />}
                       description="Random placement"
                       checked={faction.minorFactionsMode?.mode === "random"}
-                      onMouseDown={() => faction.setMinorFactionsMode("random")}
+                      onSelect={() => faction.setMinorFactionsMode("random")}
                       compact
                     />
                     <HoverRadioCard
@@ -198,15 +218,17 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
                       icon={<IconUsersGroup size={18} />}
                       description="Same pool as majors"
                       checked={faction.minorFactionsMode?.mode === "sharedPool"}
-                      onMouseDown={() => faction.setMinorFactionsMode("shared")}
+                      onSelect={() => faction.setMinorFactionsMode("shared")}
                       compact
                     />
                     <HoverRadioCard
                       title="Separate"
                       icon={<IconUser size={18} />}
                       description="Own faction pool"
-                      checked={faction.minorFactionsMode?.mode === "separatePool"}
-                      onMouseDown={() => faction.setMinorFactionsMode("separate")}
+                      checked={
+                        faction.minorFactionsMode?.mode === "separatePool"
+                      }
+                      onSelect={() => faction.setMinorFactionsMode("separate")}
                       compact
                     >
                       {faction.minorFactionsMode?.mode === "separatePool" && (
@@ -258,9 +280,13 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
             description="Create multiple drafts with same settings"
             checked={multidraft.isMultidraft}
             onChange={multidraft.setIsMultidraft}
-            numericValue={multidraft.isMultidraft ? multidraft.numDrafts : undefined}
+            numericValue={
+              multidraft.isMultidraft ? multidraft.numDrafts : undefined
+            }
             onIncrease={() => multidraft.setNumDrafts(multidraft.numDrafts + 1)}
-            onDecrease={() => multidraft.setNumDrafts(Math.max(2, multidraft.numDrafts - 1))}
+            onDecrease={() =>
+              multidraft.setNumDrafts(Math.max(2, multidraft.numDrafts - 1))
+            }
             increaseDisabled={multidraft.numDrafts >= 9}
             decreaseDisabled={multidraft.numDrafts <= 2}
           />
@@ -288,18 +314,22 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
             onDecrease={() => faction.decrementPreassignedFactions()}
             increaseDisabled={
               faction.preassignedFactions !== undefined &&
-              faction.preassignedFactions >= factionConstraints.maxPreassignedFactions
+              faction.preassignedFactions >=
+                factionConstraints.maxPreassignedFactions
             }
             decreaseDisabled={
               faction.preassignedFactions !== undefined &&
-              faction.preassignedFactions <= factionConstraints.minPreassignedFactions
+              faction.preassignedFactions <=
+                factionConstraints.minPreassignedFactions
             }
           />
           <CompactSwitch
             label="Draft Player Colors"
             description="Choose in-game color via draft"
             checked={format.draftPlayerColors}
-            onChange={() => format.setDraftPlayerColors(!format.draftPlayerColors)}
+            onChange={() =>
+              format.setDraftPlayerColors(!format.draftPlayerColors)
+            }
           />
           <CompactSwitch
             label="Show Monument Cards"
@@ -315,7 +345,9 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
             label="Allow Home Planets"
             description="Enable placing home planets on map"
             checked={format.allowHomePlanetSearch}
-            onChange={() => format.setAllowHomePlanetSearch(!format.allowHomePlanetSearch)}
+            onChange={() =>
+              format.setAllowHomePlanetSearch(!format.allowHomePlanetSearch)
+            }
           />
           <CompactSwitch
             label="Drahn Variant"

@@ -1,14 +1,18 @@
 import { isAudioAlertEnabled } from "./audioAlert";
 
-export function requestNotificationPermission() {
+export async function requestNotificationPermission() {
+  if (!("Notification" in window) || !navigator.serviceWorker) return "denied";
   if (
     "Notification" in window &&
     navigator.serviceWorker &&
     Notification.permission === "default"
   ) {
     // Browsers can reject permission requests without a user gesture.
-    void Notification.requestPermission().catch(() => {});
+    return Notification.requestPermission().catch(() => "denied" as const);
   }
+  return typeof Notification === "undefined"
+    ? "denied"
+    : Notification.permission;
 }
 
 export function showNotification(title: string, options: NotificationOptions) {

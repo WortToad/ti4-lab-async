@@ -46,6 +46,8 @@ import { FactionIcon } from "~/components/icons/FactionIcon";
 import { PlayerChip } from "./PlayerChip";
 import { factions as allFactions } from "~/data/factionData";
 import { ExportDraftState } from "~/routes/draft.$id/components/ExportDraftState";
+import { KeleresHomeSetup } from "~/draft/KeleresHomeSetup";
+import { getBaseKeleresSetup } from "~/draft/keleres";
 
 export function FinalizedDraft() {
   const navigate = useNavigate();
@@ -80,6 +82,8 @@ export function FinalizedDraft() {
   const [mapStringFormat, setMapStringFormat] =
     useState<ExternalMapStringFormat>("ttpg");
   const mapString = mapStrings[mapStringFormat];
+  const keleres = getBaseKeleresSetup(draft);
+  const homePending = !!keleres && !keleres.chosen;
 
   return (
     <Stack mt="lg" gap="xl">
@@ -88,10 +92,16 @@ export function FinalizedDraft() {
       {/* Header */}
       <Box>
         <Group justify="space-between" align="flex-start" wrap="wrap" gap="md">
-          <Title order={1}>Draft Complete</Title>
+          <Title order={1}>
+            {homePending ? "Finish your map" : "Draft Complete"}
+          </Title>
           <Group gap="sm">
-            <Anchor href={appPath(`/draft/${draftUrl}.png`)} target="_blank">
+            <Anchor
+              href={homePending ? undefined : appPath(`/draft/${draftUrl}.png`)}
+              target="_blank"
+            >
               <Button
+                disabled={homePending}
                 size="md"
                 color="green"
                 leftSection={<IconShare size={18} />}
@@ -120,7 +130,9 @@ export function FinalizedDraft() {
             color="gray"
             leftSection={<IconArrowBackUp size={14} />}
             onClick={async () => {
-              if (confirm("Are you sure you want to undo the last selection?")) {
+              if (
+                confirm("Are you sure you want to undo the last selection?")
+              ) {
                 await undoLastPick();
               }
             }}
@@ -131,6 +143,7 @@ export function FinalizedDraft() {
           <ExportDraftState full />
         </Group>
       </Box>
+      <KeleresHomeSetup />
       <SimpleGrid
         cols={{ base: 1, sm: 1, md: 1, lg: 2 }}
         style={{ gap: 30 }}
@@ -309,11 +322,17 @@ export function FinalizedDraft() {
                 <TextInput
                   size="sm"
                   value={mapString}
+                  placeholder={
+                    homePending
+                      ? "Choose the Keleres home to complete the map string"
+                      : undefined
+                  }
                   readOnly
                   rightSection={
                     <CopyButton value={mapString}>
                       {({ copied, copy }) => (
                         <ActionIcon
+                          disabled={homePending}
                           variant="subtle"
                           color={copied ? "teal" : "gray"}
                           onClick={copy}
@@ -323,7 +342,11 @@ export function FinalizedDraft() {
                               : `Copy ${mapStringFormat} string`
                           }
                         >
-                          {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+                          {copied ? (
+                            <IconCheck size={16} />
+                          ) : (
+                            <IconCopy size={16} />
+                          )}
                         </ActionIcon>
                       )}
                     </CopyButton>

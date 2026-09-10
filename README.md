@@ -35,9 +35,15 @@ Open `http://localhost:3000/` in your browser and you're good to go.
 
 ## Shared lobbies and recovery
 
-Every newly created draft uses one shared lobby link, including Milty, Nucleus, Texas, Mini-Milty, RAW, Mantis, and all bag/Franken variants. Each player enters their name to join and saves a private recovery UUID. An available player slot is assigned automatically. The browser remembers their UUID in an HTTP-only cookie and local storage. On another device, paste it into the lobby's rejoin form or **Rejoin a lobby** on the main page. Draft details and seating stay hidden until everyone has joined and the admin starts.
+Every newly created draft uses one shared lobby link, including Milty, Nucleus, Texas, Mini-Milty, RAW, Mantis, and all bag/Franken variants. Setup asks for the number of players; names are entered once, when people join the shared lobby. Switching formats carries over the player count within the chosen format's limits. Draft details and seating stay hidden until everyone has joined and the admin starts. For lobbies created from a Discord roster, joining players can select their Discord identity so mentions follow the correct person regardless of join order.
 
-The creator has a separate admin UUID and can also join as a player. Admin controls can retrieve or replace player UUIDs, rename players, release slots for replacements, pause/resume play, undo actions, and restore checkpoints. Restoring a save pauses play for review. Released slots keep their draft progress and require a replacement before resuming. The admin view receives only public draft information plus the admin's own hand when playing.
+The browser remembers each player's private recovery code in an HTTP-only cookie and local storage. On another device, paste it into **Already joined? Restore access** in the lobby or **Rejoin an existing draft** on the main page. After joining, codes and recovery tools are under **Recovery & access**. The lobby shows the people who have joined and the remaining capacity; draft order and seating follow the chosen format's rules.
+
+During play, the turn indicator and tab title show when you have a pending choice, including simultaneous rounds. **Turn alerts** offers optional sound and browser notifications for all draft formats. Keep the tab open to receive them. Drafts refresh when you return to the tab or reconnect; opted-in alerts also keep background tabs up to date.
+
+The creator has a separate admin recovery code and can also join as a player. Admin controls can retrieve or replace player recovery codes, rename players, release players for replacements, pause/resume play, undo actions, and restore checkpoints. Restoring a save pauses play for review. Replacements retain the released player's draft progress and must join before play resumes. The admin view receives only public draft information plus the admin's own hand when playing.
+
+Draft previews save changes in the current browser tab so refreshing preserves map and faction edits. A failed creation request leaves the preview available for retry; successful creation clears its saved preview. **Use a draft template** prepares a new lobby from exported draft JSON with a fresh roster and no previous picks. Encrypted lobby backups instead restore progress in their original lobby through admin controls.
 
 Save files exported from admin controls are encrypted so downloading a backup does not expose hidden picks. They can be imported back into the same lobby; player identities stay current when older game states are restored. Keep regular backups of the SQLite database as well: it holds the lobby records and the keys required to restore these files. For bag drafts, exported states also capture their linked map when present; the map lobby has its own turn recovery controls. The older local-only `/raw-draft` route now opens the persistent RAW setup flow. Existing base drafts created before managed lobbies retain their legacy access model and progress; create a new draft to use the full lobby flow. Existing bag, Mantis, and RAW rooms preserve their progress and recognize their previous credentials.
 
@@ -53,7 +59,13 @@ Each player's five tiles fill their own section of the map: the builder draws fr
 
 Use **Mantis draft** to draft individual tiles, factions, and speaker positions, discard extra tiles, and build the map with random draws and limited mulligans. Completed bag drafts with suitable tile hands can continue into this map-building flow.
 
-**Mini-Milty** fills a base-game map before a two-round faction and speaker draft for 3–6 players.
+**Mini-Milty** fills a base-game map before a two-round faction and speaker draft for 3–6 players. Its recommended faction count follows the player count until overridden. Preview controls regenerate a complete map or reset to the original map while preserving faction changes.
+
+Texas and bag setup show insufficient faction or tile pools before creation. Texas reserves enough factions for every enabled redraw; bags retain their custom count controls and explain the supply needed by the current settings.
+
+Unsubmitted bag picks and faction assembly choices survive refresh in the same tab and are rechecked against the current round and player identity. Selection counts and submit controls stay visible while browsing long lists. Mantis resolves Keleres' legal home and hero before map building and records forced placements automatically when no placement or mulligan choice remains. These actions remain undoable.
+
+Standard and Texas drafts also ask the Keleres player to choose an available home and matching hero before exporting the completed map. Standard draft refreshes preserve open controls and replay position, and delayed reads cannot overwrite newer submitted choices.
 
 Drafts persist in SQLite. New tables are created by the existing startup migration process. Run locally with integrations disabled if you do not have Discord/R2 configured:
 

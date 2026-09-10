@@ -1,3 +1,4 @@
+import { SLICE_SHAPES } from "../sliceShapes";
 import { mapStringOrder } from "~/data/mapStringOrder";
 import { shuffle, weightedChoice } from "../helpers/randomization";
 import { systemData } from "~/data/systemData";
@@ -9,9 +10,10 @@ import {
 } from "../types";
 import { calculateTier, getTieredSystems } from "../tieredSystems";
 import {
-  chooseRequiredSystems,
-  fillSlicesWithRemainingTiles,
-  fillSlicesWithRequiredTiles,
+  filterTieredSystems,
+  isAlpha,
+  isBeta,
+  isLegendary,
 } from "../helpers/sliceGeneration";
 import {
   PlanetTrait,
@@ -23,8 +25,13 @@ import {
 import { generateEmptyMap } from "~/utils/map";
 import { draftConfig } from "../draftConfig";
 import { calculateMapStats } from "~/hooks/useFullMapStats";
-import { calculateSliceValue, getSliceValueConfig, SliceValueModifiers } from "~/stats";
 import {
+  calculateSliceValue,
+  getSliceValueConfig,
+  SliceValueModifiers,
+} from "~/stats";
+import {
+  coreGenerateSlices,
   getAdjacentPositions,
   hasAdjacentAnomalies,
 } from "../common/sliceGenerator";
@@ -98,6 +105,29 @@ export function generateMap(
   minorFactionPool?: FactionId[],
   attempts: number = 0,
 ) {
+  const config = draftConfig[settings.type];
+  const pool = [...new Set(systemPool)];
+  if (
+    !Number.isInteger(settings.numSlices) ||
+    settings.numSlices < 1 ||
+    pool.length <
+      settings.numSlices * config.numSystemsInSlice +
+        config.modifiableMapTiles.length
+  )
+    return undefined;
+  const { minSliceValue = 4, maxSliceValue = 10 } =
+    settings.sliceGenerationConfig ?? {};
+  if (minSliceValue > maxSliceValue) return undefined;
+  if (!generateSlices(settings.numSlices, pool, settings.sliceGenerationConfig))
+    return undefined;
+  for (let attempt = attempts; attempt < 1000; attempt++) {
+    const result = generateMapAttempt(settings, pool);
+    if (result) return result;
+  }
+  return undefined;
+}
+
+function generateMapAttempt(settings: DraftSettings, systemPool: SystemId[]) {
   const sliceCount = settings.numSlices;
   const config = draftConfig[settings.type];
   const sliceGenConfig = settings.sliceGenerationConfig;
@@ -144,13 +174,6 @@ export function generateMap(
     return systemPool.filter((id) => !remaining.includes(id));
   };
 
-  const { numAlphas: totalNumAlphas, numBetas: totalNumBetas } =
-    weightedChoice(ALL_WORMHOLES);
-  const totalNumLegendaries = weightedChoice(ALL_LEGENDARIES);
-
-  const { numAlphas, numBetas } = weightedChoice(MAP_WORMHOLES);
-  const numLegendaries = weightedChoice(MAP_LEGENDARIES);
-
   // --------------------------------------------------
   // Step 1: Distribute alphas/betas/legendaries on map.
   // --------------------------------------------------
@@ -168,6 +191,39 @@ export function generateMap(
     ),
   );
 
+  const wormholeOptions = ALL_WORMHOLES.filter(
+    ({ value }) =>
+      value.numAlphas <= alphas.length &&
+      value.numBetas <= betas.length &&
+      value.numAlphas >= (sliceGenConfig?.numAlphas ?? 0) &&
+      value.numBetas >= (sliceGenConfig?.numBetas ?? 0),
+  );
+  const { numAlphas: totalNumAlphas, numBetas: totalNumBetas } =
+    wormholeOptions.length
+      ? weightedChoice(wormholeOptions)
+      : {
+          numAlphas: Math.min(3, alphas.length),
+          numBetas: Math.min(3, betas.length),
+        };
+  const legendaryOptions = ALL_LEGENDARIES.filter(
+    ({ value }) =>
+      value <= legendaries.length &&
+      value >= (sliceGenConfig?.minLegendaries ?? 0) &&
+      value <= (sliceGenConfig?.maxLegendaries ?? Infinity),
+  );
+  const totalNumLegendaries = legendaryOptions.length
+    ? weightedChoice(legendaryOptions)
+    : (sliceGenConfig?.minLegendaries ?? 0);
+  const { numAlphas, numBetas } = weightedChoice(
+    MAP_WORMHOLES.filter(
+      ({ value }) =>
+        value.numAlphas <= totalNumAlphas && value.numBetas <= totalNumBetas,
+    ),
+  );
+  const numLegendaries = weightedChoice(
+    MAP_LEGENDARIES.filter(({ value }) => value <= totalNumLegendaries),
+  );
+
   const tileLocations = shuffle(
     config.modifiableMapTiles.map((idx) => ({
       mapIdx: idx,
@@ -176,10 +232,19 @@ export function generateMap(
   );
 
   const alphaSpots = distributeByDistance(tileLocations, alphas, numAlphas);
-  const betaSpots = distributeByDistance(tileLocations, betas, numBetas);
+  const alphaIds = new Set(alphaSpots.map(({ systemId }) => systemId));
+  const betaSpots = distributeByDistance(
+    tileLocations,
+    betas.filter((id) => !alphaIds.has(id)),
+    numBetas,
+  );
+  const wormholeIds = new Set([
+    ...alphaIds,
+    ...betaSpots.map(({ systemId }) => systemId),
+  ]);
   const legendarySpots = distributeByDistance(
     tileLocations,
-    legendaries,
+    legendaries.filter((id) => !wormholeIds.has(id)),
     numLegendaries,
   );
 
@@ -200,10 +265,19 @@ export function generateMap(
 
   // calculate remaining alphas, betas, and wormholes to fill in slices
   // considering the ones put on the map
-  const remainingAlphas = Math.max(totalNumAlphas - numAlphas, 0);
-  const remainingBetas = Math.max(totalNumBetas - numBetas, 0);
+  const placedSystems = Object.values(chosenMapLocations).map(
+    (id) => systemData[id],
+  );
+  const remainingAlphas = Math.max(
+    totalNumAlphas - placedSystems.filter(isAlpha).length,
+    0,
+  );
+  const remainingBetas = Math.max(
+    totalNumBetas - placedSystems.filter(isBeta).length,
+    0,
+  );
   const remainingLegendaries = Math.max(
-    totalNumLegendaries - numLegendaries,
+    totalNumLegendaries - placedSystems.filter(isLegendary).length,
     0,
   );
 
@@ -211,10 +285,12 @@ export function generateMap(
   // Step 2: Generate slices, distributing remaining alphas/betas/legendaries equally
   // ---------------------------------------------------------------------------------
   const slices = generateSlices(sliceCount, remainingSystems(), {
+    ...sliceGenConfig,
     numAlphas: remainingAlphas,
     numBetas: remainingBetas,
     minLegendaries: remainingLegendaries,
   });
+  if (!slices) return undefined;
   // promote the chosen slice systems.
   chosenSliceSystems = slices.flat(1);
 
@@ -232,15 +308,6 @@ export function generateMap(
   // ---------------------------------------------------------------------------------
   // Track which core slice positions are already occupied by alphas/betas/legendaries
   if (settings.type === "heisen") {
-    const coreSlicePositions = CORE_SLICES.flat();
-    const occupiedCorePositions: Record<number, SystemId> = {};
-
-    coreSlicePositions.forEach((pos) => {
-      if (chosenMapLocations[pos]) {
-        occupiedCorePositions[pos] = chosenMapLocations[pos];
-      }
-    });
-
     // Define tier weightings for core slices using the same distribution as for player slices
     const coreSliceTiers: TieredSlice[] = [];
     for (let i = 0; i < 6; i++) {
@@ -254,7 +321,6 @@ export function generateMap(
       coreSliceTiers,
       tieredSystems,
       chosenMapLocations,
-      occupiedCorePositions,
       sliceValueModifiers,
     );
   }
@@ -325,7 +391,7 @@ export function generateMap(
   // ------------------------------------------------
   // Step 6: Validate map and core slice balance
   // ------------------------------------------------
-  if (settings.type === "heisen" && attempts <= 1000) {
+  if (settings.type === "heisen") {
     // Calculate min/max planets across all slices
     const planetCounts = slices.map((slice) =>
       slice.reduce(
@@ -374,30 +440,62 @@ export function generateMap(
 
     // Check balance criteria
     const rejectionReasons: string[] = [];
-    if (minTotalSpend < minSliceValue) rejectionReasons.push(`minTotalSpend=${minTotalSpend}<${minSliceValue}`);
-    if (maxTotalSpend > maxSliceValue) rejectionReasons.push(`maxTotalSpend=${maxTotalSpend}>${maxSliceValue}`);
+    if (minTotalSpend < minSliceValue)
+      rejectionReasons.push(`minTotalSpend=${minTotalSpend}<${minSliceValue}`);
+    if (maxTotalSpend > maxSliceValue)
+      rejectionReasons.push(`maxTotalSpend=${maxTotalSpend}>${maxSliceValue}`);
     if (minPlanets < 2) rejectionReasons.push(`minPlanets=${minPlanets}<2`);
     if (maxPlanets > 5) rejectionReasons.push(`maxPlanets=${maxPlanets}>5`);
-    if (redTileCount < MIN_RED_TILES) rejectionReasons.push(`redTileCount=${redTileCount}<${MIN_RED_TILES}`);
-    if (config.type === "heisen" && mapStats.totalLegendary > 4) rejectionReasons.push(`totalLegendary=${mapStats.totalLegendary}>4`);
-    if (minCoreSpend < CORE_SLICE_MIN_OPTIMAL) rejectionReasons.push(`minCoreSpend=${minCoreSpend}<${CORE_SLICE_MIN_OPTIMAL}`);
-    if (maxCoreSpend > CORE_SLICE_MAX_OPTIMAL) rejectionReasons.push(`maxCoreSpend=${maxCoreSpend}>${CORE_SLICE_MAX_OPTIMAL}`);
-    if (coreSliceBalance > CORE_SLICE_MAX_BALANCE) rejectionReasons.push(`coreSliceBalance=${coreSliceBalance}>${CORE_SLICE_MAX_BALANCE}`);
-    if (hasAdjacentAnomalies(chosenMapLocations)) rejectionReasons.push(`hasAdjacentAnomalies`);
+    if (redTileCount < MIN_RED_TILES)
+      rejectionReasons.push(`redTileCount=${redTileCount}<${MIN_RED_TILES}`);
+    if (config.type === "heisen" && mapStats.totalLegendary > 4)
+      rejectionReasons.push(`totalLegendary=${mapStats.totalLegendary}>4`);
+    if (minCoreSpend < CORE_SLICE_MIN_OPTIMAL)
+      rejectionReasons.push(
+        `minCoreSpend=${minCoreSpend}<${CORE_SLICE_MIN_OPTIMAL}`,
+      );
+    if (maxCoreSpend > CORE_SLICE_MAX_OPTIMAL)
+      rejectionReasons.push(
+        `maxCoreSpend=${maxCoreSpend}>${CORE_SLICE_MAX_OPTIMAL}`,
+      );
+    if (coreSliceBalance > CORE_SLICE_MAX_BALANCE)
+      rejectionReasons.push(
+        `coreSliceBalance=${coreSliceBalance}>${CORE_SLICE_MAX_BALANCE}`,
+      );
+    if (hasAdjacentAnomalies(chosenMapLocations))
+      rejectionReasons.push(`hasAdjacentAnomalies`);
 
     if (rejectionReasons.length > 0) {
-      console.log(`[heisen attempt ${attempts}] REJECTED: ${rejectionReasons.join(', ')}`);
-      return generateMap(settings, systemPool, minorFactionPool, attempts + 1);
+      return undefined;
     }
   }
 
-  if (attempts > 0) {
-    console.log(`[heisen] SUCCESS after ${attempts} attempts`);
-  }
+  if (
+    slices.some((slice) => !validateNucleusSlice(slice, sliceGenConfig ?? {}))
+  )
+    return undefined;
+  if (config.modifiableMapTiles.some((idx) => !chosenMapLocations[idx]))
+    return undefined;
+  const allIds = [...Object.values(chosenMapLocations), ...slices.flat()];
+  const allSystems = allIds.map((id) => systemData[id]);
+  if (
+    allSystems.filter(isLegendary).length >
+      (sliceGenConfig?.maxLegendaries ?? Infinity) ||
+    allSystems.filter(isLegendary).length <
+      (sliceGenConfig?.minLegendaries ?? 0) ||
+    allSystems.filter(isAlpha).length < (sliceGenConfig?.numAlphas ?? 0) ||
+    allSystems.filter(isBeta).length < (sliceGenConfig?.numBetas ?? 0)
+  )
+    return undefined;
+  if (
+    new Set(allIds).size !== allIds.length ||
+    hasAdjacentAnomalies(chosenMapLocations)
+  )
+    return undefined;
   return {
     map,
     slices,
-    valid: attempts <= 1000,
+    valid: true,
   };
 }
 
@@ -412,11 +510,14 @@ function calculateCoreSliceValues(
       .map((pos) => chosenMapLocations[pos])
       .map((id) => systemData[id]);
 
-    return calculateSliceValue(systems, getSliceValueConfig(
-      sliceValueModifiers,
-      [1, 2],  // equidistantIndices
-      [0],     // mecatolPathIndices - ring 1 tile is on path to Rex
-    ));
+    return calculateSliceValue(
+      systems,
+      getSliceValueConfig(
+        sliceValueModifiers,
+        [1, 2], // equidistantIndices
+        [0], // mecatolPathIndices - ring 1 tile is on path to Rex
+      ),
+    );
   });
 }
 
@@ -429,7 +530,6 @@ function fillCoreSlices(
   coreSliceTiers: TieredSlice[],
   tieredSystems: Record<ChoosableTier, SystemId[]>,
   chosenMapLocations: Record<number, SystemId>,
-  occupiedCorePositions: Record<number, SystemId>,
   sliceValueModifiers?: Partial<SliceValueModifiers>,
 ) {
   // For each core slice
@@ -442,7 +542,7 @@ function fillCoreSlices(
       const position = slicePositions[j];
 
       // Skip positions already filled by wormholes/legendaries
-      if (occupiedCorePositions[position]) continue;
+      if (chosenMapLocations[position]) continue;
 
       // Get the desired tier for this position
       const desiredTier = sliceTiers[j] as ChoosableTier;
@@ -526,8 +626,11 @@ function fillCoreSlices(
         chosenMapLocations[position] = selectedSystem;
 
         // Remove the selected system from tieredSystems
-        const tierIndex = tieredSystems[desiredTier].indexOf(selectedSystem);
-        if (tierIndex !== -1) tieredSystems[desiredTier].splice(tierIndex, 1);
+        const selectedTier = calculateTier(
+          systemData[selectedSystem],
+        ) as ChoosableTier;
+        const tierIndex = tieredSystems[selectedTier].indexOf(selectedSystem);
+        if (tierIndex !== -1) tieredSystems[selectedTier].splice(tierIndex, 1);
       }
     }
   }
@@ -608,7 +711,18 @@ const rebalanceTraits = (
           ? systemData[id].wormholes.length > 0
           : true;
 
-      return hasMinTrait && planetCountMatches && wormholesMatch;
+      const sameTileType = systemData[id].type === systemData[toRemove].type;
+      const sameSpecials =
+        systemData[id].wormholes.join(",") ===
+          systemData[toRemove].wormholes.join(",") &&
+        isLegendary(systemData[id]) === isLegendary(systemData[toRemove]);
+      return (
+        hasMinTrait &&
+        planetCountMatches &&
+        wormholesMatch &&
+        sameTileType &&
+        sameSpecials
+      );
     });
 
     // Evaluate each possible swap to find the one that gives the best balance
@@ -701,46 +815,73 @@ const countPlanetTraits = (used: SystemId[]) => {
 export function generateSlices(
   sliceCount: number,
   availableSystems: SystemId[],
-  config: SliceGenerationConfig = {
-    numAlphas: 0,
-    numBetas: 0,
-    minLegendaries: 0,
-  },
+  config: SliceGenerationConfig = {},
 ) {
-  const tieredSlices: TieredSlice[] = [];
-  for (let i = 0; i < sliceCount; i++) {
-    const tierValues = shuffle(weightedChoice(SLICE_CHOICES));
-    tieredSlices.push(tierValues);
-  }
-
-  // Enforce a minimum number of wormholes and legendary planets
-  const { chosenTiles, remainingTiles } = chooseRequiredSystems(
+  return coreGenerateSlices({
+    sliceCount,
     availableSystems,
-    {
-      minAlphaWormholes: config.numAlphas,
-      minBetaWormholes: config.numBetas,
-      minLegendary: config.minLegendaries ?? 0,
-    },
+    config,
+    mecatolPath: config.mecatolPathSystemIndices ?? [1],
+    centerTile: 1,
+    sliceShape: SLICE_SHAPES.milty_eq.slice(0, 4),
+    systemTiers: Object.fromEntries(
+      availableSystems.map((id) => [
+        id,
+        calculateTier(systemData[id]) as ChoosableTier,
+      ]),
+    ),
+    sliceChoices: SLICE_CHOICES,
+    selectSystemPool: true,
+    validateSystems: (systems, settings) =>
+      filterTieredSystems(systems, isAlpha).length >=
+        (settings.numAlphas ?? 0) &&
+      filterTieredSystems(systems, isBeta).length >= (settings.numBetas ?? 0) &&
+      filterTieredSystems(systems, isLegendary).length >=
+        (settings.minLegendaries ?? 0) &&
+      filterTieredSystems(systems, isLegendary).length <=
+        (settings.maxLegendaries ?? Infinity),
+    validateSlice: validateNucleusSlice,
+  });
+}
+
+function validateNucleusSlice(
+  slice: SystemIds,
+  settings: SliceGenerationConfig,
+) {
+  const systems = slice.map((id) => systemData[id]);
+  const value = calculateSliceValue(
+    systems,
+    getSliceValueConfig(
+      settings.sliceValueModifiers,
+      [],
+      settings.mecatolPathSystemIndices ?? [1],
+    ),
   );
-  const tieredChosenTiles = getTieredSystems(chosenTiles);
-  const tieredRemainingTiles = getTieredSystems(remainingTiles);
-
-  // distirbute the wormholes/legendaries in round robin fashion
-  // on the slices.
-  const slices: SystemIds[] = Array.from({ length: sliceCount }, () => []);
-  fillSlicesWithRequiredTiles(tieredSlices, tieredChosenTiles, slices);
-
-  // fill slices with remaining tiles, respecting the 'tier' requirements
-  // of the spots in each slice.
-  fillSlicesWithRemainingTiles(
-    tieredSlices,
-    tieredRemainingTiles,
-    slices,
-    config?.sliceValueModifiers,
+  const resources = systems.reduce(
+    (sum, system) =>
+      sum + system.optimalSpend.resources + system.optimalSpend.flex,
+    0,
   );
-
-  // shuffle the slices
-  return slices.map((slice) => shuffle(slice));
+  const influence = systems.reduce(
+    (sum, system) =>
+      sum + system.optimalSpend.influence + system.optimalSpend.flex,
+    0,
+  );
+  const planetCount = systems.reduce(
+    (sum, system) => sum + system.planets.length,
+    0,
+  );
+  return (
+    value >= (settings.minSliceValue ?? 4) &&
+    value <= (settings.maxSliceValue ?? 10) &&
+    resources >= (settings.minOptimalResources ?? 0) &&
+    influence >= (settings.minOptimalInfluence ?? 0) &&
+    planetCount >= 2 &&
+    planetCount <= 5 &&
+    systems.filter(isAlpha).length <= 1 &&
+    systems.filter(isBeta).length <= 1 &&
+    systems.filter(isLegendary).length <= 1
+  );
 }
 
 type Location = { mapIdx: number; position: { x: number; y: number } };
@@ -754,6 +895,7 @@ function distributeByDistance(
   const chosen: { location: Location; systemId: SystemId }[] = [];
 
   for (let i = 0; i < numSpots; i++) {
+    if (!availableLocations.length || !availableSystems.length) break;
     // First tile gets placed randomly on any spot.
     if (i === 0) {
       const location = availableLocations.pop()!;

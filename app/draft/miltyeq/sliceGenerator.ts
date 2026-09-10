@@ -2,7 +2,7 @@ import { DraftSettings, SystemId, SystemIds, FactionId } from "~/types";
 import { SLICE_SHAPES } from "../sliceShapes";
 import { miltySystemTiers } from "~/data/miltyTileTiers";
 import { SliceChoice, SliceGenerationConfig, TieredSystems } from "../types";
-import { shuffle, weightedChoice } from "../helpers/randomization";
+import { shuffle } from "../helpers/randomization";
 import {
   filterTieredSystems,
   isAlpha,
@@ -45,12 +45,12 @@ const MINOR_FACTION_SLICE_CHOICES: SliceChoice[] = [
 
 const DEFAULT_CONFIG = DEFAULT_SLICE_SETTINGS.miltyeq;
 
-export const generateMap = (
+export function generateMap(
   settings: DraftSettings,
   systemPool: SystemId[],
   minorFactionPool?: FactionId[],
   attempts: number = 0,
-) => {
+) {
   const config = draftConfig[settings.type];
   const minorFactionsMode = settings.minorFactionsMode;
   if (
@@ -110,7 +110,7 @@ export const generateMap = (
   }
 
   return coreGenerateMap(settings, systemPool, attempts, generateSlices);
-};
+}
 
 const validateSlice = (slice: SystemIds, config: SliceGenerationConfig) => {
   const systems = slice.map((systemId: SystemId) => systemData[systemId]);
@@ -153,25 +153,28 @@ const validateSlice = (slice: SystemIds, config: SliceGenerationConfig) => {
   return true;
 };
 
-export const generateSlices = (
+export function generateSlices(
   sliceCount: number,
   availableSystems: SystemId[],
   config?: SliceGenerationConfig,
-) =>
-  coreGenerateSlices({
-    mecatolPath: config!.mecatolPathSystemIndices!,
+) {
+  return coreGenerateSlices({
+    mecatolPath: config?.mecatolPathSystemIndices ?? [1, 3],
     centerTile: 1,
     sliceCount,
     availableSystems,
-    config: config ?? DEFAULT_CONFIG,
+    config: {
+      ...DEFAULT_CONFIG,
+      numAlphas: DEFAULT_CONFIG.minAlphaWormholes,
+      numBetas: DEFAULT_CONFIG.minBetaWormholes,
+      mecatolPathSystemIndices: [1, 3],
+      ...config,
+    },
     sliceShape: SLICE_SHAPES.milty_eq,
     systemTiers: miltySystemTiers,
-    getSliceTiers: () => {
-      if (config?.hasMinorFactions)
-        return shuffle(weightedChoice(MINOR_FACTION_SLICE_CHOICES));
-
-      return shuffle(weightedChoice(SLICE_CHOICES));
-    },
+    sliceChoices: config?.hasMinorFactions
+      ? MINOR_FACTION_SLICE_CHOICES
+      : SLICE_CHOICES,
     validateSystems: (
       systems: TieredSystems,
       config: SliceGenerationConfig,
@@ -200,3 +203,4 @@ export const generateSlices = (
     validateSlice,
     postProcessSlices,
   });
+}

@@ -25,7 +25,7 @@ export function SlicesConfigurationSection({ maxSlices }: Props) {
               variant="subtle"
               color="gray"
               disabled={slices.numSlices <= playerCount}
-              onMouseDown={() => slices.setNumSlices(slices.numSlices - 1)}
+              onClick={() => slices.setNumSlices(slices.numSlices - 1)}
             >
               -
             </Button>
@@ -37,7 +37,7 @@ export function SlicesConfigurationSection({ maxSlices }: Props) {
               variant="subtle"
               color="gray"
               disabled={slices.numSlices >= maxSlices}
-              onMouseDown={() => slices.setNumSlices(slices.numSlices + 1)}
+              onClick={() => slices.setNumSlices(slices.numSlices + 1)}
             >
               +
             </Button>

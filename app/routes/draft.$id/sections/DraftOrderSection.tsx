@@ -9,20 +9,15 @@ import { useHydratedDraft } from "~/hooks/useHydratedDraft";
 import { useSyncDraft } from "~/hooks/useSyncDraft";
 import { ExportDraftState } from "../components/ExportDraftState";
 import { useSafeOutletContext } from "~/useSafeOutletContext";
-import { useState } from "react";
 import { AdminPasswordModal } from "../components/AdminPasswordModal";
-import { notifications } from "@mantine/notifications";
 import { useAdminControls } from "../components/useAdminControls";
 import { Link } from "react-router";
 import {
   IconPlayerPlay,
   IconShare,
-  IconVolume,
-  IconVolumeOff,
   IconArrowBackUp,
 } from "@tabler/icons-react";
 import { LabArtToggleButton } from "~/components/LabArtToggleButton";
-import { isAudioAlertEnabled, setAudioAlertEnabled } from "~/utils/audioAlert";
 
 export function DraftOrderSection() {
   const managedLobby = useContext(LobbyIdentityContext)?.managed;
@@ -45,22 +40,6 @@ export function DraftOrderSection() {
   const { hydratedPlayers, currentPick } = useHydratedDraft();
   const pickOrder = useDraft((state) => state.draft.pickOrder);
   const selections = useDraft((state) => state.draft.selections);
-  const [audioAlertEnabled, setAudioAlertEnabledState] = useState(
-    isAudioAlertEnabled(),
-  );
-
-  const handleAudioToggle = () => {
-    const newValue = !audioAlertEnabled;
-    setAudioAlertEnabled(newValue);
-    setAudioAlertEnabledState(newValue);
-    notifications.show({
-      title: newValue ? "Audio alerts enabled" : "Audio alerts disabled",
-      message: newValue
-        ? "You'll hear a sound when it's your turn to draft"
-        : "You won't hear sounds when it's your turn",
-      color: newValue ? "blue" : "gray",
-    });
-  };
 
   const handleUndo = async () => {
     if (confirm("Are you sure you want to undo the last selection?")) {
@@ -92,21 +71,6 @@ export function DraftOrderSection() {
 
       {/* Other view controls */}
       <Group gap={4}>
-        <ActionIcon
-          size="sm"
-          variant={audioAlertEnabled ? "filled" : "default"}
-          color={audioAlertEnabled ? "violet" : "gray"}
-          onClick={handleAudioToggle}
-          title={
-            audioAlertEnabled ? "Disable audio alerts" : "Enable audio alerts"
-          }
-        >
-          {audioAlertEnabled ? (
-            <IconVolume size={14} />
-          ) : (
-            <IconVolumeOff size={14} />
-          )}
-        </ActionIcon>
         <ActionIcon
           component={Link}
           to={`/draft/${draftUrl}/replay`}

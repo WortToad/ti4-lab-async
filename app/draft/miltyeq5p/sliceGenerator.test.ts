@@ -1,72 +1,42 @@
-import { expect, test } from "vitest";
-import { DraftSettings } from "~/types";
+import { afterEach, test, vi } from "vitest";
 import { getSystemPool } from "~/utils/system";
 import { generateMap } from "../miltyeq/sliceGenerator";
+import {
+  expectCompleteMap,
+  generatorTestSettings,
+  seedRandom,
+} from "../common/generationTestUtils";
 
-const defaultTestSettings = {
-  type: "miltyeq5p",
-  draftSpeaker: false,
-  allowEmptyTiles: false,
-  allowHomePlanetSearch: false,
-  numFactions: 2,
-  numSlices: 10,
-  randomizeMap: false,
-  randomizeSlices: false,
-  numPreassignedFactions: 0,
-  numMinorFactions: 0,
-  minorFactionsInSharedPool: false,
-} as const;
+afterEach(() => vi.restoreAllMocks());
 
-test("Milty-EQ 5p can properly generate maps", () => {
-  const settings: DraftSettings = {
-    factionGameSets: ["base", "pok"],
-    tileGameSets: ["base", "pok"],
-    ...defaultTestSettings,
-  };
+test.each([1, 2, 3, 7, 19, 42, 1337, 20260910])(
+  "fills ten-slice five-player drafts without exhausting a tier (seed %i)",
+  (seed) => {
+    seedRandom(seed);
+    const settings = {
+      ...generatorTestSettings,
+      type: "miltyeq5p" as const,
+      numSlices: 10,
+    };
+    const pool = getSystemPool(settings.tileGameSets);
+    expectCompleteMap(generateMap(settings, pool), settings, pool);
+  },
+);
 
-  const systemPool = getSystemPool(["base", "pok"]);
-  const iterations = 10000;
-  for (let i = 0; i < iterations; i++) {
-    try {
-      const result = generateMap(settings, [...systemPool]);
-      expect(result, `Failed on iteration ${i + 1}`).toBeDefined();
-      expect(result?.valid, `Map was invalid on iteration ${i + 1}`).toBe(true);
-    } catch (e) {
-      console.log(`Failed on iteration ${i + 1}`);
-      throw e;
-    }
-  }
-});
-
-test("Milty-EQ 5p generates with discordant stars", () => {
-  const settings: DraftSettings = {
-    factionGameSets: ["base", "pok", "discordant", "discordantexp"],
-    tileGameSets: [
-      "base",
-      "pok",
-      "discordant",
-      "discordantexp",
-      "unchartedstars",
-    ],
-    ...defaultTestSettings,
-  };
-
-  const systemPool = getSystemPool([
-    "base",
-    "pok",
-    "discordant",
-    "discordantexp",
-    "unchartedstars",
-  ]);
-  const iterations = 10000;
-  for (let i = 0; i < iterations; i++) {
-    try {
-      const result = generateMap(settings, [...systemPool]);
-      expect(result, `Failed on iteration ${i + 1}`).toBeDefined();
-      expect(result?.valid, `Map was invalid on iteration ${i + 1}`).toBe(true);
-    } catch (e) {
-      console.log(`Failed on iteration ${i + 1}`);
-      throw e;
-    }
-  }
-});
+test.each([1, 19, 42, 1337])(
+  "fills expansion ten-slice five-player drafts (seed %i)",
+  (seed) => {
+    seedRandom(seed);
+    const settings = {
+      ...generatorTestSettings,
+      type: "miltyeq5p" as const,
+      numSlices: 10,
+      tileGameSets: [
+        ...generatorTestSettings.tileGameSets,
+        "unchartedstars" as const,
+      ],
+    };
+    const pool = getSystemPool(settings.tileGameSets);
+    expectCompleteMap(generateMap(settings, pool), settings, pool);
+  },
+);

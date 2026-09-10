@@ -1,6 +1,10 @@
 import { DraftSettings, FactionId, Map, SystemId, SystemIds } from "~/types";
 import {
   groupSystemsByTier,
+  hasAdjacentSliceAnomalies,
+  isAlpha,
+  isBeta,
+  isLegendary,
   separateAnomalies,
   shuffleTieredSystems,
 } from "../helpers/sliceGeneration";
@@ -9,7 +13,7 @@ import {
   ChoosableTier,
   DraftConfig,
   SliceGenerationConfig,
-  TieredSlice,
+  SliceChoice,
   TieredSystems,
 } from "../types";
 import { shuffle } from "../helpers/randomization";
@@ -19,10 +23,12 @@ import { draftConfig } from "../draftConfig";
 import { systemIdsInSlice, systemIdsToSlices } from "~/utils/slice";
 import { calculateMapStats } from "~/hooks/useFullMapStats";
 import { getSystemPool } from "~/utils/system";
+import { createSliceTierSampler } from "./tierRecipes";
+import { calculateSliceValue, getSliceValueConfig } from "~/stats";
 import { miltySystemTiers } from "~/data/miltyTileTiers";
 
 // Define which tiles are adjacent to home systems
-export const HOME_ADJACENT_TILES = [1, 2, 3];
+export const HOME_ADJACENT_TILES = [0, 1, 2];
 
 export type CoreGenerateSlicesArgs = {
   // Configuration parameters
@@ -35,7 +41,8 @@ export type CoreGenerateSlicesArgs = {
   centerTile: number;
 
   // Strategy functions
-  getSliceTiers: () => TieredSlice;
+  sliceChoices: SliceChoice[];
+  selectSystemPool?: boolean;
   validateSystems: (
     systems: TieredSystems,
     config: SliceGenerationConfig,
@@ -68,6 +75,9 @@ export function coreRerollSlice(
   const systemsInOtherSlices = slices
     .filter((_, idx) => idx !== sliceToRerollIdx)
     .flat();
+  const otherSystems = systemsInOtherSlices.map((id) => systemData[id]);
+  const defaultWormholes = settings.type.startsWith("heisen") ? 0 : 2;
+  const defaultLegendaries = settings.type.startsWith("heisen") ? 0 : 1;
 
   // Get all system IDs from the original systems pool that aren't in use
   const allSystems = getSystemPool(settings.tileGameSets);
@@ -83,9 +93,53 @@ export function coreRerollSlice(
 
     const newSlices = config.generateSlices(1, availableSystems, {
       ...settings.sliceGenerationConfig,
-      numAlphas: 0,
-      numBetas: 0,
-      minLegendaries: 0,
+      numAlphas: Math.max(
+        0,
+        (settings.sliceGenerationConfig?.numAlphas ?? defaultWormholes) -
+          otherSystems.filter(isAlpha).length,
+      ),
+      numBetas: Math.max(
+        0,
+        (settings.sliceGenerationConfig?.numBetas ?? defaultWormholes) -
+          otherSystems.filter(isBeta).length,
+      ),
+      minLegendaries: Math.max(
+        0,
+        (settings.sliceGenerationConfig?.minLegendaries ?? defaultLegendaries) -
+          otherSystems.filter(isLegendary).length,
+      ),
+      maxLegendaries:
+        settings.sliceGenerationConfig?.maxLegendaries === undefined
+          ? undefined
+          : settings.sliceGenerationConfig.maxLegendaries -
+            otherSystems.filter(isLegendary).length,
+      safePathToMecatol: Math.max(
+        0,
+        (settings.sliceGenerationConfig?.safePathToMecatol ?? 0) -
+          slices.filter(
+            (slice, idx) =>
+              idx !== sliceToRerollIdx &&
+              hasPathToMecatol(slice, config.mecatolPathSystemIndices),
+          ).length,
+      ),
+      centerTileNotEmpty: Math.max(
+        0,
+        (settings.sliceGenerationConfig?.centerTileNotEmpty ?? 0) -
+          slices.filter(
+            (slice, idx) =>
+              idx !== sliceToRerollIdx &&
+              checkFirstTileToMecatolIsSafe(slice, 1),
+          ).length,
+      ),
+      highQualityAdjacent: Math.max(
+        0,
+        (settings.sliceGenerationConfig?.highQualityAdjacent ?? 0) -
+          slices.filter(
+            (slice, idx) =>
+              idx !== sliceToRerollIdx &&
+              hasHighQualityAdjacent(slice, miltySystemTiers),
+          ).length,
+      ),
       minorFactionPool,
     });
     if (!newSlices || newSlices.length === 0) return undefined;
@@ -141,38 +195,92 @@ export function coreGenerateMap(
   minorFactionPool?: FactionId[],
 ) {
   const config = draftConfig[settings.type];
-  const map = generateEmptyMap(config);
+  const pool = [...new Set(systemPool)];
   const numMapTiles = config.modifiableMapTiles.length;
-  const slices = generateSlices(settings.numSlices, systemPool, {
-    ...settings.sliceGenerationConfig,
-    minorFactionPool,
-  });
-
-  if (!slices) return undefined;
-  const usedSystemIds = slices.flat(1);
-  const remainingSystemIds = shuffle(
-    systemPool.filter((id) => !usedSystemIds.includes(id)),
-  );
-  const mapSystemIds = shuffle(remainingSystemIds).slice(0, numMapTiles);
-
-  // fill map with chosen systems
-  config.modifiableMapTiles.forEach((idx) => {
-    map[idx] = {
-      idx: idx,
-      position: mapStringOrder[idx],
-      type: "SYSTEM",
-      systemId: mapSystemIds.pop()!,
-    };
-  });
-
-  // if we have gone past max attempts, return the map regardless of validation
-  if (attempts > 1000) return { map, slices, valid: false };
-  if (!validateMap(config, settings, map, slices)) {
-    return coreGenerateMap(settings, systemPool, attempts + 1, generateSlices);
+  if (
+    pool.length <
+    settings.numSlices * config.numSystemsInSlice + numMapTiles
+  ) {
+    return undefined;
   }
 
-  return { map, slices, valid: true };
+  const redTilesRequired = Math.floor(
+    numTilesAvailable(config) * RED_TILE_RATIO,
+  );
+  if (
+    pool.filter((id) => systemData[id].type === "RED").length < redTilesRequired
+  )
+    return undefined;
+  const maxLegendaries = settings.sliceGenerationConfig?.maxLegendaries ?? 3;
+  for (let attempt = attempts; attempt < 100; attempt++) {
+    const slices = generateSlices(settings.numSlices, pool, {
+      ...settings.sliceGenerationConfig,
+      minorFactionPool,
+    });
+    if (!slices) return undefined;
+    const usedSystemIds = slices.flat();
+    const remainingSystemIds = pool.filter((id) => !usedSystemIds.includes(id));
+    if (remainingSystemIds.length < numMapTiles) return undefined;
+    const emptyMap = generateEmptyMap(config);
+    const sliceStats = calculateMapStats(
+      getSlicesToValidate(config, settings, slices),
+      emptyMap,
+    );
+    const requiredMapReds = Math.max(0, redTilesRequired - sliceStats.redTiles);
+    const redPool = remainingSystemIds.filter(
+      (id) => systemData[id].type === "RED",
+    );
+    if (
+      sliceStats.totalLegendary > maxLegendaries ||
+      requiredMapReds > numMapTiles ||
+      redPool.length < requiredMapReds
+    )
+      continue;
+    for (let mapAttempt = 0; mapAttempt < 50; mapAttempt++) {
+      const map = [...emptyMap];
+      const chosen = shuffle(redPool, requiredMapReds);
+      let legendaries =
+        sliceStats.totalLegendary +
+        chosen.filter((id) => isLegendary(systemData[id])).length;
+      if (legendaries > maxLegendaries) continue;
+      for (const id of shuffle(
+        remainingSystemIds.filter((id) => !chosen.includes(id)),
+      )) {
+        if (chosen.length === numMapTiles) break;
+        const legendary = isLegendary(systemData[id]);
+        if (legendary && legendaries >= maxLegendaries) continue;
+        chosen.push(id);
+        if (legendary) legendaries++;
+      }
+      if (chosen.length !== numMapTiles) continue;
+      const mapSystemIds = shuffle(chosen);
+      config.modifiableMapTiles.forEach((idx, tileIndex) => {
+        map[idx] = {
+          idx,
+          position: mapStringOrder[idx],
+          type: "SYSTEM",
+          systemId: mapSystemIds[tileIndex],
+        };
+      });
+      if (validateMap(config, settings, map, slices))
+        return { map, slices, valid: true };
+    }
+  }
+  return undefined;
 }
+
+const getSlicesToValidate = (
+  config: DraftConfig,
+  settings: DraftSettings,
+  slices: SystemIds[],
+) =>
+  systemIdsToSlices(
+    config,
+    slices,
+    settings.sliceGenerationConfig?.sliceValueModifiers,
+  )
+    .slice(0, config.numPlayers)
+    .map((slice) => systemIdsInSlice(slice));
 
 const validateMap = (
   config: DraftConfig,
@@ -180,15 +288,8 @@ const validateMap = (
   map: Map,
   slices: SystemIds[],
 ) => {
-  // For validating 'globals', we grab the N richest slices.
-  const slicesToValidate = systemIdsToSlices(
-    config,
-    slices,
-    settings.sliceGenerationConfig?.sliceValueModifiers,
-  )
-    .slice(0, config.numPlayers)
-    .map((s) => systemIdsInSlice(s));
-
+  // Global limits apply to the richest slices that could form the final map.
+  const slicesToValidate = getSlicesToValidate(config, settings, slices);
   const stats = calculateMapStats(slicesToValidate, map);
 
   const redTilesRequired = Math.floor(
@@ -225,141 +326,214 @@ export function coreGenerateSlices({
   sliceShape,
   sliceCount,
   config,
-  getSliceTiers,
+  sliceChoices,
+  selectSystemPool = false,
   validateSystems,
   validateSlice,
   postProcessSlices,
 }: CoreGenerateSlicesArgs): SystemIds[] | undefined {
-  const allTieredSystems = groupSystemsByTier(availableSystems, systemTiers);
-  const sliceTiers: TieredSlice[] = Array.from(
-    { length: sliceCount },
-    getSliceTiers,
+  const allTieredSystems = groupSystemsByTier(
+    [...new Set(availableSystems)],
+    systemTiers,
   );
-  const tierCounts = sliceTiers.flat().reduce(
-    (counts, tier) => {
-      // NOTE: "resolved" branch should never be triggered,
-      // but is currently required for the type checker
-      // as the types are a bit messy.
-      if (tier === "resolved") return counts;
-      counts[tier] = (counts[tier] || 0) + 1;
-      return counts;
-    },
-    { high: 0, med: 0, low: 0, red: 0 } as Record<ChoosableTier, number>,
-  );
-
-  const gatherSlices = (): SystemIds[] | undefined => {
-    let slices: SystemIds[] | undefined = undefined;
-    for (let i = 0; i < 100; i++) {
-      const tieredSystems = gatherSystems();
-
-      if (!tieredSystems) {
-        continue;
-      }
-
-      const t_slices = gatherSlicesFromSystems(tieredSystems);
-
-      if (t_slices) {
-        let isValid = true;
-
-        // Separate anomalies
-        for (let sliceIndex = 0; sliceIndex < t_slices.length; sliceIndex++) {
-          let slice = t_slices[sliceIndex];
-          slice = separateAnomalies(slice, sliceShape);
-          t_slices[sliceIndex] = slice;
-        }
-
-        // Run any post-processing if provided
-        if (postProcessSlices) {
-          postProcessSlices(t_slices, config, mecatolPath, centerTile);
-        }
-
-        // check slices
-        for (let sliceIndex = 0; sliceIndex < t_slices.length; sliceIndex++) {
-          if (!validateSlice(t_slices[sliceIndex], config)) {
-            isValid = false;
-            break;
-          }
-        }
-        if (!isValid) {
-          continue;
-        }
-
-        slices = t_slices;
-        break;
-      }
-    }
-
-    return slices;
-  };
-
-  const gatherSystems = () => {
-    let tieredSystems: TieredSystems | undefined = undefined;
-    for (let i = 0; i < 1000; i++) {
-      const shuffledTieredSystems = shuffleTieredSystems(allTieredSystems);
-      const t_tieredSystems = {
-        high: shuffledTieredSystems.high.slice(0, tierCounts.high),
-        med: shuffledTieredSystems.med.slice(0, tierCounts.med),
-        low: shuffledTieredSystems.low.slice(0, tierCounts.low),
-        red: shuffledTieredSystems.red.slice(0, tierCounts.red),
-      };
-
-      // Make sure we have enough systems in each tier
-      // as sometimes the weighted picks grab more tiles in a tier
-      // than we have available.
-      if (
-        t_tieredSystems.high.length < tierCounts.high ||
-        t_tieredSystems.med.length < tierCounts.med ||
-        t_tieredSystems.low.length < tierCounts.low ||
-        t_tieredSystems.red.length < tierCounts.red
-      ) {
-        continue;
-      }
-
-      if (validateSystems(t_tieredSystems, config)) {
-        tieredSystems = t_tieredSystems;
-        break;
-      }
-    }
-
-    return tieredSystems;
-  };
-
-  const gatherSlicesFromSystems = (
-    tieredSystems: TieredSystems,
-  ): SystemIds[] | undefined => {
-    let slices: SystemIds[] = [];
-    for (let i = 0; i < 1000; i++) {
-      const t_tieredSystems: TieredSystems = JSON.parse(
-        JSON.stringify(tieredSystems),
-      );
-      t_tieredSystems.high = shuffle(t_tieredSystems.high);
-      t_tieredSystems.low = shuffle(t_tieredSystems.low);
-      t_tieredSystems.med = shuffle(t_tieredSystems.med);
-      t_tieredSystems.red = shuffle(t_tieredSystems.red);
-      for (let i = 0; i < sliceCount; i++) {
-        const tierValues = sliceTiers[i];
-        const slice: SystemId[] = tierValues.map(
-          (tier) => t_tieredSystems[tier as ChoosableTier].shift()!,
+  // Bound each recipe optimistically across all legal positions. If even the
+  // best available tiles cannot meet a minimum, shuffling cannot help.
+  const bounds = Object.fromEntries(
+    Object.values(allTieredSystems)
+      .flat()
+      .map((id) => {
+        const system = systemData[id];
+        const values = [[], [0]].flatMap((equidistant) =>
+          [[], [0]].map((path) =>
+            calculateSliceValue(
+              [system],
+              getSliceValueConfig(
+                config.sliceValueModifiers,
+                equidistant,
+                path,
+              ),
+            ),
+          ),
         );
+        return [
+          id,
+          {
+            min: Math.min(...values),
+            max: Math.max(...values),
+            resources: system.optimalSpend.resources + system.optimalSpend.flex,
+            influence: system.optimalSpend.influence + system.optimalSpend.flex,
+          },
+        ];
+      }),
+  );
+  const feasibleChoices = sliceChoices.filter(({ value }) => {
+    const recipeBounds = (
+      field: "min" | "max" | "resources" | "influence",
+      descending = true,
+    ) =>
+      (["high", "med", "low", "red"] as const).reduce(
+        (sum, tier) =>
+          sum +
+          allTieredSystems[tier]
+            .map((id) => bounds[id][field])
+            .sort((a, b) => (descending ? b - a : a - b))
+            .slice(0, value.filter((chosenTier) => chosenTier === tier).length)
+            .reduce((total, amount) => total + amount, 0),
+        0,
+      );
+    return (
+      (config.minSliceValue === undefined ||
+        recipeBounds("max") >= config.minSliceValue) &&
+      (config.maxSliceValue === undefined ||
+        recipeBounds("min", false) <= config.maxSliceValue) &&
+      recipeBounds("resources") >= (config.minOptimalResources ?? 0) &&
+      recipeBounds("influence") >= (config.minOptimalInfluence ?? 0)
+    );
+  });
+  const sampleTiers = createSliceTierSampler(
+    sliceCount,
+    allTieredSystems,
+    feasibleChoices,
+  );
+  if (!sampleTiers) return undefined;
+  const pool = Object.values(allTieredSystems)
+    .flat()
+    .map((id) => systemData[id]);
+  if (
+    [config.numAlphas, config.numBetas, config.minLegendaries].some(
+      (count) => (count ?? 0) > sliceCount,
+    ) ||
+    pool.filter(isAlpha).length < (config.numAlphas ?? 0) ||
+    pool.filter(isBeta).length < (config.numBetas ?? 0) ||
+    pool.filter(isLegendary).length < (config.minLegendaries ?? 0) ||
+    (config.maxLegendaries !== undefined &&
+      config.maxLegendaries < (config.minLegendaries ?? 0)) ||
+    (config.minSliceValue !== undefined &&
+      config.maxSliceValue !== undefined &&
+      config.minSliceValue > config.maxSliceValue) ||
+    [
+      config.safePathToMecatol,
+      config.centerTileNotEmpty,
+      config.highQualityAdjacent,
+    ].some((count) => (count ?? 0) > sliceCount)
+  )
+    return undefined;
 
-        const shuffledSlice = shuffle(slice);
-        if (!validateSlice(shuffledSlice, config)) break;
-        slices.push(shuffledSlice);
+  for (let attempt = 0; attempt < 100; attempt++) {
+    // A failed selection gets a new feasible recipe as well as new tiles.
+    const sliceTiers = sampleTiers();
+    const counts = { high: 0, med: 0, low: 0, red: 0 };
+    sliceTiers.flat().forEach((tier) => counts[tier]++);
+    const maxSpecialCount = (
+      predicate: (system: (typeof systemData)[SystemId]) => boolean,
+    ) =>
+      (Object.keys(counts) as ChoosableTier[]).reduce(
+        (total, tier) =>
+          total +
+          Math.min(
+            counts[tier],
+            allTieredSystems[tier].filter((id) => predicate(systemData[id]))
+              .length,
+          ),
+        0,
+      );
+    if (
+      maxSpecialCount(isAlpha) < (config.numAlphas ?? 0) ||
+      maxSpecialCount(isBeta) < (config.numBetas ?? 0) ||
+      maxSpecialCount(isLegendary) < (config.minLegendaries ?? 0)
+    )
+      continue;
+    let selected = allTieredSystems;
+    if (selectSystemPool) {
+      let validPool: TieredSystems | undefined;
+      for (let poolAttempt = 0; poolAttempt < 100; poolAttempt++) {
+        const candidate = {
+          high: shuffle(allTieredSystems.high, counts.high),
+          med: shuffle(allTieredSystems.med, counts.med),
+          low: shuffle(allTieredSystems.low, counts.low),
+          red: shuffle(allTieredSystems.red, counts.red),
+        };
+        if (validateSystems(candidate, config)) {
+          validPool = candidate;
+          break;
+        }
       }
-      if (slices.length !== sliceCount) {
-        slices = [];
-      } else {
-        break;
-      }
+      if (!validPool) continue;
+      selected = validPool;
     }
-
-    return slices.length ? slices : undefined;
-  };
-
-  const slices: SystemIds[] | undefined = gatherSlices();
-  if (!slices) return undefined;
-
-  return slices;
+    const remaining = shuffleTieredSystems(selected);
+    const slices: SystemIds[] = [];
+    let searchBudget = 2000;
+    const recipes = [...sliceTiers].sort(
+      (a, b) =>
+        b.filter((tier) => tier === "red").length -
+        a.filter((tier) => tier === "red").length,
+    );
+    const assignSlice = (index: number): boolean => {
+      if (index === recipes.length)
+        return validateSystems(
+          groupSystemsByTier(slices.flat(), systemTiers),
+          config,
+        );
+      const tried = new Set<string>();
+      for (
+        let sliceAttempt = 0;
+        sliceAttempt < 40 && searchBudget > 0;
+        sliceAttempt++
+      ) {
+        searchBudget--;
+        const candidates = shuffleTieredSystems(remaining);
+        const slice = separateAnomalies(
+          shuffle(recipes[index].map((tier) => candidates[tier].pop()!)),
+          sliceShape,
+        );
+        const key = slice.join(",");
+        if (tried.has(key)) continue;
+        tried.add(key);
+        if (
+          !validateSlice(slice, config) ||
+          hasAdjacentSliceAnomalies(slice, sliceShape)
+        )
+          continue;
+        for (const id of slice) {
+          const tier = systemTiers[id];
+          remaining[tier].splice(remaining[tier].indexOf(id), 1);
+        }
+        slices.push(slice);
+        if (assignSlice(index + 1)) return true;
+        slices.pop();
+        for (const id of slice) remaining[systemTiers[id]].push(id);
+      }
+      return false;
+    };
+    if (!assignSlice(0)) continue;
+    postProcessSlices?.(slices, config, mecatolPath, centerTile);
+    if (
+      slices.some(
+        (slice) =>
+          !validateSlice(slice, config) ||
+          hasAdjacentSliceAnomalies(slice, sliceShape),
+      )
+    )
+      continue;
+    if (
+      slices.filter((slice) => hasPathToMecatol(slice, mecatolPath)).length <
+      (config.safePathToMecatol ?? 0)
+    )
+      continue;
+    if (
+      slices.filter((slice) => checkFirstTileToMecatolIsSafe(slice, centerTile))
+        .length < (config.centerTileNotEmpty ?? 0)
+    )
+      continue;
+    if (
+      slices.filter((slice) => hasHighQualityAdjacent(slice, systemTiers))
+        .length < (config.highQualityAdjacent ?? 0)
+    )
+      continue;
+    return shuffle(slices);
+  }
+  return undefined;
 }
 
 // Function to check if center tile no empty and no anomaly
@@ -368,7 +542,7 @@ export function checkFirstTileToMecatolIsSafe(
   centerTile?: number,
 ): boolean {
   // If no centerTile is specified in the config, always return true
-  if (!centerTile) return true;
+  if (centerTile === undefined) return true;
 
   // Skip if index out of bounds
   if (centerTile >= slice.length) {
@@ -426,7 +600,7 @@ export function ensureCenterTileIsSafe(
   minCenterSafeCount: number,
   centerTile?: number,
 ): void {
-  if (!centerTile) return;
+  if (centerTile === undefined) return;
 
   const centerSafeSlices = slices.filter((slice) =>
     checkFirstTileToMecatolIsSafe(slice, centerTile),

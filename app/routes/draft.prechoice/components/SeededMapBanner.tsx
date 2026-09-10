@@ -46,9 +46,9 @@ export function SeededMapBanner() {
     >
       <Text size="sm">
         {sliceCount} slices with {systemCount} total systems have been imported
-        from your generated map. You can customize faction settings, player
-        names, and other options below. Changing to an incompatible map type
-        will ignore these pre-seeded slices.
+        from your generated map. You can customize faction settings and draft
+        rules below. Changing the player count or map layout clears these
+        imported slices.
       </Text>
     </Alert>
   );

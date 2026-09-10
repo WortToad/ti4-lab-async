@@ -74,7 +74,7 @@ export function FactionConfigurationSection() {
         color="orange"
         w="fit-content"
         rightSection={<IconAlienFilled />}
-        onMouseDown={openFactionSettings}
+        onClick={openFactionSettings}
       >
         Configure faction pool
       </Button>

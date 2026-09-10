@@ -71,6 +71,9 @@ export function registerDraftSyncHandlers(socket: Socket): void {
   socket.on("joinDraft", (id: unknown) => {
     if (validId(id)) void socket.join(`draft:${id}`);
   });
+  socket.on("leaveDraft", (id: unknown) => {
+    if (validId(id)) void socket.leave(`draft:${id}`);
+  });
   const notify = (id: unknown) => {
     if (validId(id) && socket.rooms.has(`draft:${id}`))
       socket.to(`draft:${id}`).emit("draftChanged");

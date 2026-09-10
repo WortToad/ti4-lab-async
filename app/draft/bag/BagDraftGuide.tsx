@@ -59,126 +59,140 @@ export function BagDraftGuide({
       ...Object.keys(rules.keepLimits),
     ]),
   ] as BagItemCategory[];
+  const content = (
+    <Stack gap="md">
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="sm">
+        {stages.map((stage, index) => (
+          <Paper
+            key={stage.title}
+            withBorder
+            p="sm"
+            radius="md"
+            bg={
+              index === active ? "var(--mantine-color-blue-light)" : undefined
+            }
+            aria-current={index === active ? "step" : undefined}
+          >
+            <Stack gap="xs">
+              <Group gap="xs">
+                <Badge variant={index === active ? "filled" : "light"}>
+                  {index + 1}
+                </Badge>
+                <Text size="sm" fw={600}>
+                  {stage.title}
+                </Text>
+              </Group>
+              <Text size="sm">{stage.text}</Text>
+            </Stack>
+          </Paper>
+        ))}
+      </SimpleGrid>
+      <Accordion variant="contained">
+        <Accordion.Item value="rules">
+          <Accordion.Control>
+            Collection limits, final choices and privacy
+          </Accordion.Control>
+          <Accordion.Panel>
+            <Stack gap="sm">
+              <Text size="sm">
+                <strong>Keep counts are required.</strong> Choose exactly the
+                number shown, or keep every available choice if you have fewer.
+                A lower count is not an optional choice.
+                {isTwilightsFallBag(variant) &&
+                  " In Twilight’s Fall and Inaugural Splice, you may fill an ability, genome, or unit upgrade slot with a generic technology instead."}
+              </Text>
+              <Text size="sm">
+                <strong>A bag</strong> is the set of choices currently offered
+                to you. <strong>Your collection</strong> contains everything you
+                have drafted so far. <strong>Your final faction</strong>{" "}
+                contains only the components you keep after the bags stop
+                passing.
+              </Text>
+              <Text size="sm">
+                Take at most one component per category per pass
+                {variant === "frankendraz"
+                  ? ", except that you may take multiple faction packages"
+                  : ""}
+                . You cannot exceed a category’s collection maximum across all
+                bags. If there are fewer legal choices, the required pick count
+                is reduced; bags with no legal choices pass automatically.
+                Drafting ends when nobody can take anything else.
+              </Text>
+              {variant === "frankendraz" && (
+                <Text size="sm">
+                  A faction package unlocks that faction’s components for
+                  assembly. Drafting a package does not commit you to playing
+                  that complete faction: combine its components with those from
+                  your other drafted packages.
+                </Text>
+              )}
+              <Text size="sm">
+                Your bag and collected picks stay private to your slot. The
+                admin sees lobby progress and recovery controls; other players’
+                hands stay hidden. Completed factions are revealed only when
+                everyone finishes.
+              </Text>
+              <Table.ScrollContainer minWidth={300}>
+                <Table>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Category</Table.Th>
+                      <Table.Th>Collect up to</Table.Th>
+                      <Table.Th>Keep afterward</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {categories
+                      .filter(
+                        (category) =>
+                          (rules.draftLimits[category] ?? 0) +
+                            (rules.keepLimits[category] ?? 0) >
+                          0,
+                      )
+                      .map((category) => (
+                        <Table.Tr key={category}>
+                          <Table.Td>
+                            {bagCategoryLabel(category, variant)}
+                          </Table.Td>
+                          <Table.Td>
+                            {rules.draftLimits[category] ??
+                              (variant === "frankendraz" ? "From packages" : 0)}
+                          </Table.Td>
+                          <Table.Td>
+                            {category === "FACTION"
+                              ? "Choose components"
+                              : (rules.keepLimits[category] ?? 0)}
+                          </Table.Td>
+                        </Table.Tr>
+                      ))}
+                  </Table.Tbody>
+                </Table>
+              </Table.ScrollContainer>
+            </Stack>
+          </Accordion.Panel>
+        </Accordion.Item>
+      </Accordion>
+    </Stack>
+  );
+
+  if (phase !== "lobby") {
+    return (
+      <Accordion variant="separated" radius="md">
+        <Accordion.Item value="guide">
+          <Accordion.Control>How this draft works</Accordion.Control>
+          <Accordion.Panel>{content}</Accordion.Panel>
+        </Accordion.Item>
+      </Accordion>
+    );
+  }
+
   return (
     <Paper withBorder p="lg" radius="md">
       <Stack gap="md">
         <Title order={2} size="h3">
           How this draft works
         </Title>
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="sm">
-          {stages.map((stage, index) => (
-            <Paper
-              key={stage.title}
-              withBorder
-              p="sm"
-              radius="md"
-              bg={
-                index === active ? "var(--mantine-color-blue-light)" : undefined
-              }
-              aria-current={index === active ? "step" : undefined}
-            >
-              <Stack gap="xs">
-                <Group gap="xs">
-                  <Badge variant={index === active ? "filled" : "light"}>
-                    {index + 1}
-                  </Badge>
-                  <Text size="sm" fw={600}>
-                    {stage.title}
-                  </Text>
-                </Group>
-                <Text size="sm">{stage.text}</Text>
-              </Stack>
-            </Paper>
-          ))}
-        </SimpleGrid>
-        <Accordion variant="contained">
-          <Accordion.Item value="rules">
-            <Accordion.Control>
-              Collection limits, final choices and privacy
-            </Accordion.Control>
-            <Accordion.Panel>
-              <Stack gap="sm">
-                <Text size="sm">
-                  <strong>Keep counts are required.</strong> Choose exactly the
-                  number shown, or keep every available choice if you have
-                  fewer. A lower count is not an optional choice.
-                  {isTwilightsFallBag(variant) &&
-                    " In Twilight’s Fall and Inaugural Splice, you may fill an ability, genome, or unit upgrade slot with a generic technology instead."}
-                </Text>
-                <Text size="sm">
-                  <strong>A bag</strong> is the set of choices currently offered
-                  to you. <strong>Your collection</strong> contains everything
-                  you have drafted so far. <strong>Your final faction</strong>{" "}
-                  contains only the components you keep after the bags stop
-                  passing.
-                </Text>
-                <Text size="sm">
-                  Take at most one component per category per pass
-                  {variant === "frankendraz"
-                    ? ", except that you may take multiple faction packages"
-                    : ""}
-                  . You cannot exceed a category’s collection maximum across all
-                  bags. If there are fewer legal choices, the required pick
-                  count is reduced; bags with no legal choices pass
-                  automatically. Drafting ends when nobody can take anything
-                  else.
-                </Text>
-                {variant === "frankendraz" && (
-                  <Text size="sm">
-                    A faction package unlocks that faction’s components for
-                    assembly. Drafting a package does not commit you to playing
-                    that complete faction: combine its components with those
-                    from your other drafted packages.
-                  </Text>
-                )}
-                <Text size="sm">
-                  Your bag and collected picks stay private to your slot. The
-                  admin sees lobby progress and recovery controls; other
-                  players’ hands stay hidden. Completed factions are revealed
-                  only when everyone finishes.
-                </Text>
-                <Table.ScrollContainer minWidth={300}>
-                  <Table>
-                    <Table.Thead>
-                      <Table.Tr>
-                        <Table.Th>Category</Table.Th>
-                        <Table.Th>Collect up to</Table.Th>
-                        <Table.Th>Keep afterward</Table.Th>
-                      </Table.Tr>
-                    </Table.Thead>
-                    <Table.Tbody>
-                      {categories
-                        .filter(
-                          (category) =>
-                            (rules.draftLimits[category] ?? 0) +
-                              (rules.keepLimits[category] ?? 0) >
-                            0,
-                        )
-                        .map((category) => (
-                          <Table.Tr key={category}>
-                            <Table.Td>
-                              {bagCategoryLabel(category, variant)}
-                            </Table.Td>
-                            <Table.Td>
-                              {rules.draftLimits[category] ??
-                                (variant === "frankendraz"
-                                  ? "From packages"
-                                  : 0)}
-                            </Table.Td>
-                            <Table.Td>
-                              {category === "FACTION"
-                                ? "Choose components"
-                                : (rules.keepLimits[category] ?? 0)}
-                            </Table.Td>
-                          </Table.Tr>
-                        ))}
-                    </Table.Tbody>
-                  </Table>
-                </Table.ScrollContainer>
-              </Stack>
-            </Accordion.Panel>
-          </Accordion.Item>
-        </Accordion>
+        {content}
       </Stack>
     </Paper>
   );

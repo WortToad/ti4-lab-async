@@ -229,6 +229,26 @@ export const isMiltyEqVariant = (mapType: ChoosableDraftType) =>
   mapType === "miltyeq7p" ||
   mapType === "miltyeq8p";
 
+export function mapForPlayerCount(current: ChoosableDraftType, count: number) {
+  const family = (type: ChoosableDraftType) =>
+    type.startsWith("miltyeq")
+      ? "miltyeq"
+      : type.startsWith("milty")
+        ? "milty"
+        : type.startsWith("heisen")
+          ? "heisen"
+          : type;
+  const compatible = (Object.keys(MAPS) as ChoosableDraftType[]).filter(
+    (type) => MAPS[type].playerCount === count,
+  );
+  return (
+    compatible.find((type) => type === current) ??
+    compatible.find((type) => family(type) === family(current)) ??
+    compatible[0] ??
+    current
+  );
+}
+
 function nucleusMap(type: DraftType, playerCount: number): PrechoiceMap {
   const description = `${playerCount}-player Nucleus using the async bot's hyperlane layout. Draft three-system slices around a shared central map, with speaker order drafted separately.`;
   return {

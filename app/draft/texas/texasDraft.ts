@@ -1,5 +1,6 @@
 import { shuffle } from "~/draft/helpers/randomization";
 import { systemData } from "~/data/systemData";
+import { getTexasTilePoolErrors } from "./validation";
 import {
   Draft,
   FactionId,
@@ -15,7 +16,10 @@ export const TEXAS_REDRAW_VALUE = "REDRAW";
 export function createTexasSeatAssignments(
   players: Player[],
 ): Pick<TexasDraftState, "seatOrder" | "seatAssignments" | "speakerId"> {
-  const seatOrder = shuffle(players.map((player) => player.id), players.length);
+  const seatOrder = shuffle(
+    players.map((player) => player.id),
+    players.length,
+  );
   const seatAssignments = seatOrder.reduce<Record<PlayerId, number>>(
     (acc, playerId, idx) => {
       acc[playerId] = idx;
@@ -42,7 +46,15 @@ export function dealTexasFactionOptions(
   | "initialFactionOptions"
   | "initialFactionDrawPile"
 > {
-  const shuffled = shuffle([...factionPool]);
+  if (!Number.isInteger(handSize) || handSize < 1)
+    throw new Error("The faction hand size must be a positive whole number.");
+  const uniqueFactions = [...new Set(factionPool)];
+  const required = players.length * handSize;
+  if (uniqueFactions.length < required)
+    throw new Error(
+      `Cannot deal Texas faction hands: need ${required} unique factions (${handSize} per player), but only ${uniqueFactions.length} remain.`,
+    );
+  const shuffled = shuffle(uniqueFactions);
   const factionOptions = players.reduce<Record<PlayerId, FactionId[]>>(
     (acc, player) => {
       acc[player.id] = shuffled.splice(0, handSize);
@@ -68,11 +80,14 @@ export function dealTexasTiles(
   systemPool: SystemId[],
   players: Player[],
 ): Pick<TexasDraftState, "tileHands" | "tileKeeps" | "initialTileHands"> {
+  const errors = getTexasTilePoolErrors(systemPool, players.length);
+  if (errors.length) throw new Error(errors.join(" "));
+  const uniqueTiles = [...new Set(systemPool)];
   const bluePool = shuffle(
-    systemPool.filter((id) => systemData[id]?.type === "BLUE"),
+    uniqueTiles.filter((id) => systemData[id]?.type === "BLUE"),
   );
   const redPool = shuffle(
-    systemPool.filter((id) => systemData[id]?.type === "RED"),
+    uniqueTiles.filter((id) => systemData[id]?.type === "RED"),
   );
 
   const tileHands = {
@@ -117,24 +132,24 @@ export function applyTexasFactionCommit(
   if (!draft.texasDraft) return selections;
 
   const allowRedraw = draft.settings.texasAllowFactionRedraw !== false;
-  const drawPile = draft.texasDraft.factionDrawPile ?? [];
+  const redrawCount = selections.filter(
+    (selection) => selection.value === TEXAS_REDRAW_VALUE,
+  ).length;
+  if (redrawCount && !allowRedraw)
+    throw new Error(
+      "Faction redraw is disabled for this draft. Choose a faction from your hand.",
+    );
+  const drawPile = [...(draft.texasDraft.factionDrawPile ?? [])];
+  if (drawPile.length < redrawCount)
+    throw new Error(
+      `Cannot redraw ${redrawCount} faction hands: only ${drawPile.length} fresh factions remain. Ask the admin to restore an earlier checkpoint and review the faction pool.`,
+    );
   const resolvedSelections = selections.map((selection) => {
     if (selection.value !== TEXAS_REDRAW_VALUE) {
       return selection;
     }
 
-    if (!allowRedraw) {
-      const fallback =
-        draft.texasDraft?.factionOptions?.[selection.playerId]?.[0];
-      return fallback ? { ...selection, value: fallback } : selection;
-    }
-
-    const drawn = drawPile.pop();
-    if (!drawn) {
-      const fallback =
-        draft.texasDraft?.factionOptions?.[selection.playerId]?.[0];
-      return fallback ? { ...selection, value: fallback } : selection;
-    }
+    const drawn = drawPile.pop()!;
     return { ...selection, value: drawn };
   });
 

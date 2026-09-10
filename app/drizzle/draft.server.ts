@@ -6,6 +6,7 @@ import { Draft, SimultaneousPickType } from "~/types";
 import { enqueueImageJob } from "~/utils/imageJobQueue.server";
 import { v4 as uuidv4 } from "uuid";
 import { createBaseLobby, saveBaseCheckpoint } from "./baseDraftLobby.server";
+import { getBaseKeleresSetup } from "~/draft/keleres";
 
 export async function draftById(id: string) {
   const results = await db
@@ -137,6 +138,8 @@ function deriveDraftMode(draft: Draft): DraftMode {
 
 function deriveDraftPhase(draft: Draft, isComplete: boolean): DraftPhase {
   if (isComplete) return "complete";
+  const keleres = getBaseKeleresSetup(draft);
+  if (keleres?.ready && !keleres.chosen) return "homeSystem";
 
   const currentPickNumber = draft.selections?.length ?? 0;
   const banModifier = draft.settings.modifiers?.banFactions;
@@ -156,7 +159,9 @@ function deriveDraftPhase(draft: Draft, isComplete: boolean): DraftPhase {
 export function deriveDraftMetadata(draft: Draft) {
   const selectionsCount = draft.selections?.length ?? 0;
   const pickOrderCount = draft.pickOrder?.length ?? 0;
-  const isComplete = selectionsCount === pickOrderCount;
+  const keleres = getBaseKeleresSetup(draft);
+  const isComplete =
+    selectionsCount === pickOrderCount && (!keleres || !!keleres.chosen);
   const mode = deriveDraftMode(draft);
   const phase = deriveDraftPhase(draft, isComplete);
   const playerNames = draft.players?.map((p) => p.name).join(", ") ?? "";
@@ -492,7 +497,10 @@ export function updateDraft(
         })
         .where(eq(drafts.id, id))
         .run();
-      return !existingDraft.isComplete && metadata.isComplete
+      return (!existingDraft.isComplete ||
+        !deriveDraftMetadata(JSON.parse(existingDraft.data as string))
+          .isComplete) &&
+        metadata.isComplete
         ? existingDraft.urlName
         : null;
     },

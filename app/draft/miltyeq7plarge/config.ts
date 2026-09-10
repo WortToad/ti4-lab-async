@@ -47,6 +47,6 @@ export const miltyeq7plarge: DraftConfig = {
     ],
     6: rotateSlice(slice, 1),
   } as Record<number, [number, number][]>,
-  generateSlices,
-  generateMap,
+  generateSlices: (...args) => generateSlices(...args),
+  generateMap: (...args) => generateMap(...args),
 };

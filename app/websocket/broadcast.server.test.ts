@@ -25,12 +25,14 @@ describe("draft websocket privacy", () => {
     const rooms = new Set<string>();
     const emit = vi.fn();
     const join = vi.fn((room: string) => rooms.add(room));
+    const leave = vi.fn((room: string) => rooms.delete(room));
     registerDraftSyncHandlers({
       on: (event: string, callback: (...args: unknown[]) => void) => {
         handlers[event] = callback;
       },
       rooms,
       join,
+      leave,
       to: () => ({ emit }),
     } as unknown as Socket);
     handlers.syncDraft("room", "forged private draft");
@@ -42,5 +44,12 @@ describe("draft websocket privacy", () => {
     handlers.joinDraft({ id: "room" });
     handlers.joinDraft("bad room!");
     expect(join).toHaveBeenCalledTimes(1);
+    handlers.leaveDraft("room");
+    handlers.syncDraft("room", "forged private draft");
+    expect(emit).toHaveBeenCalledTimes(1);
+    expect(leave).toHaveBeenCalledWith("draft:room");
+    handlers.leaveDraft({ id: "room" });
+    handlers.leaveDraft("bad room!");
+    expect(leave).toHaveBeenCalledTimes(1);
   });
 });

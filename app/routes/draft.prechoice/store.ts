@@ -8,7 +8,8 @@ import {
   MinorFactionsMode,
 } from "~/types";
 import { getFactionCount } from "~/data/factionData";
-import { MAPS, type ChoosableDraftType } from "./maps";
+import { MAPS, mapForPlayerCount, type ChoosableDraftType } from "./maps";
+import { makeLobbyPlayers } from "~/draft/lobbySetup";
 import { getFactionPool } from "~/utils/factions";
 import { notifications } from "@mantine/notifications";
 import {
@@ -62,9 +63,7 @@ type DraftSetupStore = {
   validateSetup: () => void;
   player: {
     players: Player[];
-    add: () => void;
-    remove: () => void;
-    changeName: (playerIdx: number, name: string) => void;
+    setCount: (count: number) => void;
     setPlayers: (players: Player[]) => void;
   };
   map: {
@@ -235,7 +234,6 @@ export const useDraftSetup = create<DraftSetupStore>()(
             // Default to all 8 kings
             state.kings.numKings = 8;
           }
-
         }),
 
       validateSetup: () => {
@@ -250,9 +248,18 @@ export const useDraftSetup = create<DraftSetupStore>()(
           if (state.referenceCardPacks.numReferenceCardPacks < playerCount) {
             state.referenceCardPacks.numReferenceCardPacks = playerCount;
           }
-          const maxReferencePacks = Math.floor((referenceCardFactionPool.length - state.referenceCardPacks.bannedFactions.length) / 3);
-          if (state.referenceCardPacks.numReferenceCardPacks > maxReferencePacks) {
-            state.referenceCardPacks.numReferenceCardPacks = Math.max(playerCount, maxReferencePacks);
+          const maxReferencePacks = Math.floor(
+            (referenceCardFactionPool.length -
+              state.referenceCardPacks.bannedFactions.length) /
+              3,
+          );
+          if (
+            state.referenceCardPacks.numReferenceCardPacks > maxReferencePacks
+          ) {
+            state.referenceCardPacks.numReferenceCardPacks = Math.max(
+              playerCount,
+              maxReferencePacks,
+            );
           }
 
           // Update kings to at least player count
@@ -266,17 +273,16 @@ export const useDraftSetup = create<DraftSetupStore>()(
 
           const currentMap = MAPS[state.map.selectedMapType];
           if (currentMap && currentMap.playerCount !== playerCount) {
-            const newMapType = (Object.keys(MAPS).find(
-              (key) =>
-                MAPS[key as ChoosableDraftType].playerCount === playerCount,
-            ) || state.map.selectedMapType) as ChoosableDraftType;
+            const newMapType = mapForPlayerCount(
+              state.map.selectedMapType,
+              playerCount,
+            );
 
             state.map.selectedMapType = newMapType;
 
             state.format.allowEmptyTiles = false;
             state.format.allowHomePlanetSearch = false;
-            state.format.draftSpeaker =
-              newMapType.startsWith("heisen");
+            state.format.draftSpeaker = newMapType.startsWith("heisen");
           }
 
           const maxSlices = Math.max(
@@ -309,37 +315,13 @@ export const useDraftSetup = create<DraftSetupStore>()(
       },
 
       player: {
-        players: Array(6)
-          .fill(null)
-          .map((_, i) => ({
-            id: i,
-            name: "",
-          })),
-
-        add: () => {
+        players: makeLobbyPlayers(6),
+        setCount: (count: number) => {
+          if (!Number.isInteger(count) || count < 3 || count > 8) return;
           setAndValidate((state) => {
-            const numPlayers = state.player.players.length;
-
-            state.player.players.push({
-              id: numPlayers,
-              name: "",
-            });
+            state.player.players = makeLobbyPlayers(count);
           });
         },
-
-        remove: () => {
-          setAndValidate((state) => {
-            state.player.players.pop();
-          });
-        },
-
-        changeName: (playerIdx: number, name: string) =>
-          set((state) => {
-            const player = state.player.players.find((p) => p.id === playerIdx);
-            if (player) {
-              player.name = name;
-            }
-          }),
 
         setPlayers: (players: Player[]) =>
           setAndValidate((state) => {
@@ -364,8 +346,7 @@ export const useDraftSetup = create<DraftSetupStore>()(
             // Side effects when map type changes
             state.format.allowEmptyTiles = false;
             state.format.allowHomePlanetSearch = false;
-            state.format.draftSpeaker =
-              mapType.startsWith("heisen");
+            state.format.draftSpeaker = mapType.startsWith("heisen");
           });
         },
       },
@@ -384,17 +365,23 @@ export const useDraftSetup = create<DraftSetupStore>()(
         numReferenceCardPacks: 6, // Default to player count, will be updated in validateSetup
         bannedFactions: [],
         presetPackages: "",
-        setBannedFactions: (factions) => setAndValidate(state => {
-          state.referenceCardPacks.bannedFactions = factions;
-        }),
-        setPresetPackages: (value) => set(state => {
-          state.referenceCardPacks.presetPackages = value;
-        }),
+        setBannedFactions: (factions) =>
+          setAndValidate((state) => {
+            state.referenceCardPacks.bannedFactions = factions;
+          }),
+        setPresetPackages: (value) =>
+          set((state) => {
+            state.referenceCardPacks.presetPackages = value;
+          }),
 
         setNumReferenceCardPacks: (num: number) => {
           set((state) => {
             const playerCount = state.player.players.length;
-            const maxPacks = Math.floor((referenceCardFactionPool.length - state.referenceCardPacks.bannedFactions.length) / 3);
+            const maxPacks = Math.floor(
+              (referenceCardFactionPool.length -
+                state.referenceCardPacks.bannedFactions.length) /
+                3,
+            );
             state.referenceCardPacks.numReferenceCardPacks = Math.max(
               playerCount,
               Math.min(maxPacks, num),
@@ -407,19 +394,27 @@ export const useDraftSetup = create<DraftSetupStore>()(
         numKings: 8, // Default to all 8 kings
         bannedKings: [],
         prioritizedKings: [],
-        setBannedKings: (kings) => setAndValidate(state => {
-          state.kings.bannedKings = kings;
-          state.kings.prioritizedKings = state.kings.prioritizedKings.filter(id => !kings.includes(id));
-        }),
-        setPrioritizedKings: (kings) => set(state => {
-          state.kings.prioritizedKings = kings;
-          state.kings.numKings = Math.max(state.kings.numKings, kings.length);
-        }),
+        setBannedKings: (kings) =>
+          setAndValidate((state) => {
+            state.kings.bannedKings = kings;
+            state.kings.prioritizedKings = state.kings.prioritizedKings.filter(
+              (id) => !kings.includes(id),
+            );
+          }),
+        setPrioritizedKings: (kings) =>
+          set((state) => {
+            state.kings.prioritizedKings = kings;
+            state.kings.numKings = Math.max(state.kings.numKings, kings.length);
+          }),
 
         setNumKings: (num: number) => {
           set((state) => {
             const playerCount = state.player.players.length;
-            state.kings.numKings = Math.max(playerCount, state.kings.prioritizedKings.length, Math.min(8 - state.kings.bannedKings.length, num));
+            state.kings.numKings = Math.max(
+              playerCount,
+              state.kings.prioritizedKings.length,
+              Math.min(8 - state.kings.bannedKings.length, num),
+            );
           });
         },
       },
@@ -517,9 +512,12 @@ export const useDraftSetup = create<DraftSetupStore>()(
           setAndValidate((state) => {
             state.content.flags.withDiscordantTiles = v;
             // Sync legacy flags
-            state.content.flags.withDiscordant = v || state.content.flags.withDiscordantFactions;
-            state.content.flags.withDiscordantExp = v || state.content.flags.withDiscordantFactions;
-            state.content.flags.withUnchartedStars = v || state.content.flags.withDiscordantFactions;
+            state.content.flags.withDiscordant =
+              v || state.content.flags.withDiscordantFactions;
+            state.content.flags.withDiscordantExp =
+              v || state.content.flags.withDiscordantFactions;
+            state.content.flags.withUnchartedStars =
+              v || state.content.flags.withDiscordantFactions;
           });
         },
 
@@ -527,8 +525,10 @@ export const useDraftSetup = create<DraftSetupStore>()(
           setAndValidate((state) => {
             state.content.flags.withDiscordantFactions = v;
             // Sync legacy flags
-            state.content.flags.withDiscordant = v || state.content.flags.withDiscordantTiles;
-            state.content.flags.withDiscordantExp = v || state.content.flags.withDiscordantTiles;
+            state.content.flags.withDiscordant =
+              v || state.content.flags.withDiscordantTiles;
+            state.content.flags.withDiscordantExp =
+              v || state.content.flags.withDiscordantTiles;
           });
         },
 

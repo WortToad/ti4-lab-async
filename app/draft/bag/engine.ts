@@ -7,6 +7,10 @@ import {
   type BagItemCategory,
 } from "./catalog";
 import { BAG_VARIANTS, getBagRules, isTwilightsFallBag } from "./rules";
+import {
+  availableAssemblyItemIds,
+  includeAssemblyCompanions,
+} from "./assembly";
 import type {
   BagDraftAction,
   BagDraftState,
@@ -154,10 +158,7 @@ function count(items: string[], category: BagItemCategory) {
   return items.filter((id) => categoryOf(id) === category).length;
 }
 
-export function createBagState(
-  input: CreateBagDraftInput,
-  random = Math.random,
-): BagDraftState {
+function prepareBagDraft(input: CreateBagDraftInput) {
   validateBagInput(input);
   const { players, ...configuration } = input;
   const settings: BagSettings = {
@@ -179,6 +180,51 @@ export function createBagState(
     (item) =>
       !banned.has(item.id) && (!item.faction || !factions.has(item.faction)),
   );
+  for (const [rawCategory, limit] of Object.entries(rules.draftLimits)) {
+    if (limit === 0) continue;
+    const category = rawCategory as BagItemCategory;
+    const available = new Set(
+      category === "DRAFTORDER"
+        ? players.map((_, index) => `DRAFTORDER:${index + 1}`)
+        : pool
+            .filter((item) => item.category === category)
+            .map((item) => item.id),
+    );
+    const required = limit * players.length;
+    if (category === "FACTION" && settings.priorityFactions?.length) {
+      const priority = new Set(
+        settings.priorityFactions.map((id) => `FACTION:${id}`),
+      );
+      assert(
+        priority.size <= required &&
+          [...priority].every((id) => available.has(id)),
+        "Prioritized factions must be enabled, unbanned, and fit in the faction pool.",
+      );
+    }
+    assert(
+      available.size >= required,
+      `${CATEGORY_LABELS[category]}: need ${required} items (${limit} × ${players.length} players), but only ${available.size} are available. Enable another content pack, remove bans, or reduce the category count.`,
+    );
+  }
+  return { settings, rules, pool };
+}
+
+export function getBagSetupError(input: CreateBagDraftInput) {
+  try {
+    prepareBagDraft(input);
+    return undefined;
+  } catch (error) {
+    if (error instanceof BagDraftError) return error.message;
+    throw error;
+  }
+}
+
+export function createBagState(
+  input: CreateBagDraftInput,
+  random = Math.random,
+): BagDraftState {
+  const { settings, rules, pool } = prepareBagDraft(input);
+  const { players } = input;
   const names =
     settings.shufflePlayers === false ? players : shuffle(players, random);
   const seats: BagSeat[] = names.map((name, id) => ({
@@ -209,21 +255,12 @@ export function createBagState(
       const priority = new Set(
         settings.priorityFactions.map((id) => `FACTION:${id}`),
       );
-      assert(
-        priority.size <= limit * seats.length &&
-          [...priority].every((id) => available.includes(id)),
-        "Prioritized factions must be enabled, unbanned, and fit in the faction pool.",
-      );
       available = [
         ...available.filter((id) => priority.has(id)),
         ...available.filter((id) => !priority.has(id)),
       ];
     }
     const required = limit * seats.length;
-    assert(
-      available.length >= required,
-      `${CATEGORY_LABELS[category]}: need ${required} items (${limit} × ${seats.length} players), but only ${available.length} are available. Enable another content pack, remove bans, or reduce the category count.`,
-    );
     const dealt = shuffle(available.slice(0, required), random);
     seats.forEach((seat, index) =>
       seat.bag.push(...dealt.slice(index * limit, (index + 1) * limit)),
@@ -280,7 +317,7 @@ export function requiredBagPicks(state: BagDraftState, seat: BagSeat) {
   );
 }
 
-function assemblyBaseItems(
+export function assemblyBaseItems(
   state: BagDraftState,
   seat: BagSeat,
 ): BagDraftItem[] {
@@ -338,21 +375,12 @@ export function keptBagItems(
   state: BagDraftState,
   seat: BagSeat,
 ): BagDraftItem[] {
-  const result = new Map(
-    seat.keptItemIds.map((id) => [id, resolveBagItem(id, state.settings)]),
+  const items = seat.keptItemIds.map((id) =>
+    resolveBagItem(id, state.settings),
   );
-  if (!isTwilightsFallBag(state.settings.variant)) {
-    const addComponents = (item: BagDraftItem) => {
-      for (const id of item.additionalComponents ?? []) {
-        if (result.has(id)) continue;
-        const component = resolveBagItem(id, state.settings);
-        result.set(id, component);
-        addComponents(component);
-      }
-    };
-    [...result.values()].forEach(addComponents);
-  }
-  return [...result.values()];
+  return isTwilightsFallBag(state.settings.variant)
+    ? items
+    : includeAssemblyCompanions(items);
 }
 
 function beginAssembly(state: BagDraftState) {
@@ -420,20 +448,11 @@ function chooseFinalItems(
   );
   const tf = isTwilightsFallBag(state.settings.variant);
   if (!tf) {
-    const base = assemblyBaseItems(state, seat);
-    const reachable = new Set(base.map((item) => item.id));
-    const visited = new Set<string>();
-    const visit = (item: BagDraftItem) => {
-      if (visited.has(item.id)) return;
-      visited.add(item.id);
-      for (const id of item.additionalComponents ?? [])
-        visit(resolveBagItem(id, state.settings));
-      for (const id of item.optionalSwaps ?? []) {
-        reachable.add(id);
-        if (itemIds.includes(id)) visit(resolveBagItem(id, state.settings));
-      }
-    };
-    base.filter((item) => itemIds.includes(item.id)).forEach(visit);
+    const reachable = availableAssemblyItemIds(
+      options,
+      assemblyBaseItems(state, seat).map((item) => item.id),
+      itemIds,
+    );
     assert(
       itemIds.every((id) => reachable.has(id)),
       "An optional swap requires keeping the component that grants it.",

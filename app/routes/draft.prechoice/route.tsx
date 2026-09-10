@@ -5,31 +5,32 @@ import {
   Flex,
   Group,
   NumberInput,
+  Paper,
+  SimpleGrid,
   Stack,
   Switch,
   Tabs,
   Text,
+  Title,
 } from "@mantine/core";
 import { DiscordData, Draft, DraftSettings } from "~/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DemoMap } from "~/components/DemoMap";
 import { LobbyRecovery } from "~/draft/LobbyRecovery";
 import { SectionTitle } from "~/components/Section";
-import { PlayerInputSection } from "../draft.new/components/PlayerInputSection";
+import { LobbyPlayerCount } from "~/draft/LobbyPlayerCount";
+import { makeLobbyPlayers, parseLobbyPlayerCount } from "~/draft/lobbySetup";
 import {
   useLoaderData,
   useLocation,
   useNavigate,
+  useNavigation,
   useSearchParams,
   useSubmit,
   LoaderFunctionArgs,
   Link,
 } from "react-router";
-import {
-  IconFile,
-  IconInfoCircle,
-  IconPlayerPlay,
-} from "@tabler/icons-react";
+import { IconFile, IconInfoCircle, IconPlayerPlay } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
 import {
   SliceSettingsModal,
@@ -45,6 +46,8 @@ import { KingsConfigurationSection } from "./components/KingsConfigurationSectio
 import { DraftConfigurationPanel } from "./components/DraftConfigurationPanel";
 import { useDraftSettingsBuilder, useDraftNavigation } from "./hooks";
 import { buildTexasDraft } from "~/draft/texas/buildTexasDraft";
+import { getTexasSetupErrors } from "~/draft/texas/validation";
+import { ContentPacksSection } from "./components/ContentPacksSection";
 import { MinorFactionsInfoModal } from "./components/MinorFactionsInfoModal";
 import { SavedStateModal } from "./components/SavedStateModal";
 import { MapStyleSelector } from "./components/MapStyleSelector";
@@ -55,14 +58,19 @@ import { getMaxAvailableSlices } from "./utils";
 import buttonClasses from "~/ui/buttons.module.css";
 import classes from "./prechoice.module.css";
 import { twilightsFallFactionIds } from "~/data/factionData";
-import { parseReferenceCardPacks, validateTwilightsFallSettings } from "~/draft/twilightsFall/pools";
+import {
+  parseReferenceCardPacks,
+  validateTwilightsFallSettings,
+} from "~/draft/twilightsFall/pools";
 
 export default function DraftPrechoice() {
   const location = useLocation();
   const navigate = useNavigate();
   const submit = useSubmit();
+  const navigation = useNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [setupError, setSetupError] = useState<string | null>(null);
+  const [templateError, setTemplateError] = useState<string | null>(null);
   const { discordData, mapSlicesString, selectedDraftType } =
     useLoaderData<typeof loader>();
   const [hoveredMapType, setHoveredMapType] = useState<
@@ -81,6 +89,7 @@ export default function DraftPrechoice() {
   const format = useDraftSetup((state) => state.format);
   const texas = useDraftSetup((state) => state.texas);
   const faction = useDraftSetup((state) => state.faction);
+  const multidraft = useDraftSetup((state) => state.multidraft);
 
   const [sliceSettings, setSliceSettings] = useState<
     Record<SliceSettingsFormatType, SliceGenerationSettings>
@@ -95,17 +104,20 @@ export default function DraftPrechoice() {
 
   // Initialize players from Discord data if available
   const discordDataInitialized = useRef(false);
+  const requestedPlayerCount = searchParams.get("playerCount");
   useEffect(() => {
-    if (discordData?.players && !discordDataInitialized.current) {
+    if (discordDataInitialized.current) return;
+    if (discordData?.players) {
       setPlayers(
-        discordData.players.map((discordPlayer) => ({
-          id: discordPlayer.playerId,
-          name: discordPlayer.type === "unidentified" ? discordPlayer.name : "",
-        })),
+        makeLobbyPlayers(
+          parseLobbyPlayerCount(String(discordData.players.length)),
+        ),
       );
-      discordDataInitialized.current = true;
+    } else if (requestedPlayerCount !== null) {
+      setPlayers(makeLobbyPlayers(parseLobbyPlayerCount(requestedPlayerCount)));
     }
-  }, [discordData, setPlayers]);
+    discordDataInitialized.current = true;
+  }, [discordData, requestedPlayerCount, setPlayers]);
 
   // Initialize from seeded map URL param (one-time on mount)
   const seededMapInitialized = useRef(false);
@@ -117,13 +129,7 @@ export default function DraftPrechoice() {
         const sliceCount = seededData.slices.length;
         const currentPlayerCount = player.players.length;
         if (sliceCount !== currentPlayerCount) {
-          const newPlayers = Array(sliceCount)
-            .fill(null)
-            .map((_, i) => ({
-              id: i,
-              name: player.players[i]?.name ?? "",
-            }));
-          setPlayers(newPlayers);
+          setPlayers(makeLobbyPlayers(sliceCount));
         }
 
         // Set map type to selected type from URL, or first compatible type
@@ -168,19 +174,36 @@ export default function DraftPrechoice() {
           !!faction.minorFactionsMode,
         ),
       ),
-    [
-      faction.minorFactionsMode,
-      map.selectedMapType,
-      playerCount,
-      tileGameSets,
-    ],
+    [faction.minorFactionsMode, map.selectedMapType, playerCount, tileGameSets],
   );
 
   const { buildDraftSettings } = useDraftSettingsBuilder(sliceSettings);
   const { navigateToDraft } = useDraftNavigation(discordData);
+  const texasSettings: DraftSettings = {
+    ...buildDraftSettings(),
+    draftGameMode: "texasStyle",
+    draftSpeaker: false,
+    draftPlayerColors: false,
+    allowHomePlanetSearch: false,
+    allowEmptyTiles: false,
+    modifiers: { banFactions: { numFactions: 1 } },
+    texasFactionHandSize: texas.factionHandSize,
+    texasAllowFactionRedraw: texas.allowRedraw,
+    randomizeMap: false,
+    randomizeSlices: false,
+  };
+  const texasErrors =
+    draftMode === "texasStyle"
+      ? getTexasSetupErrors(texasSettings, playerCount)
+      : [];
 
-  const handleChangeName = (playerIdx: number, name: string) => {
-    player.changeName(playerIdx, name);
+  const handlePlayerCountChange = (count: number) => {
+    player.setCount(count);
+    const next = new URLSearchParams(searchParams);
+    next.set("playerCount", String(count));
+    next.delete("mapSlices");
+    next.delete("draftType");
+    setSearchParams(next, { replace: true });
   };
 
   const handleMapTypeSelect = (mapType: ChoosableDraftType) => {
@@ -203,73 +226,76 @@ export default function DraftPrechoice() {
     setSetupError(null);
     if (draftMode === "twilightFalls") {
       try {
-      const draftType = map.selectedMapType;
-      const presetPacks = parseReferenceCardPacks(referenceCardPacks.presetPackages);
+        const draftType = map.selectedMapType;
+        const presetPacks = parseReferenceCardPacks(
+          referenceCardPacks.presetPackages,
+        );
 
-      const twilightsFallSettings: DraftSettings = {
-        type: draftType,
-        nucleusStyle: draftType.startsWith("heisen"),
-        numFactions: kings.numKings, // Configurable number of kings
-        numKings: kings.numKings,
-        allowedFactions: twilightsFallFactionIds.filter(id => !kings.bannedKings.includes(id)),
-        requiredFactions: kings.prioritizedKings,
-        factionGameSets: ["twilightsFall"], // Only Mahact Kings faction set
-        tileGameSets: ["base", "pok", "te"],
-        numSlices: Number(slices.numSlices),
-        numReferenceCardPacks: presetPacks?.length ?? referenceCardPacks.numReferenceCardPacks,
-        bannedReferenceCardFactions: referenceCardPacks.bannedFactions,
-        presetReferenceCardPacks: presetPacks,
-        randomizeMap: true,
-        randomizeSlices: true,
-        draftSpeaker: false,
-        showMonumentImagesInFactionInfo:
-          format.showMonumentImagesInFactionInfo,
-        allowHomePlanetSearch: false,
-        allowEmptyTiles: false,
-        draftPlayerColors: false,
-        minorFactionsMode: undefined,
-        draftGameMode: "twilightsFall",
-      };
-      validateTwilightsFallSettings(twilightsFallSettings, player.players.length);
+        const twilightsFallSettings: DraftSettings = {
+          type: draftType,
+          nucleusStyle: draftType.startsWith("heisen"),
+          numFactions: kings.numKings, // Configurable number of kings
+          numKings: kings.numKings,
+          allowedFactions: twilightsFallFactionIds.filter(
+            (id) => !kings.bannedKings.includes(id),
+          ),
+          requiredFactions: kings.prioritizedKings,
+          factionGameSets: ["twilightsFall"], // Only Mahact Kings faction set
+          tileGameSets: ["base", "pok", "te"],
+          numSlices: Number(slices.numSlices),
+          numReferenceCardPacks:
+            presetPacks?.length ?? referenceCardPacks.numReferenceCardPacks,
+          bannedReferenceCardFactions: referenceCardPacks.bannedFactions,
+          presetReferenceCardPacks: presetPacks,
+          randomizeMap: true,
+          randomizeSlices: true,
+          draftSpeaker: false,
+          showMonumentImagesInFactionInfo:
+            format.showMonumentImagesInFactionInfo,
+          allowHomePlanetSearch: false,
+          allowEmptyTiles: false,
+          draftPlayerColors: false,
+          minorFactionsMode: undefined,
+          draftGameMode: "twilightsFall",
+        };
+        validateTwilightsFallSettings(
+          twilightsFallSettings,
+          player.players.length,
+        );
 
-      navigate("/draft/new", {
-        state: {
-          draftSettings: twilightsFallSettings,
-          players: player.players,
-          discordData,
-        },
-      });
+        navigate("/draft/new", {
+          state: {
+            draftSettings: twilightsFallSettings,
+            players: player.players,
+            discordData,
+          },
+        });
       } catch (error) {
-        setSetupError(error instanceof Error ? error.message : "Invalid Twilight's Fall setup.");
+        setSetupError(
+          error instanceof Error
+            ? error.message
+            : "Invalid Twilight's Fall setup.",
+        );
       }
     } else if (draftMode === "texasStyle") {
-      const baseSettings = buildDraftSettings();
-      const texasSettings: DraftSettings = {
-        ...baseSettings,
-        draftGameMode: "texasStyle",
-        draftSpeaker: false,
-        draftPlayerColors: false,
-        allowHomePlanetSearch: false,
-        allowEmptyTiles: false,
-        modifiers: { banFactions: { numFactions: 1 } },
-        texasFactionHandSize: texas.factionHandSize,
-        texasAllowFactionRedraw: texas.allowRedraw,
-        randomizeMap: false,
-        randomizeSlices: false,
-      };
-
-      // Build the full draft object and submit directly to bypass /draft/new page
-      const draft = buildTexasDraft({
-        settings: texasSettings,
-        players: player.players,
-        integrations: { discord: discordData },
-      });
-
-      submit(draft, {
-        method: "POST",
-        encType: "application/json",
-        action: "/draft/new",
-      });
+      try {
+        const draft = buildTexasDraft({
+          settings: texasSettings,
+          players: player.players,
+          integrations: { discord: discordData },
+        });
+        submit(draft, {
+          method: "POST",
+          encType: "application/json",
+          action: "/draft/new",
+        });
+      } catch (error) {
+        setSetupError(
+          error instanceof Error
+            ? error.message
+            : "Unable to prepare Texas. Check the selected content and player count.",
+        );
+      }
     } else {
       // Base draft mode - use normal settings
       const draftSettings = buildDraftSettings();
@@ -288,37 +314,61 @@ export default function DraftPrechoice() {
   const [savedStateJson, setSavedStateJson] = useState("");
 
   const handleContinueFromSavedState = () => {
+    setTemplateError(null);
     try {
       const savedState = JSON.parse(savedStateJson);
+      if (savedState?.format === "ti4-lobby-save") {
+        throw new Error(
+          "This is a lobby backup. Rejoin the original lobby and import it from Admin controls to restore progress.",
+        );
+      }
+      if (
+        !savedState?.settings ||
+        !MAPS[savedState.settings.type as ChoosableDraftType] ||
+        !Array.isArray(savedState.players) ||
+        savedState.players.length < 3 ||
+        savedState.players.length > 8 ||
+        !Array.isArray(savedState.slices) ||
+        !Array.isArray(savedState.presetMap) ||
+        !Array.isArray(savedState.availableFactions)
+      ) {
+        throw new Error(
+          "Paste an exported draft template containing its settings, players, map, slices and faction pool.",
+        );
+      }
       const savedPlayerCount = savedState.players.length;
-      // the saved state player count might be different from the current player count
-      // so we need to adjust the players array
-      const adjustedPlayers =
-        player.players.length < savedPlayerCount
-          ? [
-              ...player.players,
-              ...Array(savedPlayerCount - player.players.length)
-                .fill(null)
-                .map((_, i) => ({
-                  id: player.players.length + i,
-                  name: "",
-                })),
-            ]
-          : player.players.slice(0, savedPlayerCount);
+      const adjustedPlayers = makeLobbyPlayers(savedPlayerCount);
+      const template =
+        savedState.settings.draftGameMode === "texasStyle"
+          ? buildTexasDraft({
+              settings: savedState.settings,
+              players: adjustedPlayers,
+              integrations: { discord: discordData },
+            })
+          : savedState;
 
       navigate("/draft/new", {
         state: {
           savedDraftState: {
-            ...savedState,
+            ...template,
             integrations: { discord: discordData },
             players: adjustedPlayers,
             selections: [],
             pickOrder: [],
+            stagedSelections: undefined,
+            playerFactionPool: undefined,
+            bannedFactions: undefined,
           } as Draft,
         },
       });
     } catch (error) {
-      console.error("Invalid JSON:", error);
+      setTemplateError(
+        error instanceof SyntaxError
+          ? "This is not valid JSON. Copy the full exported draft template and try again."
+          : error instanceof Error
+            ? error.message
+            : "Unable to read this draft template.",
+      );
     }
   };
 
@@ -353,6 +403,7 @@ export default function DraftPrechoice() {
         onClose={closeSavedState}
         onSavedStateChange={setSavedStateJson}
         onContinue={handleContinueFromSavedState}
+        error={templateError}
       />
 
       <MinorFactionsInfoModal
@@ -361,24 +412,62 @@ export default function DraftPrechoice() {
       />
 
       <div className={classes.grid}>
-        <div className={classes.col12}><LobbyRecovery /></div>
-        {setupError && <div className={classes.col12}><Alert color="red">{setupError}</Alert></div>}
+        <div className={classes.col12}>
+          <Title order={1}>Create a draft lobby</Title>
+          <Text c="dimmed" mt="xs">
+            Prepare the draft, share one link, and start when everyone has
+            joined.
+          </Text>
+        </div>
+        <div className={classes.col12}>
+          <SimpleGrid cols={{ base: 1, sm: 2 }}>
+            <Paper withBorder radius="md" p="md">
+              <LobbyPlayerCount
+                count={playerCount}
+                onChange={handlePlayerCountChange}
+              />
+            </Paper>
+            <LobbyRecovery />
+          </SimpleGrid>
+        </div>
+        {setupError && (
+          <div className={classes.col12}>
+            <Alert color="red">{setupError}</Alert>
+          </div>
+        )}
         <div className={classes.col12}>
           <Group justify="space-between" gap="sm" mb="sm">
             <Text size="sm" c="dimmed">
-              Choose a draft format or build the galaxy using the official setup rules.
+              Choose a draft format or build the galaxy using the official setup
+              rules.
             </Text>
             <Group gap="xs">
-              <Button component={Link} to={`/draft/raw/new?mode=${draftMode === "twilightFalls" ? "twilightsFall" : "base"}`} variant="light">
+              <Button
+                component={Link}
+                to={`/draft/raw/new?mode=${draftMode === "twilightFalls" ? "twilightsFall" : "base"}&playerCount=${playerCount}`}
+                variant="light"
+              >
                 Rules as written (RAW)
               </Button>
-              <Button component={Link} to="/draft/bag/new" variant="light">
+              <Button
+                component={Link}
+                to={`/draft/bag/new?playerCount=${playerCount}`}
+                variant="light"
+              >
                 Bag / Franken / Twilight’s Fall
               </Button>
-              <Button component={Link} to="/draft/mantis/new" variant="light">
+              <Button
+                component={Link}
+                to={`/draft/mantis/new?playerCount=${playerCount}`}
+                variant="light"
+              >
                 Mantis draft
               </Button>
-              <Button component={Link} to="/draft/minimilty/new" variant="light">
+              <Button
+                component={Link}
+                to={`/draft/minimilty/new?playerCount=${playerCount}`}
+                variant="light"
+              >
                 Mini-Milty (base game)
               </Button>
             </Group>
@@ -403,44 +492,49 @@ export default function DraftPrechoice() {
           </div>
         )}
         <div className={classes.colLeft}>
-        <Flex align="center" direction="column">
-          <Box w="100%">
-            <SectionTitle title="Draft style" />
-          </Box>
-          <Group w="100%" align="flex-start">
-            <MapStyleSelector
-              playerCount={player.players.length}
-              selectedMapType={map.selectedMapType}
-              onMapTypeHover={setHoveredMapType}
-              onMapTypeSelect={handleMapTypeSelect}
-              onOpenSettings={handleOpenSettings}
-              onOpenMinorFactionsInfo={openMinorFactions}
-            />
-            <Box flex={1} pos="relative" mt="sm">
-              <Box
-                flex={1}
-                pos="relative"
-                mah="1000px"
-                mb="lg"
-                visibleFrom="xs"
-              >
-                {mapType && (
-                  <DemoMap
-                    id="prechoice-map"
-                    map={MAPS[mapType].map}
-                    titles={MAPS[mapType].titles}
-                    padding={0}
-                  />
-                )}
-              </Box>
-              <DraftFormatDescription
-                mapType={mapType}
-                data={MAPS[mapType].descriptionData}
-                title={MAPS[mapType].title}
-              />
+          <Flex align="center" direction="column">
+            <Box w="100%">
+              <SectionTitle title="Map layout" />
             </Box>
-          </Group>
-        </Flex>
+            <Flex
+              w="100%"
+              gap="md"
+              align="flex-start"
+              direction={{ base: "column", xs: "row" }}
+            >
+              <MapStyleSelector
+                playerCount={player.players.length}
+                selectedMapType={map.selectedMapType}
+                onMapTypeHover={setHoveredMapType}
+                onMapTypeSelect={handleMapTypeSelect}
+                onOpenSettings={handleOpenSettings}
+                onOpenMinorFactionsInfo={openMinorFactions}
+              />
+              <Box flex={1} w="100%" miw={0} pos="relative" mt="sm">
+                <Box
+                  flex={1}
+                  pos="relative"
+                  mah="1000px"
+                  mb="lg"
+                  visibleFrom="xs"
+                >
+                  {mapType && (
+                    <DemoMap
+                      id="prechoice-map"
+                      map={MAPS[mapType].map}
+                      titles={MAPS[mapType].titles}
+                      padding={0}
+                    />
+                  )}
+                </Box>
+                <DraftFormatDescription
+                  mapType={mapType}
+                  data={MAPS[mapType].descriptionData}
+                  title={MAPS[mapType].title}
+                />
+              </Box>
+            </Flex>
+          </Flex>
         </div>
 
         <div className={`${classes.col12} ${classes.hiddenFromXs}`}>
@@ -457,107 +551,127 @@ export default function DraftPrechoice() {
         </div>
 
         <div className={classes.colRight}>
-        <Stack>
-          <PlayerInputSection
-            minPlayers={3}
-            players={player.players}
-            discordData={discordData}
-            onChangeName={handleChangeName}
-            onIncreasePlayers={player.add}
-            onDecreasePlayers={player.remove}
-          />
           <Stack>
-            <SectionTitle title="Configuration" />
-            <Tabs
-              value={draftMode}
-              onChange={handleDraftModeChange}
-              variant="pills"
-            >
-              <Tabs.List mb="md">
-                <Tabs.Tab value="base">Base Draft</Tabs.Tab>
-                <Tabs.Tab value="twilightFalls">Twilight&apos;s Fall</Tabs.Tab>
-                <Tabs.Tab value="texasStyle">Texas Style</Tabs.Tab>
-              </Tabs.List>
+            <Stack>
+              <SectionTitle title="Draft rules" />
+              <Tabs
+                value={draftMode}
+                onChange={handleDraftModeChange}
+                variant="pills"
+              >
+                <Tabs.List mb="md">
+                  <Tabs.Tab value="base">Standard</Tabs.Tab>
+                  <Tabs.Tab value="twilightFalls">
+                    Twilight&apos;s Fall packs
+                  </Tabs.Tab>
+                  <Tabs.Tab value="texasStyle">Texas Style</Tabs.Tab>
+                </Tabs.List>
 
-              <Tabs.Panel value="base">
-                <DraftConfigurationPanel maxSlices={maxSlices} />
-              </Tabs.Panel>
+                <Tabs.Panel value="base">
+                  <DraftConfigurationPanel maxSlices={maxSlices} />
+                </Tabs.Panel>
 
-              <Tabs.Panel value="twilightFalls">
-                <Stack gap="sm">
-                  <Button component={Link} to="/draft/raw/new?mode=twilightsFall" variant="light">
-                    Official starting draft and map building (RAW)
-                  </Button>
-                  <Alert
-                    color="blue"
-                    title="Simplified Configuration"
-                    variant="light"
-                  >
-                    <Text size="xs">
-                      Players pick a &quot;reference card pack&quot; during the
-                      snake draft. After drafting, choose home system, faction,
-                      and priority from your pack.
-                    </Text>
-                  </Alert>
+                <Tabs.Panel value="twilightFalls">
+                  <Stack gap="sm">
+                    <Button
+                      component={Link}
+                      to={`/draft/raw/new?mode=twilightsFall&playerCount=${playerCount}`}
+                      variant="light"
+                    >
+                      Official starting draft and map building (RAW)
+                    </Button>
+                    <Alert
+                      color="blue"
+                      title="Simplified Configuration"
+                      variant="light"
+                    >
+                      <Text size="xs">
+                        Players pick a &quot;reference card pack&quot; during
+                        the snake draft. After drafting, choose home system,
+                        faction, and priority from your pack.
+                      </Text>
+                    </Alert>
 
-                  <div className={classes.twoColGrid}>
-                    <SlicesConfigurationSection maxSlices={maxSlices} />
-                    <ReferenceCardPacksConfigurationSection />
-                  </div>
-                  <div className={classes.twoColGrid}>
-                    <KingsConfigurationSection />
-                  </div>
-                </Stack>
-              </Tabs.Panel>
+                    <div className={classes.twoColGrid}>
+                      <SlicesConfigurationSection maxSlices={maxSlices} />
+                      <ReferenceCardPacksConfigurationSection />
+                    </div>
+                    <div className={classes.twoColGrid}>
+                      <KingsConfigurationSection />
+                    </div>
+                  </Stack>
+                </Tabs.Panel>
 
-              <Tabs.Panel value="texasStyle">
-                <Stack gap="sm">
-                  <Alert
-                    color="blue"
-                    title="Texas Style Draft"
-                    variant="light"
-                  >
-                    <Text size="xs">
-                      Randomized seating and speaker, faction bans, simultaneous
-                      faction selection, and a pass-based tile draft before the
-                      galaxy build.
-                    </Text>
-                  </Alert>
+                <Tabs.Panel value="texasStyle">
+                  <Stack gap="sm">
+                    <Alert
+                      color="blue"
+                      title="Texas Style Draft"
+                      variant="light"
+                    >
+                      <Text size="xs">
+                        Randomized seating and speaker, faction bans,
+                        simultaneous faction selection, and a pass-based tile
+                        draft before the galaxy build.
+                      </Text>
+                    </Alert>
 
-                  <div className={classes.twoColGrid}>
-                    <TexasStyleSettings
-                      factionHandSize={texas.factionHandSize}
-                      allowRedraw={texas.allowRedraw}
-                      onChangeHandSize={texas.setFactionHandSize}
-                      onToggleRedraw={texas.setAllowRedraw}
-                    />
-                  </div>
-                </Stack>
-              </Tabs.Panel>
-            </Tabs>
-          </Stack>
+                    <div className={classes.twoColGrid}>
+                      <TexasStyleSettings
+                        factionHandSize={texas.factionHandSize}
+                        allowRedraw={texas.allowRedraw}
+                        onChangeHandSize={texas.setFactionHandSize}
+                        onToggleRedraw={texas.setAllowRedraw}
+                      />
+                    </div>
+                    <ContentPacksSection />
+                    {texasErrors.length > 0 && (
+                      <Alert
+                        color="orange"
+                        title="Adjust the Texas pool"
+                        role="alert"
+                      >
+                        <Stack gap="xs">
+                          {texasErrors.map((error) => (
+                            <Text size="sm" key={error}>
+                              {error}
+                            </Text>
+                          ))}
+                        </Stack>
+                      </Alert>
+                    )}
+                  </Stack>
+                </Tabs.Panel>
+              </Tabs>
+            </Stack>
 
-          <Button
-            size="lg"
-            onMouseDown={handleContinue}
-            leftSection={<IconPlayerPlay />}
-            className={buttonClasses.primaryCta}
-          >
-            Continue
-          </Button>
-          <Group>
             <Button
-              size="md"
-              flex={1}
-              onMouseDown={openSavedState}
-              variant="outline"
-              color="purple.3"
-              leftSection={<IconFile />}
+              size="lg"
+              onClick={handleContinue}
+              leftSection={<IconPlayerPlay />}
+              className={buttonClasses.primaryCta}
+              loading={navigation.state !== "idle"}
+              disabled={texasErrors.length > 0}
             >
-              Continue from saved state
+              {draftMode === "texasStyle"
+                ? "Create shared lobby"
+                : draftMode === "base" && multidraft.isMultidraft
+                  ? `Create ${multidraft.numDrafts} lobbies`
+                  : "Preview draft"}
             </Button>
-          </Group>
-        </Stack>
+            <Group>
+              <Button
+                size="md"
+                flex={1}
+                onClick={openSavedState}
+                variant="outline"
+                color="purple.3"
+                leftSection={<IconFile />}
+              >
+                Use a draft template
+              </Button>
+            </Group>
+          </Stack>
         </div>
       </div>
     </>
@@ -614,7 +728,7 @@ function TexasStyleSettings({
       />
       <Switch
         label="Allow redraw"
-        description="Players can toss both factions and draw one they must play."
+        description="Players can return their dealt factions and draw one they must play."
         checked={allowRedraw}
         onChange={(event) => onToggleRedraw(event.currentTarget.checked)}
       />

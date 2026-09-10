@@ -1,3 +1,4 @@
+import { canCompleteFactionDraft } from "~/draft/factionFeasibility";
 import { shuffle } from "~/draft/helpers/randomization";
 import {
   DraftSettings,
@@ -16,6 +17,8 @@ type DraftOrderInput = {
   availableFactions: FactionId[];
   presetMap?: Draft["presetMap"];
   texasDraft?: TexasDraftState;
+  slices?: Draft["slices"];
+  availableMinorFactions?: Draft["availableMinorFactions"];
 };
 
 function generateSnakeOrder(baseOrder: PlayerId[], picks: number): PlayerId[] {
@@ -50,6 +53,8 @@ export function createDraftOrder({
   availableFactions,
   presetMap,
   texasDraft,
+  slices,
+  availableMinorFactions,
 }: DraftOrderInput) {
   const playerIds = shuffle(
     players.map((p) => p.id),
@@ -154,7 +159,11 @@ export function createDraftOrder({
   }
 
   // Normal draft flow
-  let pickOrder: DraftPick[] = [...playerIds, ...reversedPlayerIds, ...playerIds];
+  let pickOrder: DraftPick[] = [
+    ...playerIds,
+    ...reversedPlayerIds,
+    ...playerIds,
+  ];
 
   if (settings.modifiers?.banFactions) {
     const modifier = settings.modifiers.banFactions;
@@ -183,12 +192,29 @@ export function createDraftOrder({
   // Create 'bags' for each player if using bag draft
   let playerFactionPool: Record<PlayerId, FactionId[]> | undefined = undefined;
   if (settings.numPreassignedFactions !== undefined) {
-    playerFactionPool = {};
-    const available = shuffle(availableFactions);
-    players.forEach((player) => {
-      const bag = available.splice(0, settings.numPreassignedFactions!);
-      playerFactionPool![player.id] = bag;
-    });
+    for (let attempt = 0; attempt < 20; attempt++) {
+      playerFactionPool = {};
+      const available = shuffle([...availableFactions]);
+      players.forEach((player) => {
+        playerFactionPool![player.id] = available.splice(
+          0,
+          settings.numPreassignedFactions!,
+        );
+      });
+      if (
+        canCompleteFactionDraft({
+          settings,
+          players,
+          availableFactions,
+          availableMinorFactions,
+          presetMap,
+          slices,
+          playerFactionPool,
+          selections: [],
+        })
+      )
+        break;
+    }
   }
 
   return {

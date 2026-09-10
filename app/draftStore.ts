@@ -39,6 +39,8 @@ import { factions } from "./data/factionData";
 import { notifications } from "@mantine/notifications";
 import { coreRerollSlice, coreRerollMap } from "./draft/common/sliceGenerator";
 import { systemData } from "./data/systemData";
+import { getMinimumFactionCount } from "./utils/draftValidation";
+import { generateMiniMiltyMap } from "./draft/minimilty/buildMiniMilty";
 import {
   createTexasSeatAssignments,
   dealTexasFactionOptions,
@@ -247,7 +249,7 @@ const makeSelection = (
   } as DraftSelection);
 };
 
-const resetStratification = (state: any) => {
+const resetStratification = (state: Pick<DraftV2State, "draft">) => {
   if (state.draft.settings.factionStratification) {
     notifications.show({
       message: "Faction stratification was reset.",
@@ -304,7 +306,7 @@ const setModalState = (
   state: DraftV2State,
   modalType: "factionSettings" | "planetFinder",
   isOpen: boolean,
-  modalParams?: any,
+  modalParams?: DraftV2State["planetFinderModal"],
 ) => {
   if (modalType === "factionSettings") {
     state.factionSettingsModal = isOpen;
@@ -339,7 +341,7 @@ const getAvailableSystems = (
   );
 };
 
-const initializePools = (state: any, settings: DraftSettings) => {
+const initializePools = (state: Pick<DraftV2State, "factionPool" | "systemPool">, settings: DraftSettings) => {
   state.factionPool = getFactionPool(settings.factionGameSets);
   state.systemPool = getSystemPool(settings.tileGameSets);
 };
@@ -369,7 +371,13 @@ export const draftStore = createStore<DraftV2State>()(
       update: (draftId: string, draft: Draft) =>
         set((state) => {
           if (draftId === state.draftId) {
-            state.draft = draft;
+            if (state.replayMode) {
+              const index = Math.min(state.replayIndex ?? 0, draft.selections.length);
+              state.replaySelections = [...draft.selections];
+              state.replayIndex = index;
+              state.draft = { ...draft, selections: draft.selections.slice(0, index) };
+            } else state.draft = draft;
+            initializePools(state, draft.settings);
           }
         }),
       setSelectedPlayer: (playerId: PlayerId) =>
@@ -579,6 +587,8 @@ export const draftStore = createStore<DraftV2State>()(
 
       disableReplayMode: () =>
         set((state) => {
+          if (state.replayMode && state.replaySelections)
+            state.draft.selections = [...state.replaySelections];
           state.replayMode = false;
           state.replayIndex = undefined;
           state.replaySelections = undefined;
@@ -753,7 +763,7 @@ export const draftStore = createStore<DraftV2State>()(
           const minorFactionPool = getDraftableFactions(
             state.factionPool,
             draft.availableFactions,
-          );
+          ).filter((id) => id !== "keleres");
 
           const numMinorFactions = settings.numMinorFactions;
           if (numMinorFactions) {
@@ -833,7 +843,7 @@ export const draftStore = createStore<DraftV2State>()(
           const availableFactions = getAvailableFactions(
             factionPool,
             draft.availableFactions,
-          );
+          ).filter((id) => id !== "keleres");
 
           draft.availableMinorFactions = shuffle(
             availableFactions,
@@ -848,9 +858,13 @@ export const draftStore = createStore<DraftV2State>()(
             factionPool,
             draft.availableFactions,
             draft.availableMinorFactions,
-          );
+          ).filter((id) => id !== "keleres");
+          if (availableMinorFactions.length === 0) {
+            notifications.show({ message: "No available minor factions", color: "red" });
+            return;
+          }
           const idx = Math.floor(Math.random() * availableMinorFactions.length);
-          draft.availableMinorFactions?.push(availableMinorFactions[idx]);
+          (draft.availableMinorFactions ??= []).push(availableMinorFactions[idx]);
           draft.settings.numMinorFactions += 1;
         }),
 
@@ -936,24 +950,31 @@ export const draftStore = createStore<DraftV2State>()(
 
       removeLastFaction: () =>
         set(({ draft }) => {
-          if (draft.settings.draftGameMode === "twilightsFall") {
-            const removable = [...draft.availableFactions].reverse().find(id => !draft.settings.requiredFactions?.includes(id));
-            if (!removable || draft.availableFactions.length <= draft.players.length) return;
-            draft.availableFactions = draft.availableFactions.filter(id => id !== removable);
-            draft.settings.numKings = draft.availableFactions.length;
-            draft.settings.numFactions = draft.availableFactions.length;
-            return;
-          }
+          const removable = [...draft.availableFactions]
+            .reverse()
+            .find((id) => !draft.settings.requiredFactions?.includes(id));
+          if (
+            !removable ||
+            draft.availableFactions.length <= getMinimumFactionCount(draft)
+          ) return;
           resetStratification({ draft });
 
-          const availableFactions = draft.availableFactions.slice(0, -1);
-          draft.settings.numFactions = availableFactions.length;
-          draft.availableFactions = availableFactions;
+          draft.availableFactions = draft.availableFactions.filter(
+            (id) => id !== removable,
+          );
+          draft.settings.numFactions = draft.availableFactions.length;
+          if (draft.settings.draftGameMode === "twilightsFall") {
+            draft.settings.numKings = draft.settings.numFactions;
+          }
         }),
 
       removeFaction: (id: FactionId) =>
         set(({ draft }) => {
-          if (draft.settings.draftGameMode === "twilightsFall" && (draft.settings.requiredFactions?.includes(id) || draft.availableFactions.length <= draft.players.length)) return;
+          if (
+            !draft.availableFactions.includes(id) ||
+            draft.settings.requiredFactions?.includes(id) ||
+            draft.availableFactions.length <= getMinimumFactionCount(draft)
+          ) return;
           resetStratification({ draft });
 
           draft.settings.numFactions = draft.availableFactions.length - 1;
@@ -1022,6 +1043,15 @@ export const draftStore = createStore<DraftV2State>()(
       // map actions
       clearMap: () =>
         set(({ draft }) => {
+          if (draft.settings.draftGameMode === "presetMap") {
+            if (draft.settings.presetMap) {
+              draft.presetMap = draft.settings.presetMap.map((tile) => ({
+                ...tile,
+                position: { ...tile.position },
+              }));
+            }
+            return;
+          }
           const config = draftConfig[draft.settings.type];
           draft.presetMap = generateEmptyMap(config);
         }),
@@ -1033,7 +1063,7 @@ export const draftStore = createStore<DraftV2State>()(
           const minorFactionPool = getDraftableFactions(
             factionPool,
             draft.availableFactions,
-          );
+          ).filter((id) => id !== "keleres");
 
           const generated = generateMapAndSlices(
             config,
@@ -1051,6 +1081,12 @@ export const draftStore = createStore<DraftV2State>()(
 
       randomizeMap: () =>
         set(({ draft }) => {
+          if (draft.settings.draftGameMode === "presetMap") {
+            if (draft.settings.presetMapFormat === "miniMilty") {
+              draft.presetMap = generateMiniMiltyMap(draft.players.length);
+            }
+            return;
+          }
           const result = coreRerollMap(
             draft.settings,
             draft.slices.map((slice) => systemIdsInSlice(slice)),
@@ -1085,7 +1121,7 @@ export const draftStore = createStore<DraftV2State>()(
           const minorFactionPool = getDraftableFactions(
             factionPool,
             draft.availableFactions,
-          );
+          ).filter((id) => id !== "keleres");
 
           // Call coreRerollSlice to generate a new slice
           const result = coreRerollSlice(
@@ -1130,7 +1166,7 @@ export const draftStore = createStore<DraftV2State>()(
           const minorFactionPool = getDraftableFactions(
             factionPool,
             draft.availableFactions,
-          );
+          ).filter((id) => id !== "keleres");
 
           const rawSlices = config.generateSlices(
             draft.settings.numSlices,
@@ -1260,7 +1296,9 @@ export function randomizeFactions(
   stratifiedConfig?: FactionStratification,
 ) {
   // Start with required factions
-  const availableFactions = [...(requiredFactions ?? [])];
+  const availableFactions = [...new Set(requiredFactions ?? [])].filter((id) =>
+    factionPool.includes(id),
+  );
 
   // Behavior if no stratification is requested
   if (!stratifiedConfig || !factionGameSet) {

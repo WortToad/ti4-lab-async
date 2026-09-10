@@ -25,6 +25,7 @@ import {
 import { bagMapBuildError, bagToMantisState } from "./bagToMantis";
 import {
   applyBagAction,
+  assemblyBaseItems,
   assemblyOptions,
   BagDraftError,
   createBagState,
@@ -285,6 +286,10 @@ export function projectBagDraft(
             hand: seat.hand.map((id) => resolveBagItem(id, state.settings)),
             assemblyOptions:
               state.phase !== "drafting" ? assemblyOptions(state, seat) : [],
+            assemblyBaseItemIds:
+              state.phase !== "drafting"
+                ? assemblyBaseItems(state, seat).map((item) => item.id)
+                : [],
             keptItemIds: seat.keptItemIds,
             roundPicks: seat.roundPicks,
             ready: seat.ready,
@@ -379,11 +384,7 @@ export async function getBagDraftView(
   }
   return view;
 }
-export async function joinBagDraft(
-  id: string,
-  name: string,
-  key?: string,
-) {
+export async function joinBagDraft(id: string, name: string, key?: string) {
   return db.transaction(
     () => {
       const { state, credentials, viewer } = loadBagDraft(id, key);

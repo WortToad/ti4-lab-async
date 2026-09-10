@@ -90,6 +90,7 @@ export type BagDraftView = {
     bag: BagDraftItem[];
     hand: BagDraftItem[];
     assemblyOptions: BagDraftItem[];
+    assemblyBaseItemIds: string[];
     keptItemIds: string[];
     roundPicks: string[];
     ready: boolean;

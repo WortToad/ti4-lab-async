@@ -32,6 +32,7 @@ export function generateSlices(
   attempts: number = 0,
 ) {
   if (attempts > 1000) return undefined;
+  config = { numAlphas: 2, numBetas: 2, minLegendaries: 1, ...config };
 
   // Validation function for systems
   const validateSystems = (
@@ -110,7 +111,7 @@ export function generateSlices(
     config,
     sliceShape,
     systemTiers: miltySystemTiers,
-    getSliceTiers: () => ["high", "med", "low", "red", "red"],
+    sliceChoices: [{ weight: 1, value: ["high", "med", "low", "red", "red"] }],
     validateSystems,
     validateSlice,
     postProcessSlices,

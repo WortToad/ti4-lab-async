@@ -1,14 +1,14 @@
-import { appPath, appUrl } from "~/utils/appUrl";
+import { appUrl } from "~/utils/appUrl";
 import { Button, Grid, Stack, Text } from "@mantine/core";
 import { ActionFunctionArgs, data, redirect, MetaFunction } from "react-router";
 import {
   useFetcher,
   useLoaderData,
-  useRevalidator,
+  type ClientLoaderFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router";
 import { eq } from "drizzle-orm";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useDraft } from "~/draftStore";
 import { db } from "~/drizzle/config.server";
 import { drafts } from "~/drizzle/schema.server";
@@ -36,7 +36,9 @@ import {
   DraftSummarySection,
 } from "../draft.$id/sections";
 import { PlanetFinder } from "../draft.$id/components/PlanetFinder";
-import { useNotifyActivePlayer } from "~/hooks/useNotifyActivePlayer";
+import { useLobbyRefresh } from "~/hooks/useLobbyRefresh";
+import { DraftTurnStatus } from "~/draft/DraftTurnStatus";
+import { getBasePendingAction } from "~/draft/turn";
 import { FinalizedDraft } from "../draft.$id/components/FinalizedDraft";
 import { SyncDraftContext, useSyncDraftFetcher } from "~/hooks/useSyncDraft";
 import { PlayerInputSection } from "../draft.new/components/PlayerInputSection";
@@ -46,7 +48,6 @@ import { useSafeOutletContext } from "~/useSafeOutletContext";
 import { BanPhase } from "../draft.$id/sections/BanPhase";
 import { IconRefresh } from "@tabler/icons-react";
 import { useSocketConnection } from "~/useSocketConnection";
-import { AudioAlertConsentModal } from "../draft.$id/components/AudioAlertConsentModal";
 import { DraftableReferenceCardPacksSection } from "../draft.$id/sections/DraftableReferenceCardPacksSection";
 import { PriorityValueSelectionPhase } from "../draft.$id/sections/PriorityValueSelectionPhase";
 import { HomeSystemSelectionPhase } from "../draft.$id/sections/HomeSystemSelectionPhase";
@@ -68,6 +69,7 @@ import {
 import { applyBaseSelection } from "~/drizzle/baseDraftSync.server";
 import { broadcastDraftUpdate } from "~/websocket/broadcast.server";
 import { withBaseDraftLock } from "~/draft/baseDraftLock.server";
+import { createOrderedLoader } from "~/hooks/orderedLoader";
 
 export function headers() {
   return { "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" };
@@ -76,19 +78,22 @@ export function headers() {
 export default function RunningDraft() {
   const result = useLoaderData<typeof loader>();
   const fetcher = useFetcher<typeof action>();
-  const revalidator = useRevalidator();
-  useEffect(() => {
-    if (!result.lobby) return;
-    const timer = setInterval(() => {
-      if (
-        document.visibilityState === "visible" &&
-        revalidator.state === "idle" &&
-        fetcher.state === "idle"
-      )
-        void revalidator.revalidate();
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [result.lobby, revalidator, fetcher.state]);
+  useLobbyRefresh();
+  const selectedPlayer = useDraft((state) =>
+    state.draftId === result.id ? state.selectedPlayer : undefined,
+  );
+  const playerId = result.lobby ? result.ownPlayerId : selectedPlayer;
+  const currentDraft = useDraft((state) =>
+    state.draftId === result.id &&
+    state.hydrated &&
+    !state.replayMode &&
+    (!result.lobby || state.selectedPlayer === (result.ownPlayerId ?? -1))
+      ? state.draft
+      : result.data,
+  );
+  const pendingAction = currentDraft
+    ? getBasePendingAction(currentDraft, playerId)
+    : undefined;
   const operation = (operation: LobbyOperation) =>
     fetcher.submit(
       {
@@ -132,17 +137,33 @@ export default function RunningDraft() {
           />
         )}
         {result.data && (
-          <div inert={result.lobby?.paused || undefined}>
-            <DraftBoard
-              result={{
-                id: result.id,
-                urlName: result.urlName,
-                data: result.data,
-              }}
-              managed={!!result.lobby}
-              ownPlayerId={result.ownPlayerId}
-            />
-          </div>
+          <>
+            {playerId !== undefined && playerId >= 0 && currentDraft && (
+              <DraftTurnStatus
+                roomKey={`base:${result.id}`}
+                playerId={playerId}
+                pending={pendingAction}
+                paused={result.lobby?.paused}
+                complete={
+                  !pendingAction &&
+                  currentDraft.selections.length >=
+                    currentDraft.pickOrder.length
+                }
+              />
+            )}
+            <div inert={result.lobby?.paused || undefined}>
+              <DraftBoard
+                key={`${result.id}:${result.lobby ? (result.lobby.ownUuid ?? "spectator") : "legacy"}`}
+                result={{
+                  id: result.id,
+                  urlName: result.urlName,
+                  data: result.data,
+                }}
+                managed={!!result.lobby}
+                ownPlayerId={result.ownPlayerId}
+              />
+            </div>
+          </>
         )}
       </Stack>
     </LobbyIdentityContext.Provider>
@@ -159,8 +180,6 @@ function DraftBoard({
   ownPlayerId?: number;
 }) {
   const { adminMode } = useSafeOutletContext();
-  useNotifyActivePlayer();
-  const revalidator = useRevalidator();
   const {
     syncDraft,
     syncing,
@@ -178,36 +197,31 @@ function DraftBoard({
   const selectedPlayer = draftStore.selectedPlayer;
   const { draftFinished } = useHydratedDraft();
   const isPresetMapDraft = settings.draftGameMode === "presetMap";
+  const initialized = useRef(false);
 
   // Real-time socket connection to push and receive state updates.
   const { socket, isDisconnected, isReconnecting, reconnect } =
     useSocketConnection({
-      onConnect: () => socket?.emit("joinDraft", result.id),
+      draftId: result.id,
     });
-  useEffect(() => {
-    if (!socket) return;
-    const changed = () => {
-      void revalidator.revalidate();
-    };
-    socket.on("draftChanged", changed);
-    return () => {
-      socket.off("draftChanged", changed);
-    };
-  }, [socket, revalidator]);
 
-  // pre-seed store with loaded persisted draft
   useEffect(() => {
-    draftStore.draftActions.hydrate(result.id!, result.urlName!, result.data);
-    draftStore.replayActions.disableReplayMode();
-
-    if (managed) draftActions.setSelectedPlayer(ownPlayerId ?? -1);
-    else {
-      try {
-        const selected = localStorage.getItem(`draft:player:${result.id}`);
-        if (selected) draftActions.setSelectedPlayer(parseInt(selected));
-      } catch {
-        /* Browsers may disable local storage. */
+    if (!initialized.current) {
+      initialized.current = true;
+      draftActions.hydrate(result.id, result.urlName!, result.data);
+      if (managed) draftActions.setSelectedPlayer(ownPlayerId ?? -1);
+      else {
+        try {
+          const selected = localStorage.getItem(`draft:player:${result.id}`);
+          if (selected) draftActions.setSelectedPlayer(parseInt(selected));
+        } catch {
+          /* Browsers may disable local storage. */
+        }
       }
+    } else if (!syncing) {
+      // Polling replaces server state without closing local controls. Router
+      // mutations finish their authenticated revalidation before this applies.
+      draftActions.update(result.id, result.data);
     }
   }, [
     result.data,
@@ -216,8 +230,7 @@ function DraftBoard({
     managed,
     ownPlayerId,
     draftActions,
-    draftStore.draftActions,
-    draftStore.replayActions,
+    syncing,
   ]);
 
   useEffect(() => {
@@ -225,7 +238,11 @@ function DraftBoard({
       draftActions.setSelectedPlayer(ownPlayerId ?? -1);
   }, [managed, ownPlayerId, selectedPlayer, draftActions]);
 
-  if (!draftStore.hydrated || draftStore.draftId !== result.id)
+  if (
+    !initialized.current ||
+    !draftStore.hydrated ||
+    draftStore.draftId !== result.id
+  )
     return <LoadingOverlay />;
 
   const syncDraftContextValue = {
@@ -377,10 +394,6 @@ function DraftBoard({
       )}
 
       <PlanetFinder onSystemSelected={syncDraft} />
-      <AudioAlertConsentModal />
-      <audio id="notificationSound" src={appPath("/chime.mp3")} preload="auto">
-        <track kind="captions" />
-      </audio>
       <Stack gap="sm" mb="60" mt="lg">
         <CurrentPickBanner />
         <div style={{ height: 15 }} />
@@ -665,6 +678,20 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     { headers: headers() },
   );
 };
+
+const loadClientDraft =
+  createOrderedLoader<
+    Exclude<Awaited<ReturnType<typeof loader>>, Response>["data"]
+  >();
+
+export function clientLoader({
+  request,
+  serverLoader,
+}: ClientLoaderFunctionArgs) {
+  return loadClientDraft(new URL(request.url).pathname, () =>
+    serverLoader<typeof loader>(),
+  );
+}
 
 type LoaderData = {
   data: Draft | null;

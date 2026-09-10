@@ -2,7 +2,7 @@ import { Hex } from "../Hex";
 import { PlayerDemoTile as TPlayerDemoTile } from "~/types";
 import { useContext } from "react";
 import { MapContext } from "~/contexts/MapContext";
-import { Title } from "@mantine/core";
+import { Text } from "@mantine/core";
 
 import classes from "./Tiles.module.css";
 
@@ -22,14 +22,15 @@ export function PlayerDemoTile({ tile, title, color }: Props) {
       showBorder={tile.playerNumber === 6}
     >
       {tile.isHomeSystem && (
-        <Title
-          size={24}
+        <Text
+          fz={Math.min(24, radius * 0.38)}
+          ff="Orbitron"
           fw={600}
-          style={{ zIndex: 1 }}
+          style={{ zIndex: 1, whiteSpace: "nowrap" }}
           className={classes.title}
         >
           {title}
-        </Title>
+        </Text>
       )}
     </Hex>
   );

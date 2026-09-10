@@ -34,7 +34,7 @@ export function MinorFactionsSection() {
               icon={<IconDice size={24} />}
               description="Randomly preplaces home systems"
               checked={faction.minorFactionsMode.mode === "random"}
-              onMouseDown={() => faction.setMinorFactionsMode("random")}
+              onSelect={() => faction.setMinorFactionsMode("random")}
             />
 
             <HoverRadioCard
@@ -42,7 +42,7 @@ export function MinorFactionsSection() {
               icon={<IconUsersGroup size={24} />}
               description="Draft minor factions from the same pool as regular factions"
               checked={faction.minorFactionsMode.mode === "sharedPool"}
-              onMouseDown={() => faction.setMinorFactionsMode("shared")}
+              onSelect={() => faction.setMinorFactionsMode("shared")}
             />
 
             <HoverRadioCard
@@ -50,7 +50,7 @@ export function MinorFactionsSection() {
               icon={<IconUser size={24} />}
               description="Draft minor factions from a separate pool"
               checked={faction.minorFactionsMode.mode === "separatePool"}
-              onMouseDown={() => faction.setMinorFactionsMode("separate")}
+              onSelect={() => faction.setMinorFactionsMode("separate")}
             >
               {faction.minorFactionsMode.mode === "separatePool" && (
                 <NumberStepper

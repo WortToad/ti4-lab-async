@@ -23,7 +23,12 @@ export function NumberStepper({
         variant="subtle"
         color="gray"
         disabled={decreaseDisabled}
-        onMouseDown={decrease}
+        aria-label="Decrease count"
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.stopPropagation();
+          decrease(event);
+        }}
       >
         <IconMinus size={14} />
       </ActionIcon>
@@ -37,7 +42,12 @@ export function NumberStepper({
         variant="subtle"
         color="gray"
         disabled={increaseDisabled}
-        onMouseDown={increase}
+        aria-label="Increase count"
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.stopPropagation();
+          increase(event);
+        }}
       >
         <IconPlus size={14} />
       </ActionIcon>

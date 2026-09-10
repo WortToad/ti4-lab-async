@@ -1,4 +1,4 @@
-import { Button, Grid, SimpleGrid, Stack } from "@mantine/core";
+import { Button, Grid, SimpleGrid, Stack, Text } from "@mantine/core";
 import { CurrentPickBanner } from "../components/CurrentPickBanner";
 import { DraftOrderSection } from "./DraftOrderSection";
 import { SectionTitle } from "~/components/Section";
@@ -9,21 +9,28 @@ import { useMemo } from "react";
 import { useSyncDraft } from "~/hooks/useSyncDraft";
 import { useHydratedDraft } from "~/hooks/useHydratedDraft";
 import { PlayerInputSection } from "~/routes/draft.new/components/PlayerInputSection";
+import {
+  getFactionBanError,
+  getFactionBanSource,
+} from "~/utils/factionSourceValidation";
 import { useSafeOutletContext } from "~/useSafeOutletContext";
 
 export function BanPhase() {
   const { adminMode } = useSafeOutletContext();
-  const players = useDraft((state) => state.draft.players);
-  const factionPool = useDraft((state) => state.factionPool);
+  const draft = useDraft((state) => state.draft);
+  const players = draft.players;
   const { banFaction } = useDraft((state) => state.draftActions);
   const { updatePlayerName } = useDraft((state) => state.actions);
   const sortedFactionPool = useMemo(() => {
-    return [...factionPool].sort((a, b) => {
+    return getFactionBanSource({
+      settings: draft.settings,
+      availableMinorFactions: draft.availableMinorFactions,
+    }).sort((a, b) => {
       const aFaction = allFactions[a];
       const bFaction = allFactions[b];
       return aFaction.name.localeCompare(bFaction.name);
     });
-  }, [factionPool]);
+  }, [draft.settings, draft.availableMinorFactions]);
 
   const { syncDraft, syncing } = useSyncDraft();
 
@@ -54,28 +61,37 @@ export function BanPhase() {
               const player = hydratedPlayers.find((p) =>
                 p.bannedFactions?.includes(factionId),
               );
+              const banError = player
+                ? undefined
+                : getFactionBanError(draft, factionId);
               return (
-                <DraftableFaction
-                  key={factionId}
-                  player={player}
-                  disabled={!!player}
-                  selectTitle={"Ban"}
-                  faction={allFactions[factionId]}
-                  onSelect={
-                    canSelect && !player
-                      ? () => {
-                          if (
-                            confirm(
-                              `Banning faction ${allFactions[factionId].name}`,
-                            )
-                          ) {
-                            banFaction(activePlayer.id, factionId);
-                            syncDraft();
+                <Stack key={factionId} gap={4}>
+                  <DraftableFaction
+                    player={player}
+                    disabled={!!player || !!banError || syncing}
+                    selectTitle={"Ban"}
+                    faction={allFactions[factionId]}
+                    onSelect={
+                      canSelect && !player && !banError && !syncing
+                        ? () => {
+                            if (
+                              confirm(
+                                `Banning faction ${allFactions[factionId].name}`,
+                              )
+                            ) {
+                              banFaction(activePlayer.id, factionId);
+                              syncDraft();
+                            }
                           }
-                        }
-                      : undefined
-                  }
-                />
+                        : undefined
+                    }
+                  />
+                  {banError && (
+                    <Text size="xs" c="dimmed">
+                      {banError}
+                    </Text>
+                  )}
+                </Stack>
               );
             })}
           </SimpleGrid>

@@ -74,7 +74,7 @@ export function ReferenceCardPacksConfigurationSection() {
                 !!referenceCardPacks.presetPackages.trim() ||
                 referenceCardPacks.numReferenceCardPacks <= playerCount
               }
-              onMouseDown={() =>
+              onClick={() =>
                 referenceCardPacks.setNumReferenceCardPacks(
                   referenceCardPacks.numReferenceCardPacks - 1,
                 )
@@ -93,7 +93,7 @@ export function ReferenceCardPacksConfigurationSection() {
                 !!referenceCardPacks.presetPackages.trim() ||
                 referenceCardPacks.numReferenceCardPacks >= maxPacks
               }
-              onMouseDown={() =>
+              onClick={() =>
                 referenceCardPacks.setNumReferenceCardPacks(
                   referenceCardPacks.numReferenceCardPacks + 1,
                 )

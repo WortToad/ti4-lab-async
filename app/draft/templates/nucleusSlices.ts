@@ -12,6 +12,7 @@ export function generateTemplateNucleusSlices(
   if (availableSystems.length < count * 3) return undefined;
   for (let attempt = 0; attempt < 1000; attempt++) {
     const slices = generateSlices(count, availableSystems, config);
+    if (!slices) return undefined;
     const valid = slices.every((slice) => {
       if (slice.length !== 3 || slice.some((id) => !systemData[id]))
         return false;

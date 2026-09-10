@@ -18,11 +18,18 @@ import {
 import { Tile } from "~/types";
 import { systemData } from "~/data/systemData";
 import { useCoreSliceValues } from "~/hooks/useCoreSliceValues";
+import { getPresetMapEditableTiles } from "~/utils/presetMapEditing";
 
 export function MapSection() {
   const config = useDraftConfig();
   const map = useDraft((state) => state.draft.presetMap);
   const draftType = useDraft((state) => state.draft.settings.type);
+  const settings = useDraft((state) => state.draft.settings);
+  const isPresetMap = settings.draftGameMode === "presetMap";
+  const isMiniMilty = settings.presetMapFormat === "miniMilty";
+  const editableTiles = isPresetMap
+    ? getPresetMapEditableTiles({ settings, presetMap: map })
+    : config.modifiableMapTiles;
   const sliceValueModifiers = useDraft(
     (state) => state.draft.settings.sliceGenerationConfig?.sliceValueModifiers,
   );
@@ -43,6 +50,8 @@ export function MapSection() {
   const height = getBoundedMapHeight(width, windowHeight - 150);
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (!event.over || !event.active.data.current || !event.over.data.current)
+      return;
     const [, originTileIdx] = (event.active!.id as string).split("-");
     const [, destTileIdx] = (event.over!.id as string).split("-");
 
@@ -51,8 +60,11 @@ export function MapSection() {
 
     if (destTile.type !== "SYSTEM") return;
     if (originTile.type !== "SYSTEM") return;
-    // do not allow move of mecatol rex!
-    if (destTile.systemId === "18") return;
+    if (
+      !editableTiles.includes(destTile.idx) ||
+      !editableTiles.includes(originTile.idx)
+    )
+      return;
 
     const originSystem = systemData[originTile.systemId];
     const destinationSystem = systemData[destTile.systemId];
@@ -72,15 +84,28 @@ export function MapSection() {
     <div style={{ position: "sticky", width: "auto", top: 60 }}>
       <SectionTitle title="Full Map">
         <Group gap={2}>
-          {/* TODO: disable map randomization if not allowed by the draft config */}
-          {config.allowIndependentMapRandomization !== false && (
-            <Button size="xs" onMouseDown={randomizeMap} bg="gray">
-              <IconDice6Filled size={24} />
+          {(isMiniMilty ||
+            (!isPresetMap &&
+              config.allowIndependentMapRandomization !== false)) && (
+            <Button
+              size="xs"
+              onClick={randomizeMap}
+              bg="gray"
+              aria-label={isMiniMilty ? "Regenerate map" : "Randomize map"}
+            >
+              <IconDice6Filled size={20} />
+              {isMiniMilty && "Regenerate map"}
             </Button>
           )}
-          <Button size="xs" onMouseDown={clearMap} bg="red">
-            Clear
-          </Button>
+          {(!isPresetMap || settings.presetMap) && (
+            <Button
+              size="xs"
+              onClick={clearMap}
+              color={isPresetMap ? "gray" : "red"}
+            >
+              {isPresetMap ? "Reset map" : "Clear"}
+            </Button>
+          )}
         </Group>
       </SectionTitle>
       <Box
@@ -113,7 +138,7 @@ export function MapSection() {
           <Map
             id="fullmap"
             map={map}
-            modifiableMapTiles={config.modifiableMapTiles}
+            modifiableMapTiles={editableTiles}
             interactions={MAP_INTERACTIONS.draftBuild}
             onSelectSystemTile={(t) => openPlanetFinderForMap(t.idx)}
             onDeleteSystemTile={(t) => removeSystemFromMap(t.idx)}

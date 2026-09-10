@@ -21,6 +21,9 @@ export const MANTIS_MAPS: Partial<Record<number, DraftType>> = {
   8: "milty8p",
 };
 
+export const KELERES_HOMES = ["mentak", "xxcha", "argent"] as const;
+export type KeleresHome = (typeof KELERES_HOMES)[number];
+
 export type MantisSettings = {
   players: Player[];
   tileGameSets: GameSet[];
@@ -37,7 +40,7 @@ export type MantisSettings = {
 export type MantisSnapshot = {
   settings: MantisSettings;
   mapType: DraftType;
-  phase: "draft" | "discard" | "build" | "complete";
+  phase: "draft" | "home" | "discard" | "build" | "complete";
   players: Player[];
   order: number[];
   pickNumber: number;
@@ -45,6 +48,7 @@ export type MantisSnapshot = {
   factions: FactionId[];
   hands: Record<number, SystemId[]>;
   chosenFactions: Record<number, FactionId>;
+  chosenHomes?: Record<number, KeleresHome>;
   factionLabels?: Record<number, string>;
   bagDraftId?: string;
   seats: Record<number, number>;
@@ -59,12 +63,17 @@ export type MantisState = MantisSnapshot & { history: MantisSnapshot[] };
 export type MantisAction =
   | { type: "tile"; tileId: string }
   | { type: "faction"; factionId: FactionId }
+  | { type: "home"; factionId: KeleresHome }
   | { type: "seat"; seat: number }
   | { type: "discard"; tileId: string }
   | { type: "place"; mapIdx: number }
   | { type: "mulligan" };
 
 type Random = () => number;
+
+function mapHomeSystem(systemId: SystemId): SystemId {
+  return systemId === "51" ? "17" : systemId === "118" ? "94" : systemId;
+}
 
 function shuffled<T>(values: T[], random: Random): T[] {
   const result = [...values];
@@ -79,6 +88,90 @@ function integer(value: number, min: number, max: number, label: string) {
   if (!Number.isInteger(value) || value < min || value > max) {
     throw new Error(`${label} must be between ${min} and ${max}.`);
   }
+}
+
+function hasKeleresConflict(factions: FactionId[]) {
+  return (
+    factions.includes("keleres") &&
+    KELERES_HOMES.every((id) => factions.includes(id))
+  );
+}
+
+export function canDraftMantisFaction(
+  state: MantisSnapshot,
+  factionId: FactionId,
+) {
+  const chosen = Object.values(state.chosenFactions);
+  return (
+    state.factions.includes(factionId) &&
+    !chosen.includes(factionId) &&
+    !hasKeleresConflict([...chosen, factionId])
+  );
+}
+
+export function mantisHomeChoices(state: MantisSnapshot): KeleresHome[] {
+  const chosen = Object.values(state.chosenFactions);
+  return KELERES_HOMES.filter((id) => !chosen.includes(id));
+}
+
+export function mantisChosenHome(
+  state: MantisSnapshot,
+  playerId: number,
+): KeleresHome | undefined {
+  if (state.chosenFactions[playerId] !== "keleres") return undefined;
+  const home =
+    state.map[
+      draftConfig[state.mapType].homeIdxInMapString[state.seats[playerId]]
+    ];
+  const choices = mantisHomeChoices(state);
+  const chosen = state.chosenHomes?.[playerId];
+  if (chosen && choices.includes(chosen)) return chosen;
+  return choices.find(
+    (id) => home?.type === "SYSTEM" && home.systemId === factionSystems[id].id,
+  );
+}
+
+export function mantisPendingHomePlayer(
+  state: MantisSnapshot,
+): number | undefined {
+  return state.players.find(
+    (player) =>
+      state.chosenFactions[player.id] === "keleres" &&
+      !mantisChosenHome(state, player.id),
+  )?.id;
+}
+
+// Old builds could finish with Keleres' home still empty. Reopen only that
+// decision, preserving all tiles, draws, and already resolved home systems.
+export function normalizeMantisState(state: MantisState): MantisState {
+  for (const idx of draftConfig[state.mapType].homeIdxInMapString) {
+    const home = state.map[idx];
+    if (home?.type !== "SYSTEM") continue;
+    const systemId = mapHomeSystem(home.systemId);
+    if (systemId !== home.systemId) {
+      const map = [...state.map];
+      map[idx] = { ...home, systemId };
+      state = { ...state, map };
+    }
+  }
+  if (state.phase !== "build" && state.phase !== "complete") return state;
+  if (mantisPendingHomePlayer(state) !== undefined) {
+    return { ...state, phase: "home" };
+  }
+  for (const player of state.players) {
+    const choice = mantisChosenHome(state, player.id);
+    if (!choice) continue;
+    const idx =
+      draftConfig[state.mapType].homeIdxInMapString[state.seats[player.id]];
+    const home = state.map[idx];
+    const systemId = factionSystems[choice].id;
+    if (home.type !== "SYSTEM" || home.systemId !== systemId) {
+      const map = [...state.map];
+      map[idx] = { ...home, type: "SYSTEM", systemId };
+      return { ...state, map };
+    }
+  }
+  return state;
 }
 
 export function createMantisDraft(
@@ -118,6 +211,28 @@ export function createMantisDraft(
       "Required factions must be available and fit the faction pool.",
     );
   }
+  const factions = [
+    ...required,
+    ...shuffled(
+      factionPool.filter((id) => !required.includes(id)),
+      random,
+    ).slice(0, settings.numFactions - required.length),
+  ];
+  if (factions.length === count && hasKeleresConflict(factions)) {
+    const replace = factions.findIndex(
+      (id) =>
+        ["keleres", ...KELERES_HOMES].includes(id) && !required.includes(id),
+    );
+    const replacement = shuffled(
+      factionPool.filter((id) => !factions.includes(id)),
+      random,
+    )[0];
+    if (replace < 0 || !replacement)
+      throw new Error(
+        "Keleres needs an unplayed Mentak, Xxcha, or Argent home. Increase the faction pool or remove one of those required factions.",
+      );
+    factions[replace] = replacement;
+  }
   const mapType = MANTIS_MAPS[count]!;
   const map = generateEmptyMap(draftConfig[mapType]);
   const used = new Set(
@@ -154,13 +269,7 @@ export function createMantisDraft(
       : shuffled(ids, random),
     pickNumber: 0,
     pool: [...blues.slice(0, blueCount), ...reds.slice(0, redCount)],
-    factions: [
-      ...required,
-      ...shuffled(
-        factionPool.filter((id) => !required.includes(id)),
-        random,
-      ).slice(0, settings.numFactions - required.length),
-    ],
+    factions,
     hands: Object.fromEntries(ids.map((id) => [id, []])),
     chosenFactions: {},
     seats: {},
@@ -228,7 +337,11 @@ export function createMantisMapBuild(
     if (homeSystem) {
       if (!systemData[homeSystem] || systemData[homeSystem].type !== "GREEN")
         throw new Error(`Unknown home system: ${homeSystem}.`);
-      map[idx] = { ...map[idx], type: "SYSTEM", systemId: homeSystem };
+      map[idx] = {
+        ...map[idx],
+        type: "SYSTEM",
+        systemId: mapHomeSystem(homeSystem),
+      };
     } else map[idx] = { ...map[idx], type: "HOME", playerId: id, seat };
   }
   const state: MantisState = {
@@ -251,6 +364,7 @@ export function createMantisMapBuild(
     history: [],
   };
   drawTile(state, random);
+  advanceForcedMantisPlacements(state, random);
   return state;
 }
 
@@ -302,6 +416,7 @@ export function mantisBuildTurn(
 }
 
 export function mantisActivePlayer(state: MantisSnapshot): number | undefined {
+  if (state.phase === "home") return mantisPendingHomePlayer(state);
   if (state.phase === "build") return mantisBuildTurn(state)?.playerId;
   if (state.phase !== "draft") return undefined;
   const round = Math.floor(state.pickNumber / state.order.length);
@@ -312,7 +427,8 @@ export function mantisActivePlayer(state: MantisSnapshot): number | undefined {
 function drawTile(state: MantisState, random: Random, exclude?: string) {
   const turn = mantisBuildTurn(state);
   if (!turn) {
-    state.phase = "complete";
+    state.phase =
+      mantisPendingHomePlayer(state) === undefined ? "complete" : "home";
     state.drawnTile = undefined;
     return;
   }
@@ -326,15 +442,81 @@ function beginBuild(state: MantisState, random: Random) {
   const config = draftConfig[state.mapType];
   for (const player of state.players) {
     const index = config.homeIdxInMapString[state.seats[player.id]];
-    const system = factionSystems[state.chosenFactions[player.id]];
+    const faction = state.chosenFactions[player.id];
+    const chosenHome = mantisChosenHome(state, player.id);
+    const system =
+      factionSystems[faction === "keleres" ? chosenHome! : faction];
     if (system)
       state.map[index] = {
         ...state.map[index],
         type: "SYSTEM",
-        systemId: system.id,
+        systemId: mapHomeSystem(system.id),
       };
   }
+  if (mantisPendingHomePlayer(state) !== undefined) {
+    state.phase = "home";
+  } else if (state.players.some((p) => needsMantisDiscard(state, p.id))) {
+    state.phase = "discard";
+  } else if (!state.drawnTile || !mantisBuildTurn(state)) {
+    drawTile(state, random);
+  }
+}
+
+export function canMantisMulligan(state: MantisSnapshot, playerId: number) {
+  return (
+    state.mulligansUsed[playerId] < state.settings.mulligans &&
+    state.hands[playerId].length >= 2
+  );
+}
+
+function placeMantisTile(
+  state: MantisState,
+  playerId: number,
+  mapIdx: number,
+  random: Random,
+) {
+  const tileId = state.drawnTile!;
+  state.map[mapIdx] = {
+    ...state.map[mapIdx],
+    type: "SYSTEM",
+    systemId: tileId,
+  };
+  state.hands[playerId] = state.hands[playerId].filter((id) => id !== tileId);
   drawTile(state, random);
+  return tileId;
+}
+
+function advanceForcedMantisPlacements(state: MantisState, random: Random) {
+  // Every iteration consumes one tile. Do not run on reads or undo: an admin
+  // can inspect and recover the exact state before any automatic placement.
+  const remaining = Object.values(state.hands).flat().length;
+  for (let step = 0; step < remaining && state.phase === "build"; step++) {
+    const turn = mantisBuildTurn(state);
+    if (
+      !turn ||
+      turn.positions.length !== 1 ||
+      canMantisMulligan(state, turn.playerId)
+    )
+      return;
+    if (
+      !state.drawnTile ||
+      !state.hands[turn.playerId].includes(state.drawnTile)
+    )
+      throw new Error("No tile is available for the forced placement.");
+    const { history, ...before } = state;
+    const snapshot = structuredClone(before);
+    const tileId = placeMantisTile(
+      state,
+      turn.playerId,
+      turn.positions[0],
+      random,
+    );
+    const player = state.players.find((p) => p.id === turn.playerId)!;
+    state.log.push(
+      `${player.name} placed tile ${tileId} at map position ${turn.positions[0]} automatically (no placement or mulligan choice).`,
+    );
+    state.history = [...history, snapshot];
+  }
 }
 
 export function applyMantisAction(
@@ -345,8 +527,9 @@ export function applyMantisAction(
 ): MantisState {
   if (!original.players.some((p) => p.id === playerId))
     throw new Error("Choose a player in this draft.");
-  const state = structuredClone(original);
-  const { history, ...before } = original;
+  const state = structuredClone(normalizeMantisState(original));
+  const { history, ...before } = state;
+  const snapshot = structuredClone(before);
   const player = state.players.find((p) => p.id === playerId)!;
   let message = "";
   if (state.phase === "draft") {
@@ -373,10 +556,11 @@ export function applyMantisAction(
     } else if (action.type === "faction") {
       if (
         state.chosenFactions[playerId] ||
-        !state.factions.includes(action.factionId) ||
-        Object.values(state.chosenFactions).includes(action.factionId)
+        !canDraftMantisFaction(state, action.factionId)
       )
-        throw new Error("That faction cannot be drafted.");
+        throw new Error(
+          "That faction cannot be drafted. Keleres must retain an unplayed Mentak, Xxcha, or Argent home.",
+        );
       state.chosenFactions[playerId] = action.factionId;
       message = `${player.name} drafted ${action.factionId}.`;
     } else if (action.type === "seat") {
@@ -395,10 +579,21 @@ export function applyMantisAction(
       state.players.length *
         (7 + state.settings.extraBlues + state.settings.extraReds)
     ) {
-      if (state.players.some((p) => needsMantisDiscard(state, p.id)))
-        state.phase = "discard";
-      else beginBuild(state, random);
+      beginBuild(state, random);
     }
+  } else if (state.phase === "home") {
+    if (playerId !== mantisPendingHomePlayer(state))
+      throw new Error("Only the Keleres player can choose their home system.");
+    if (
+      action.type !== "home" ||
+      !mantisHomeChoices(state).includes(action.factionId)
+    )
+      throw new Error(
+        "Choose an unplayed Mentak, Xxcha, or Argent home for Keleres.",
+      );
+    state.chosenHomes = { ...state.chosenHomes, [playerId]: action.factionId };
+    message = `${player.name} chose the ${action.factionId} home system and hero for Keleres.`;
+    beginBuild(state, random);
   } else if (state.phase === "discard") {
     if (
       action.type !== "discard" ||
@@ -423,10 +618,7 @@ export function applyMantisAction(
     if (turn?.playerId !== playerId)
       throw new Error("It is another player's turn to build.");
     if (action.type === "mulligan") {
-      if (
-        state.mulligansUsed[playerId] >= state.settings.mulligans ||
-        state.hands[playerId].length < 2
-      )
+      if (!canMantisMulligan(state, playerId))
         throw new Error("No mulligan is available.");
       const previous = state.drawnTile;
       state.mulligansUsed[playerId]++;
@@ -441,26 +633,21 @@ export function applyMantisAction(
         throw new Error(
           "Place the drawn tile in one of your highlighted positions.",
         );
-      const tileId = state.drawnTile;
-      state.map[action.mapIdx] = {
-        ...state.map[action.mapIdx],
-        type: "SYSTEM",
-        systemId: tileId,
-      };
-      state.hands[playerId] = state.hands[playerId].filter(
-        (id) => id !== tileId,
-      );
+      const tileId = placeMantisTile(state, playerId, action.mapIdx, random);
       message = `${player.name} placed tile ${tileId} at map position ${action.mapIdx}.`;
-      drawTile(state, random);
     } else throw new Error("Place the drawn tile or use a mulligan.");
   } else throw new Error("This draft is complete.");
   state.log.push(message);
-  state.history = [...history, structuredClone(before)];
+  state.history = [...history, snapshot];
+  advanceForcedMantisPlacements(state, random);
   return state;
 }
 
 export function undoMantisAction(state: MantisState): MantisState {
   const previous = state.history.at(-1);
   if (!previous) throw new Error("There is no action to undo.");
-  return { ...structuredClone(previous), history: state.history.slice(0, -1) };
+  return normalizeMantisState({
+    ...structuredClone(previous),
+    history: state.history.slice(0, -1),
+  });
 }

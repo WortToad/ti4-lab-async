@@ -1,7 +1,7 @@
 import { useSearchParams } from "react-router";
-import { PlayerInputSection } from "../draft.new/components/PlayerInputSection";
+import { LobbyPlayerCount } from "~/draft/LobbyPlayerCount";
+import { makeLobbyPlayers, parseLobbyPlayerCount } from "~/draft/lobbySetup";
 import { useState } from "react";
-import { Player } from "~/types";
 import {
   Alert,
   Box,
@@ -33,21 +33,24 @@ const configByPlayerCount: Record<number, DraftConfig> = {
 export default function DraftTournament() {
   const [searchParams] = useSearchParams();
   const [tableName, setTableName] = useState("");
-  const [players, setPlayers] = useState<Player[]>([
-    ...[0, 1, 2, 3, 4, 5].map((i) => ({
-      id: i,
-      name: "",
-    })),
-  ]);
+  const slicesParam = searchParams.get("slices") ?? "";
+  const sliceStrings = slicesParam.split(";").filter(Boolean);
+  const maxPlayers = Math.min(8, sliceStrings.length);
+  const [players, setPlayers] = useState(() =>
+    makeLobbyPlayers(
+      parseLobbyPlayerCount(
+        searchParams.get("playerCount"),
+        4,
+        Math.max(4, maxPlayers),
+      ),
+    ),
+  );
   const createDraft = useCreateDraft();
 
   const config = configByPlayerCount[players.length] as DraftConfig;
-  const draftDisabled =
-    players.some((player) => player.name === "") || !tableName;
+  const draftDisabled = !tableName.trim();
 
-  const slicesParam = searchParams.get("slices")!;
-  const slices = slicesParam
-    .split(";")
+  const slices = sliceStrings
     .map((subStr) => {
       const parts = subStr.split(",");
       const [name, ...systemIds] = parts;
@@ -59,11 +62,16 @@ export default function DraftTournament() {
   const urlPrefix = searchParams.get("urlPrefix");
 
   const adminPassword = searchParams.get("adminPassword") ?? undefined;
+  const adjustedFactions = Math.max(
+    players.length,
+    Number(numFactions) - Math.max(0, 6 - players.length),
+  );
+  const adjustedSliceCount = Math.max(
+    players.length,
+    slices.length - Math.max(0, 6 - players.length),
+  );
 
   const handleCreateDraft = () => {
-    const adjustedFactions =
-      Number(numFactions) - Math.max(0, 6 - players.length);
-    const adjustedSliceCount = slices.length - Math.max(0, 6 - players.length);
     const adjustedSlices = shuffle(slices, adjustedSliceCount).sort((a, b) =>
       a.name.localeCompare(b.name),
     );
@@ -93,68 +101,49 @@ export default function DraftTournament() {
         undefined,
       ),
       selections: [],
-      presetUrl: `${urlPrefix}-${tableName}`,
+      presetUrl: [urlPrefix, tableName.trim()].filter(Boolean).join("-"),
     });
   };
 
-  const handleChangeName = (playerIdx: number, name: string) => {
-    setPlayers((players) =>
-      players.map((player) =>
-        player.id === playerIdx ? { ...player, name } : player,
-      ),
-    );
-  };
-
-  const handleAddPlayer = () =>
-    setPlayers((players) => [...players, { id: players.length, name: "" }]);
-
-  const handleRemovePlayer = () =>
-    setPlayers((players) => players.slice(0, players.length - 1));
-
-  const errorMessages = [
-    players.some((player) => player.name === "") &&
-      "Please fill in all player names",
-    !tableName && "Please enter a table name",
-  ]
+  const errorMessages = [!tableName.trim() && "Please enter a table name"]
     .filter(Boolean)
     .join(", ");
 
-  const maxPlayers = Math.min(8, slices.length);
+  if (maxPlayers < 4) {
+    return (
+      <Alert color="orange" title="Tournament setup link incomplete">
+        This link needs at least four prepared slices. Open the complete setup
+        link from your tournament organizer.
+      </Alert>
+    );
+  }
 
   return (
     <Box mt="lg">
       <SectionTitle title="Tournament Table Setup" />
       <Grid gutter="xl" mt="xl">
         <Grid.Col span={12} pl="xl" pr="xl">
-          <PlayerInputSection
-            players={players}
-            discordData={undefined}
-            onChangeName={handleChangeName}
-            onIncreasePlayers={handleAddPlayer}
-            onDecreasePlayers={handleRemovePlayer}
-            maxPlayers={maxPlayers}
+          <LobbyPlayerCount
+            count={players.length}
+            min={4}
+            max={maxPlayers}
+            onChange={(count) => setPlayers(makeLobbyPlayers(count))}
           />
-          {players.length < 6 && (
+          {adjustedSliceCount < slices.length && (
             <Alert color="orange.9" mt="xs" variant="filled" fw="bold">
-              With fewer than 6 players, one slice and one faction will be
-              randomly removed from the pool for each missing player
+              This table will use {adjustedSliceCount} randomly selected slices
+              from the {slices.length} below, with {adjustedFactions} factions.
             </Alert>
           )}
 
           <Text size="xl" fw={700} mb="sm" mt="lg">
-            URL name
+            Table name
           </Text>
           <Group>
+            {urlPrefix && <Text>{urlPrefix} –</Text>}
             <TextInput
               size="xl"
-              placeholder="Enter table prefix..."
-              value={urlPrefix ?? ""}
-              readOnly
-              disabled
-            />
-            -
-            <TextInput
-              size="xl"
+              aria-label="Table name"
               placeholder="Enter table name..."
               flex={1}
               value={tableName}
@@ -167,9 +156,9 @@ export default function DraftTournament() {
             size="xl"
             disabled={draftDisabled}
             fullWidth
-            onMouseDown={handleCreateDraft}
+            onClick={handleCreateDraft}
           >
-            Create Draft
+            Create shared lobby
           </Button>
 
           {errorMessages && (

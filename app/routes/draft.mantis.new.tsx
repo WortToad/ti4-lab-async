@@ -1,5 +1,6 @@
 import {
   Alert,
+  Anchor,
   Button,
   Checkbox,
   Container,
@@ -15,9 +16,11 @@ import { useState } from "react";
 import {
   data,
   Form,
+  Link,
   redirect,
   useActionData,
   useNavigation,
+  useSearchParams,
   type ActionFunctionArgs,
 } from "react-router";
 import { factions as allFactions } from "~/data/factionData";
@@ -27,6 +30,8 @@ import {
 } from "~/drizzle/mantisDraft.server";
 import type { MantisSettings } from "~/draft/mantis/engine";
 import { MapBuildDiagram } from "~/draft/mantis/MapBuildDiagram";
+import { LobbyPlayerCount } from "~/draft/LobbyPlayerCount";
+import { makeLobbyPlayers, parseLobbyPlayerCount } from "~/draft/lobbySetup";
 import type { FactionId, GameSet } from "~/types";
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -34,15 +39,15 @@ export async function action({ request }: ActionFunctionArgs) {
     const form = await request.formData();
     const count = Number(form.get("playerCount") ?? 6);
     if (!Number.isInteger(count) || count < 4 || count > 8)
-      throw new Error("Choose between 4 and 8 player slots.");
-    const names = Array.from({ length: count }, (_, i) => `Player ${i + 1}`);
+      throw new Error("Choose between 4 and 8 players.");
+    const players = makeLobbyPlayers(count);
     const sets: GameSet[] = ["base"];
     if (form.has("pok")) sets.push("pok");
     if (form.has("te")) sets.push("te");
     if (form.has("ds"))
       sets.push("discordant", "discordantexp", "unchartedstars");
     const settings: MantisSettings = {
-      players: names.map((name, id) => ({ id, name })),
+      players,
       tileGameSets: sets,
       factionGameSets: sets,
       numFactions: Number(form.get("numFactions")),
@@ -56,7 +61,7 @@ export async function action({ request }: ActionFunctionArgs) {
         .split(",")
         .filter(Boolean) as FactionId[],
       draftOrder: form.has("staticOrder")
-        ? names.map((_, index) => index)
+        ? players.map((player) => player.id)
         : undefined,
     };
     const { id, token } = createMantisRoom(settings);
@@ -77,6 +82,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function MantisNew() {
+  const [search] = useSearchParams();
   const result = useActionData<typeof action>();
   const navigation = useNavigation();
   const [banned, setBanned] = useState<string[]>([]);
@@ -84,7 +90,9 @@ export default function MantisNew() {
   const [extraBlues, setExtraBlues] = useState(0);
   const [extraReds, setExtraReds] = useState(0);
   const [mulligans, setMulligans] = useState(1);
-  const [playerCount, setPlayerCount] = useState(6);
+  const [playerCount, setPlayerCount] = useState(() =>
+    parseLobbyPlayerCount(search.get("playerCount"), 4, 8),
+  );
   const options = Object.values(allFactions)
     .filter((f) => f.set !== "twilightsFall")
     .map((f) => ({ value: f.id, label: f.name }));
@@ -92,6 +100,13 @@ export default function MantisNew() {
     <Container size="sm" py="xl">
       <Form method="post">
         <Stack gap="lg">
+          <Anchor
+            component={Link}
+            to={`/draft/prechoice?playerCount=${playerCount}`}
+            size="sm"
+          >
+            ← All draft formats
+          </Anchor>
           <Title order={2}>Mantis draft</Title>
           <Text>
             Take turns drafting a faction, a speaker position and individual map
@@ -101,22 +116,18 @@ export default function MantisNew() {
           </Text>
           {result?.error && <Alert color="red">{result.error}</Alert>}
           <Alert color="blue" title="Create a shared lobby">
-            Everyone uses the same link and enters their name to join. Each
-            player receives a recovery UUID. Draft order, seats, and choices
-            stay hidden until everyone has joined and you start the draft.
+            Choose your settings and create the lobby, then share its link.
+            Everyone enters their own name to join, including you if you are
+            playing. Start the draft once everyone has joined. Each player’s
+            recovery code and this browser’s saved access let them return later.
           </Alert>
-          <NumberInput
-            name="playerCount"
-            label="Player slots"
+          <input type="hidden" name="playerCount" value={playerCount} />
+          <LobbyPlayerCount
             description="4–8 players; names are entered when joining."
-            value={playerCount}
-            onChange={(value) =>
-              setPlayerCount(typeof value === "number" ? value : 6)
-            }
+            count={playerCount}
+            onChange={setPlayerCount}
             min={4}
             max={8}
-            allowDecimal={false}
-            required
           />
           <Checkbox
             name="staticOrder"
@@ -204,10 +215,10 @@ export default function MantisNew() {
               <Text size="sm">
                 Everyone fills their one stage 1 space, then their two stage 2
                 spaces, then their two stage 3 spaces, as numbered in the map
-                above. The player with
-                the most empty spaces in the current group places next; ties
-                follow speaker order. All five of your kept tiles are placed,
-                with your home system in a separate home position.
+                above. The player with the most empty spaces in the current
+                group places next; ties follow speaker order. All five of your
+                kept tiles are placed, with your home system in a separate home
+                position.
               </Text>
             </Stack>
           </Paper>

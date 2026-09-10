@@ -1,4 +1,4 @@
-import { SimpleGrid } from "@mantine/core";
+import { SimpleGrid, Stack, Text } from "@mantine/core";
 import { Section, SectionTitle } from "~/components/Section";
 import { useDraft } from "~/draftStore";
 import { DraftableSlice } from "../components/DraftableSlice";
@@ -6,8 +6,10 @@ import { useSyncDraft } from "~/hooks/useSyncDraft";
 import { useHydratedDraft } from "~/hooks/useHydratedDraft";
 import { useSafeOutletContext } from "~/useSafeOutletContext";
 import { useSortedSlices } from "~/routes/draft/useSortedSlices";
+import { canCompleteFactionDraft } from "~/draft/factionFeasibility";
 
 export function SlicesSection() {
+  const draft = useDraft((state) => state.draft);
   const slices = useDraft((state) => state.draft.slices);
   const draftGameMode = useDraft((state) => state.draft.settings.draftGameMode);
   const nucleusStyle = useDraft((state) => state.draft.settings.nucleusStyle);
@@ -48,38 +50,57 @@ export function SlicesSection() {
         spacing="lg"
         style={{ alignItems: "flex-start" }}
       >
-        {sortedSlices.map(({slice, idx}) => (
-          <DraftableSlice
-            key={idx}
-            id={`slice-${idx}`}
-            slice={slice}
-            player={hydratedPlayers.find((p) => p.sliceIdx === idx)}
-            modifiable={adminMode}
-            onSelect={
-              canSelectSlice
-                ? () => {
-                    if (confirm(`Selecting ${slice.name}`)) {
-                      selectSlice(activePlayer.id, idx);
-                      syncDraft();
-                    }
-                  }
-                : undefined
-            }
-            onSelectTile={
-              adminMode
-                ? (tile) => openPlanetFinderForSlice(idx, tile.idx)
-                : undefined
-            }
-            onDeleteTile={
-              adminMode
-                ? (tile) => removeSystemFromSlice(idx, tile.idx)
-                : undefined
-            }
-            onRandomizeSlice={adminMode ? () => randomizeSlice(idx) : undefined}
-            onClearSlice={adminMode ? () => clearSlice(idx) : undefined}
-            onNameChange={adminMode ? (name) => updateSliceName(idx, name) : undefined}
-          />
-        ))}
+        {sortedSlices.map(({ slice, idx }) => {
+          const blocked = !canCompleteFactionDraft(draft, {
+            type: "SELECT_SLICE",
+            playerId: activePlayer?.id ?? -1,
+            sliceIdx: idx,
+          });
+          const selected = hydratedPlayers.find((p) => p.sliceIdx === idx);
+          return (
+            <Stack key={idx} gap={4}>
+              <DraftableSlice
+                id={`slice-${idx}`}
+                slice={slice}
+                player={selected}
+                modifiable={adminMode}
+                onSelect={
+                  canSelectSlice && !blocked
+                    ? () => {
+                        if (confirm(`Selecting ${slice.name}`)) {
+                          selectSlice(activePlayer.id, idx);
+                          syncDraft();
+                        }
+                      }
+                    : undefined
+                }
+                onSelectTile={
+                  adminMode
+                    ? (tile) => openPlanetFinderForSlice(idx, tile.idx)
+                    : undefined
+                }
+                onDeleteTile={
+                  adminMode
+                    ? (tile) => removeSystemFromSlice(idx, tile.idx)
+                    : undefined
+                }
+                onRandomizeSlice={
+                  adminMode ? () => randomizeSlice(idx) : undefined
+                }
+                onClearSlice={adminMode ? () => clearSlice(idx) : undefined}
+                onNameChange={
+                  adminMode ? (name) => updateSliceName(idx, name) : undefined
+                }
+              />
+              {canSelectSlice && !selected && blocked && (
+                <Text size="xs" c="orange">
+                  Unavailable: this slice would leave too few legal faction
+                  picks or occupy the last Keleres home.
+                </Text>
+              )}
+            </Stack>
+          );
+        })}
       </SimpleGrid>
     </Section>
   );

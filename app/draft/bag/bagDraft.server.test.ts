@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { eq } from "drizzle-orm";
-import { applyBagAction, assemblyOptions } from "./engine";
+import { applyBagAction, assemblyOptions, createBagState } from "./engine";
 import type { BagDraftState, BagVariant } from "./types";
 
 const directory = mkdtempSync(join(tmpdir(), "ti4-bag-test-"));
@@ -20,6 +20,46 @@ beforeAll(async () => {
 afterAll(() => rmSync(directory, { recursive: true, force: true }));
 
 describe("persistent private bag drafts", () => {
+  it("identifies drafted assembly choices separately from conditional replacements", () => {
+    const state = createBagState({
+      variant: "franken",
+      players: ["Alice", "Bob"],
+      shufflePlayers: false,
+    });
+    state.phase = "assembling";
+    state.seats[0].hand = ["ABILITY:star_forge", "MECH:sol_mech"];
+    const view = service.projectBagDraft("assembly", state, {
+      isAdmin: false,
+      playerId: 0,
+    });
+    expect(view.privateSeat?.assemblyBaseItemIds).toEqual(state.seats[0].hand);
+    expect(view.privateSeat?.assemblyOptions.map((item) => item.id)).toContain(
+      "MECH:muaat_mech",
+    );
+    expect(
+      service.projectBagDraft("assembly", state, { isAdmin: true }).privateSeat,
+    ).toBeUndefined();
+
+    state.settings.variant = "frankendraz";
+    state.seats[0].hand = ["FACTION:muaat"];
+    const packageView = service.projectBagDraft("assembly", state, {
+      isAdmin: false,
+      playerId: 0,
+    });
+    expect(packageView.privateSeat?.assemblyBaseItemIds).toContain(
+      "ABILITY:star_forge",
+    );
+    expect(packageView.privateSeat?.assemblyBaseItemIds).not.toContain(
+      "MECH:muaat_mech",
+    );
+    expect(
+      packageView.privateSeat?.assemblyOptions.map((item) => item.id),
+    ).toContain("MECH:muaat_mech");
+    expect(packageView.privateSeat?.assemblyBaseItemIds).not.toContain(
+      "FACTION:muaat",
+    );
+  });
+
   it("keeps the lobby hidden until everyone claims a slot and the admin starts", async () => {
     const room = await service.createBagDraft({
       variant: "inaugural_splice",
@@ -175,7 +215,7 @@ describe("persistent private bag drafts", () => {
     if (revoked instanceof Response)
       throw new Error("Expected recovered lobby data");
     expect(revoked.data.viewer.playerId).toBeUndefined();
-    expect(revoked.data.accessError).toContain("UUID has changed");
+    expect(revoked.data.accessError).toContain("recovery code has changed");
     expect(new Headers(revoked.init?.headers).get("Set-Cookie")).toContain(
       "Max-Age=0",
     );

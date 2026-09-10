@@ -7,7 +7,7 @@ import {
   drafts,
   draftStagedSelections,
 } from "./schema.server";
-import type { Draft } from "~/types";
+import type { DiscordPlayer, Draft } from "~/types";
 import type { LobbyView } from "~/draft/lobby";
 import type { LobbyOperation } from "~/draft/LobbyPanel";
 import {
@@ -37,7 +37,13 @@ export type BaseLobby = {
   paused: boolean;
   adminUuid: string;
   secret: string;
-  slots: { id: number; name: string; uuid?: string }[];
+  slots: {
+    id: number;
+    name: string;
+    uuid?: string;
+    discordPlayerId?: number;
+  }[];
+  discordPlayers?: DiscordPlayer[];
   checkpoints: Checkpoint[];
   revision: number;
 };
@@ -57,6 +63,7 @@ export function createBaseLobby(id: string, draft: Draft) {
     adminUuid: randomUUID(),
     secret: newBackupSecret(),
     slots: draft.players.map(({ id, name }) => ({ id, name })),
+    discordPlayers: structuredClone(draft.integrations.discord?.players ?? []),
     checkpoints: [],
     revision: 0,
   };
@@ -71,9 +78,26 @@ export function getBaseLobby(id: string): BaseLobby | undefined {
     .from(baseDraftLobbies)
     .where(eq(baseDraftLobbies.id, id))
     .get();
-  return row
-    ? ({ ...JSON.parse(row.data), revision: row.revision } as BaseLobby)
-    : undefined;
+  if (!row) return undefined;
+  const lobby = {
+    ...JSON.parse(row.data),
+    revision: row.revision,
+  } as BaseLobby;
+  if (lobby.discordPlayers === undefined) {
+    const draftRow = db.select().from(drafts).where(eq(drafts.id, id)).get();
+    const roster = draftRow
+      ? (JSON.parse(draftRow.data as string) as Draft).integrations.discord
+          ?.players
+      : undefined;
+    if (roster) {
+      lobby.discordPlayers = roster;
+      for (const slot of lobby.slots) {
+        if (slot.uuid && roster.some((player) => player.playerId === slot.id))
+          slot.discordPlayerId = slot.id;
+      }
+    }
+  }
+  return lobby;
 }
 export function findBaseRecovery(uuid: string) {
   if (!validRecoveryToken(uuid)) return undefined;
@@ -124,7 +148,7 @@ export async function requireBasePlayer(
       { status: 409 },
     );
   if ((await readBaseViewer(id, request)).playerId !== playerId)
-    throw new Response("Rejoin your own slot to make this pick.", {
+    throw new Response("Rejoin as this player to make this pick.", {
       status: 403,
     });
 }
@@ -151,6 +175,31 @@ export function baseLobbyView(
       })),
     ownUuid: viewer.uuid,
     adminUuid: viewer.adminUuid,
+    discordPlayers: lobby.discordPlayers
+      ?.filter(
+        (player) =>
+          player.type === "identified" &&
+          !!player.memberId &&
+          !lobby.slots.some(
+            (slot) =>
+              slot.uuid &&
+              lobby.discordPlayers?.some(
+                (claimed) =>
+                  claimed.playerId === slot.discordPlayerId &&
+                  claimed.type === "identified" &&
+                  claimed.memberId === player.memberId,
+              ),
+          ),
+      )
+      .map((player) => ({
+        id: player.playerId,
+        name:
+          player.type === "identified"
+            ? player.nickname
+              ? `${player.nickname} (@${player.username})`
+              : `@${player.username}`
+            : player.name,
+      })),
     checkpoints: viewer.isAdmin
       ? lobby.checkpoints
           .map(({ id, label, createdAt }) => ({ id, label, createdAt }))
@@ -334,13 +383,13 @@ export async function mutateBaseLobby(
     if (operation.type === "recover") {
       const uuid = operation.uuid.trim().toLowerCase();
       if (!validRecoveryToken(uuid))
-        throw new Error("Enter a valid recovery UUID.");
+        throw new Error("Enter a valid recovery code.");
       if (uuid === lobby.adminUuid) issued = { uuid, role: "admin" };
       else if (lobby.slots.some((s) => s.uuid === uuid))
         issued = { uuid, role: "player" };
       else
         throw new Error(
-          "That UUID does not belong to this lobby. Ask the admin for your UUID.",
+          "That recovery code does not belong to this lobby. Ask the admin for your code.",
         );
     } else if (operation.type === "join") {
       if (viewer.playerId !== undefined)
@@ -349,8 +398,37 @@ export async function mutateBaseLobby(
         .sort((a, b) => a.id - b.id)
         .find((candidate) => !candidate.uuid);
       if (!availableSlot) throw new Error("This lobby is full.");
+      if (operation.discordPlayerId !== undefined) {
+        const discordPlayer = lobby.discordPlayers?.find(
+          (player) => player.playerId === operation.discordPlayerId,
+        );
+        if (
+          !Number.isInteger(operation.discordPlayerId) ||
+          discordPlayer?.type !== "identified" ||
+          !discordPlayer.memberId
+        )
+          throw new Error(
+            "Choose an available Discord account, or join without one.",
+          );
+        if (
+          lobby.slots.some(
+            (slot) =>
+              slot.uuid &&
+              lobby.discordPlayers?.some(
+                (claimed) =>
+                  claimed.playerId === slot.discordPlayerId &&
+                  claimed.type === "identified" &&
+                  claimed.memberId === discordPlayer.memberId,
+              ),
+          )
+        )
+          throw new Error(
+            "That Discord account has already joined this lobby.",
+          );
+      }
       availableSlot.name = playerName(operation.name);
       availableSlot.uuid = randomUUID();
+      availableSlot.discordPlayerId = operation.discordPlayerId;
       issued = { uuid: availableSlot.uuid, role: "player" };
     } else {
       if (!viewer.isAdmin)
@@ -370,7 +448,7 @@ export async function mutateBaseLobby(
           break;
         case "resume":
           if (lobby.slots.some((s) => !s.uuid))
-            throw new Error("Fill all slots before resuming.");
+            throw new Error("Wait for every player to join before resuming.");
           lobby.paused = false;
           break;
         case "checkpoint":
@@ -383,6 +461,7 @@ export async function mutateBaseLobby(
         case "release":
           if (!slot) throw new Error("Choose a player.");
           delete slot.uuid;
+          delete slot.discordPlayerId;
           if (lobby.started) lobby.paused = true;
           break;
         case "rotate":
@@ -450,6 +529,18 @@ export async function mutateBaseLobby(
         ...p,
         name: lobby.slots.find((s) => s.id === p.id)!.name,
       }));
+      if (lobby.discordPlayers && draft.integrations.discord) {
+        draft.integrations.discord.players = lobby.slots.map((slot) => {
+          const linked = slot.uuid
+            ? lobby.discordPlayers?.find(
+                (player) => player.playerId === slot.discordPlayerId,
+              )
+            : undefined;
+          return linked
+            ? { ...linked, playerId: slot.id }
+            : { type: "unidentified", playerId: slot.id, name: slot.name };
+        });
+      }
       db.update(drafts)
         .set({
           data: JSON.stringify(draft),

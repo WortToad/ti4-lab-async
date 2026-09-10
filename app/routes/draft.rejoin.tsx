@@ -40,7 +40,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return data(
       {
         error:
-          "Enter your saved recovery UUID. Ask your lobby admin for a replacement if you have lost it.",
+          "Enter your saved recovery code. Ask your lobby admin for a replacement if you have lost it.",
       },
       { status: 400, headers: privateHeaders },
     );
@@ -53,7 +53,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return data(
       {
         error:
-          "This UUID was not found. Check that you copied the whole UUID, or ask your lobby admin to recover or replace it.",
+          "This recovery code was not found. Check that you copied the whole code, or ask your lobby admin to recover or replace it.",
       },
       { status: 404, headers: privateHeaders },
     );
@@ -83,7 +83,7 @@ export default function RejoinLobby() {
             {result.error}
           </Alert>
         )}
-        <LobbyRecovery />
+        <LobbyRecovery defaultOpened />
         <Button component={Link} to="/draft/prechoice" variant="subtle">
           Back to draft setup
         </Button>

@@ -87,6 +87,6 @@ export const miltyeq8p: DraftConfig = {
       [2, 0],
     ],
   } as Record<number, [number, number][]>,
-  generateMap,
-  generateSlices,
+  generateMap: (...args) => generateMap(...args),
+  generateSlices: (...args) => generateSlices(...args),
 };

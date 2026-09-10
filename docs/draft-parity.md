@@ -2,11 +2,21 @@
 
 Reference: the downloaded AsyncTI4 bot at commit `690bb6935d497e81667b6f59e00b0aa51902d858`. The comparison concerns draft preparation, drafting, and faction assembly; Discord game execution is a separate system.
 
+The [September 2026 code and experience review](draft-review-2026-09-10.md) records verified fixes and their coverage. Supported formats below should not be read as complete rule or interaction parity.
+
+All shared-lobby setup pages ask for player count rather than names. Players name themselves when joining, and imported Discord identities can be selected independently of join order. Previews preserve map and faction changes through refresh in the current browser tab and retain edits if creation fails. Recovery codes and admin controls remain available through expandable lobby controls.
+
+All draft formats share pending-action indicators, tab-title updates and optional sound/browser alerts, including simultaneous ready states. Returning to the tab or reconnecting refreshes the lobby immediately when no submission is pending. Opted-in alerts allow background refresh; delivery requires the tab to remain open.
+
+Standard and Texas results include an owned, undoable Keleres home-and-hero choice before map export. Played primary and minor factions occupy their homes. Standard faction and slice choices preserve a feasible completion across shared, separate and preassigned pools. Incompatible older results and simultaneous Texas choices that occupy all three homes retain their picks, block export and explain how the admin can recover. This is separate from Twilight's Fall home-system drafting.
+
 ## Mini-Milty
 
 `/draft/minimilty/new` prepares the bot's base-game Mini-Milty format for three to six players. Before drafting, each map region receives three blue and two red base-game systems without duplicates. Faction selection uses only base-game factions, defaults to one more faction than players, and supports bans and priorities. Players then draft a faction and a speaker position over two snake rounds. Speaker position determines seating on the prepared board.
 
 This reuses the application's existing preset-map draft and live synchronization. Existing preset-map drafts that separate seating from speaker order retain their three-round behavior. Mini-Milty generation follows `BaseGameMiniMiltyService` and `BaseGameMiniMiltyFactionSettings`; it uses the application's standard Milty hyperlane layouts for the selected player count.
+
+The recommended faction count follows player-count changes until manually overridden. Preview regeneration uses the Mini-Milty builder, and reset restores the originally prepared map without discarding faction edits. Generic preset-map editing preserves home, Mecatol, and hyperlane cells.
 
 ## Map layouts
 
@@ -33,15 +43,17 @@ The application now has a dedicated bag draft flow for these bot variants:
 | Inaugural Splice          | Three abilities, two genomes, and two unit upgrades per bag; one pick per pass | Two abilities, one genome, and one unit upgrade           |
 | Standard bag draft        | Three blue tiles, two red tiles, one home system, and speaker order            | Keep all seven items                                      |
 
-Shared controls include player shuffling, category draft/keep counts, first and later pick counts, individual component and faction bans, priority factions for FrankenDraz, optional tiles/order, and expansion pools. The Weak Components and OP Components ban presets use the bot's lists. Bags pass once all players finish their selections; claimed slots and recovery UUIDs protect choices, and the host can undo actions or restore saved rounds. Component assembly applies errata additions and offers legal optional swaps. Twilight's Fall supports Wavelength and Antimatter substitutions.
+Shared controls include player shuffling, category draft/keep counts, first and later pick counts, individual component and faction bans, priority factions for FrankenDraz, optional tiles/order, and expansion pools. The Weak Components and OP Components ban presets use the bot's lists. Bags pass once all players finish their selections; player ownership and recovery codes protect choices, and the host can undo actions or restore saved rounds. Component assembly applies errata additions and offers legal optional swaps. Twilight's Fall supports Wavelength and Antimatter substitutions.
 
 When tiles are included, blue and red tiles are drafted alongside faction components using the same pick allowance. A player may take at most one blue and one red tile on a pass, within their total picks for that bag. Across all bags, the default collection and keep limits are three blue and two red tiles per player. Picking a tile reserves it for that player's later map section; it does not place the tile yet. After bag picking, players confirm their final faction components and kept tiles. Once everyone confirms, compatible drafts create a map room with those same tiles, accessible from the shared lobby. The setup page and every draft phase explain this sequence using the selected limits, with separate map setup guidance for drafts without tiles, unsupported player counts, or incompatible keep limits.
 
 The bot's **Use Bag Draft of Everything** button (`TEOptionService.startTFDraft`) starts `TwilightsFallFrankenDraft`, matching the web's **Twilight’s Fall · Bag Draft of Everything** option. Default bags contain 18 cards: three abilities, two genomes, two unit upgrades, two fleets, two homes, three blue tiles, two red tiles, one Mahact king, and one speaker position. Players take three cards from their first bag and two on later passes. Assembly keeps two abilities, one genome, one unit upgrade, one fleet, one home, the king, all five tiles, and speaker position. Either or both generic technologies can replace an ability, genome, or unit-upgrade slot. This differs from Inaugural Splice, which drafts only the seven ability/genome/unit cards and assumes map setup is handled separately.
 
-The catalog includes ordinary official factions, Thunder's Edge, Discordant Stars, Blue Reverie, Lost Legacies, and monuments. The complete imported catalog and refresh instructions are documented in [the bag catalog README](../app/draft/bag/README.md). Bags use unique cards and report insufficient pools; they do not silently duplicate components to fill large drafts. In particular, six FrankenDraz factions per player requires additional factions for a six-player game.
+The catalog includes ordinary official factions, Thunder's Edge, Discordant Stars, Blue Reverie, Lost Legacies, and monuments. The complete imported catalog and refresh instructions are documented in [the bag catalog README](../app/draft/bag/README.md). Bags use unique cards and report insufficient pools beside the setup controls before submission, using the same preparation checks as the server. They do not silently duplicate components to fill large drafts. In particular, six FrankenDraz factions per player requires additional factions for a six-player game.
 
 Bag components reuse the application's faction and Mahact king icons, tile rendering, typography, and card surfaces. Abilities and genomes carry their originating faction's emblem; fleets show unit icons and counts, and unit cards show combat statistics. Simplified and Originals apply to tiles and available card artwork, with enlarged original-card and king references available during picking and assembly. Missing assets are bundled from the bot checkout by the catalog importer; drafts do not require a running bot or remote image requests. Mantis uses the same faction, speaker, reference, and tile components.
+
+Pending bag picks and assembly changes persist in the current browser tab and are validated against the current player identity, round, hand and rules before restoration. Completing a submission or becoming a spectator clears them. Selected counts and submit controls remain reachable while scrolling.
 
 ## Boundaries and remaining bot features
 
@@ -55,11 +67,13 @@ Bag components reuse the application's faction and Mahact king icons, tile rende
 
 ## Mantis drafts and map building
 
-`/draft/mantis/new` supports four through eight players on the existing standard Milty map layouts. Players snake draft a public pool of individual blue/red tiles, factions, and speaker positions in any order. The initial player order can be shuffled or entered explicitly. Faction bans and priorities apply when the pool is generated.
+`/draft/mantis/new` supports four through eight players on the existing standard Milty map layouts. Players snake draft a public pool of individual blue/red tiles, factions, and speaker positions in any order. The initial player order can be shuffled or follow lobby join order. Faction bans and priorities apply when the pool is generated.
 
 As in `MantisTileDraftableSettings` and `MantisMapBuildService`, players may draft zero to two extra tiles of each color and then discard to exactly three blue and two red tiles. During map building, the server randomly draws from the current player's remaining tiles. Zero to three mulligans per player allow drawing a different tile without discarding the original. Placement is restricted to that player's current position group: the inner tile, the two middle positions, then the two outer positions. Within a group, the next player has the most unfilled positions, with ties resolved in speaker order. The builder follows the bot's placement behavior and does not add Texas draft anomaly/wormhole adjacency restrictions.
 
-The host can act for players, release a claimed player slot, and undo the latest action. Undo restores the prior random draw, hands, map, phase, and counters. Players claim their names using a browser cookie; only the slot owner or host can make picks. Public spectators can watch. Polling refreshes the shared draft, and a revision check rejects concurrent stale writes. Host credentials, slot credentials, and undo snapshots are excluded from public loader data.
+Keleres explicitly chooses an unplayed Mentak, Xxcha or Argent home and matching hero before building. Faction selection prevents all three host factions being played alongside Keleres. Legacy unfinished home choices reopen without losing placed tiles. Creuss/Crimson home positions use their galaxy gates, including repaired saved maps. A placement with exactly one legal position and no legal mulligan is recorded automatically with its own undo snapshot; loading or undoing does not replay that action automatically.
+
+The admin can release a player for replacement and undo the latest action. Undo restores the prior random draw, hands, map, phase, and counters. Players join with their names and recover access using saved recovery codes; only the player owner can make that player's picks. Admin access alone does not reveal a private draw or grant proxy picks. Public spectators can watch after the lobby starts. Polling refreshes the shared draft, and a revision check rejects concurrent stale writes. Credentials are returned only to their authorized owner or admin, and undo snapshot contents are excluded from public loader data.
 
 Compatible completed bag drafts for three through eight players can start directly in map-building mode using their existing hands, home systems, speaker order, and custom faction labels. The handoff requires exactly three known blue and two known red tiles per player. Completed maps export Async Discord and Tabletop Playground strings, plus JSON results.
 

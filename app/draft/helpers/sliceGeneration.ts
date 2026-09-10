@@ -400,14 +400,14 @@ export function separateAnomalies(origSlice: SystemId[], shape: string[]) {
   // First, shuffle a few times and see if we get a good setup.
   // Give up after a reasonable number of tries.
   for (let i = 0; i < 20; i++) {
-    if (!hasAdjacentAnomalies(slice, shape)) return slice;
+    if (!hasAdjacentSliceAnomalies(slice, shape)) return slice;
     slice = shuffle(slice);
   }
 
   // No luck.  Walk through slice permutations and use the first good one.
   // (This always fixes the same way, hence a few random stabs before this.)
   const inspector = (candidate: SystemId[]) => {
-    return !hasAdjacentAnomalies(candidate, shape);
+    return !hasAdjacentSliceAnomalies(candidate, shape);
   };
   const goodSlice = permutator(slice, inspector);
   if (goodSlice) {
@@ -417,7 +417,7 @@ export function separateAnomalies(origSlice: SystemId[], shape: string[]) {
   return slice;
 }
 
-function hasAdjacentAnomalies(slice: SystemId[], shape: string[]) {
+export function hasAdjacentSliceAnomalies(slice: SystemId[], shape: string[]) {
   const hexIsAnomalySet = new Set();
   for (let i = 0; i < slice.length; i++) {
     const hex = shape[i + 1]; // first is home system
@@ -479,13 +479,12 @@ export function groupSystemsByTier(
   return systems.reduce(
     (acc, id) => {
       const tier = tiers[id];
-      if (acc[tier]) {
-        acc[tier].push(id);
-      } else {
-        acc[tier] = [id];
-      }
+      if (acc[tier]) acc[tier].push(id);
       return acc;
     },
-    {} as Record<ChoosableTier, SystemId[]>,
+    { high: [], med: [], low: [], red: [] } as Record<
+      ChoosableTier,
+      SystemId[]
+    >,
   );
 }

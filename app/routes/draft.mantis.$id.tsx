@@ -14,14 +14,14 @@ import {
   Textarea,
   Title,
 } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   data,
   Link,
   useFetcher,
   useLoaderData,
-  useRevalidator,
   type ActionFunctionArgs,
+  type ClientLoaderFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router";
 import { Map as DraftMap, MAP_INTERACTIONS } from "~/components/Map";
@@ -30,20 +30,26 @@ import { OriginalArtToggle } from "~/components/OriginalArtToggle";
 import { FactionIcon } from "~/components/icons/FactionIcon";
 import { Section, SectionTitle } from "~/components/Section";
 import { factions as allFactions, playerColors } from "~/data/factionData";
-import { systemData } from "~/data/systemData";
+import { factionSystems, systemData } from "~/data/systemData";
 import { DraftableSpeakerOrder } from "~/routes/draft.$id/components/DraftableSpeakerOrder";
 import { FactionReference } from "~/routes/draft.$id/components/FactionHelpInfo";
 import { PlayerChip } from "~/routes/draft.$id/components/PlayerChip";
 import { SelectableCard, type PlayerColor } from "~/ui";
 import {
   applyMantisAction,
+  canDraftMantisFaction,
+  canMantisMulligan,
   countMantisTiles,
+  KELERES_HOMES,
   mantisActivePlayer,
   mantisBuildTurn,
+  mantisChosenHome,
+  mantisHomeChoices,
   needsMantisDiscard,
   undoMantisAction,
   type MantisAction,
   type MantisSnapshot,
+  type KeleresHome,
 } from "~/draft/mantis/engine";
 import {
   getMantisRoom,
@@ -57,6 +63,9 @@ import {
   type MantisRoomData,
 } from "~/drizzle/mantisDraft.server";
 import { LobbyPanel, type LobbyOperation } from "~/draft/LobbyPanel";
+import { DraftTurnStatus } from "~/draft/DraftTurnStatus";
+import { useLobbyRefresh } from "~/hooks/useLobbyRefresh";
+import { createOrderedLoader } from "~/hooks/orderedLoader";
 import { syncBagMapIdentity } from "~/draft/bag/bagDraft.server";
 import { MapBuildDiagram } from "~/draft/mantis/MapBuildDiagram";
 import { db } from "~/drizzle/config.server";
@@ -76,8 +85,35 @@ const privateHeaders = {
   "Cache-Control": "no-store",
   "Referrer-Policy": "no-referrer",
 };
+
+const keleresHeroes: Record<KeleresHome, { name: string; summary: string }> = {
+  mentak: {
+    name: "Harka Leeds",
+    summary: "Draw three action cards with component actions.",
+  },
+  xxcha: {
+    name: "Odlynn Myrr",
+    summary:
+      "Cast extra votes and gain trade goods and command tokens from players who abstain or vote against your predicted outcome.",
+  },
+  argent: {
+    name: "Kuuasi Aun Jalatai",
+    summary:
+      "Bring your flagship and two cruisers or destroyers into a space combat in a system with a planet you control.",
+  },
+};
 export function headers() {
   return privateHeaders;
+}
+
+const loadClientDraft = createOrderedLoader<
+  Awaited<ReturnType<typeof loader>>["data"]
+>();
+
+export function clientLoader({ request, serverLoader }: ClientLoaderFunctionArgs) {
+  return loadClientDraft(new URL(request.url).pathname, () =>
+    serverLoader<typeof loader>(),
+  );
 }
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -153,7 +189,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
               label:
                 state.phase === "draft"
                   ? `Round ${Math.floor(state.pickNumber / state.players.length) + 1}, before pick ${state.pickNumber + 1}`
-                  : `${state.phase === "build" ? "Map building" : "Discard extras"}: before action ${index + 1}`,
+                  : `${state.phase === "build" ? "Map building" : state.phase === "home" ? "Choose Keleres home" : "Discard extras"}: before action ${index + 1}`,
               createdAt: `Action ${index + 1}`,
             })),
           ],
@@ -470,18 +506,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 export default function MantisRoom() {
   const room = useLoaderData<typeof loader>();
   const fetcher = useFetcher<typeof action>();
-  const revalidator = useRevalidator();
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      if (
-        document.visibilityState === "visible" &&
-        revalidator.state === "idle" &&
-        fetcher.state === "idle"
-      )
-        revalidator.revalidate();
-    }, 3000);
-    return () => window.clearInterval(timer);
-  }, [revalidator, fetcher.state]);
+  useLobbyRefresh();
   const lobbyOperation = (operation: LobbyOperation) => {
     const { type, ...fields } = operation;
     fetcher.submit(
@@ -536,7 +561,9 @@ function ActiveMantisRoom({
     controlled &&
     !busy &&
     !room.lobby.paused &&
-    (draft.phase === "discard" || playerId === activeId);
+    (draft.phase === "discard"
+      ? needsMantisDiscard(draft, playerId)
+      : playerId === activeId);
   const buildTurn =
     draft.phase === "build" ? mantisBuildTurn(draft) : undefined;
 
@@ -561,7 +588,9 @@ function ActiveMantisRoom({
       ? confirmation.tileId
       : confirmation?.type === "place"
         ? draft.drawnTile
-        : undefined;
+        : confirmation?.type === "home"
+          ? factionSystems[confirmation.factionId].id
+          : undefined;
   const confirmationFaction =
     confirmation?.type === "faction"
       ? allFactions[confirmation.factionId]
@@ -571,17 +600,45 @@ function ActiveMantisRoom({
       ? `Draft tile ${confirmation.tileId}?`
       : confirmation?.type === "faction"
         ? `Draft ${allFactions[confirmation.factionId]?.name}?`
-        : confirmation?.type === "seat"
-          ? `Draft speaker position ${confirmation.seat + 1}?`
-          : confirmation?.type === "discard"
-            ? `Discard tile ${confirmation.tileId}?`
-            : confirmation?.type === "place"
-              ? `Place tile ${draft.drawnTile} at position ${confirmation.mapIdx}?`
-              : "Use a mulligan to draw a different tile?";
+        : confirmation?.type === "home"
+          ? `Choose the ${allFactions[confirmation.factionId].name} home and ${keleresHeroes[confirmation.factionId].name} as your Keleres hero?`
+          : confirmation?.type === "seat"
+            ? `Draft speaker position ${confirmation.seat + 1}?`
+            : confirmation?.type === "discard"
+              ? `Discard tile ${confirmation.tileId}?`
+              : confirmation?.type === "place"
+                ? `Place tile ${draft.drawnTile} at position ${confirmation.mapIdx}?`
+                : "Use a mulligan to draw a different tile?";
 
   return (
     <Container size="xl" py="lg">
       <Stack gap="lg">
+        {playerId !== undefined && (
+          <DraftTurnStatus
+            roomKey={`mantis:${room.id}`}
+            playerId={playerId}
+            paused={room.lobby.paused}
+            complete={draft.phase === "complete"}
+            pending={
+              draft.phase !== "complete" &&
+              (draft.phase === "discard"
+                ? needsMantisDiscard(draft, playerId)
+                : activeId === playerId)
+                ? {
+                    key: `${draft.phase}:${draft.pickNumber}:${draft.hands[playerId]?.length ?? 0}`,
+                    label:
+                      draft.phase === "home"
+                        ? "Choose your Keleres home system"
+                        : draft.phase === "discard"
+                          ? "Discard your extra tiles"
+                          : draft.phase === "build"
+                            ? "Place your drawn tile"
+                            : "Make your next pick",
+                  }
+                : undefined
+            }
+          />
+        )}
         <Group justify="space-between">
           <Title order={2}>
             {draft.factionLabels ? "Your drafted map" : "Mantis draft"}
@@ -599,14 +656,68 @@ function ActiveMantisRoom({
             <OriginalArtToggle />
           </Group>
         </Group>
+        {draft.phase === "home" && (
+          <Section>
+            <Title order={3}>Choose a Keleres home and hero</Title>
+            <Text size="sm" mt="xs" mb="md">
+              Choose an unplayed faction’s home system and its Keleres hero.
+              {KELERES_HOMES.filter(
+                (id) => !mantisHomeChoices(draft).includes(id),
+              ).length > 0 &&
+                ` Already in play: ${KELERES_HOMES.filter(
+                  (id) => !mantisHomeChoices(draft).includes(id),
+                )
+                  .map((id) => allFactions[id].name)
+                  .join(", ")}.`}
+            </Text>
+            {mantisHomeChoices(draft).length === 0 ? (
+              <Alert
+                color="red"
+                title="This saved draft has no legal Keleres home"
+              >
+                Mentak, Xxcha, and Argent were all drafted. The admin can use
+                Recovery &amp; access to restore a turn before the conflicting
+                faction pick. Existing tile placements are preserved until then.
+              </Alert>
+            ) : (
+              <SimpleGrid
+                cols={{ base: 1, sm: mantisHomeChoices(draft).length }}
+              >
+                {mantisHomeChoices(draft).map((factionId) => {
+                  return (
+                    <Stack key={factionId} align="center" gap="sm">
+                      <Text fw={600}>{allFactions[factionId].name}</Text>
+                      <SystemTileCard
+                        systemId={factionSystems[factionId].id}
+                        radius={85}
+                      />
+                      <Text size="sm" fw={600}>
+                        {keleresHeroes[factionId].name}
+                      </Text>
+                      <Text size="sm">{keleresHeroes[factionId].summary}</Text>
+                      <Button
+                        disabled={!canPick}
+                        onClick={() => pick({ type: "home", factionId })}
+                      >
+                        {`Choose ${allFactions[factionId].name} home`}
+                      </Button>
+                    </Stack>
+                  );
+                })}
+              </SimpleGrid>
+            )}
+          </Section>
+        )}
         <Text>
           {draft.factionLabels
             ? "Build the map with the tiles, home systems, and speaker order from your completed bag draft. "
-            : "Public snake draft → discard extras → build your own slice. "}
+            : "Public snake draft → resolve your home and discard extras → build your own slice. "}
           Your kept tiles fill your own section of the shared map. On each
           placement turn, the builder randomly draws from your remaining hand; a
           mulligan draws a different tile and leaves the original in your hand
-          to place later.
+          to place later. When only one position is available and no mulligan
+          can be used, the tile is placed automatically and recorded in the
+          draft log. The admin can undo these placements like any other action.
         </Text>
         {draft.phase !== "complete" && (
           <Accordion variant="contained">
@@ -636,35 +747,42 @@ function ActiveMantisRoom({
               ? "Draft and map complete"
               : draft.phase === "discard"
                 ? "All players: discard down to 3 blue and 2 red tiles"
-                : `${active?.name ?? "Waiting"} ${draft.phase === "draft" ? "is drafting" : "is building"}`}
+                : draft.phase === "home"
+                  ? `${active?.name ?? "Keleres"} is choosing a home system`
+                  : `${active?.name ?? "Waiting"} ${draft.phase === "draft" ? "is drafting" : "is building"}`}
           </Text>
         </Group>
         {fetcher.data?.error && <Alert color="red">{fetcher.data.error}</Alert>}
         <Alert
           color={canPick ? "teal" : "blue"}
           title={
-            room.lobby.paused
-              ? "Draft paused"
-              : canPick
-                ? "Your turn"
-                : controlled
-                  ? "Waiting for other players"
-                  : "Watching the draft"
+            draft.phase === "complete"
+              ? "Ready to play"
+              : room.lobby.paused
+                ? "Draft paused"
+                : canPick
+                  ? "Your turn"
+                  : controlled
+                    ? "Waiting for other players"
+                    : "Watching the draft"
           }
         >
           {room.lobby.paused
             ? "The admin is resolving an issue. Picks will resume when the admin resumes the draft."
             : draft.phase === "draft"
               ? "On each turn, choose one faction, one speaker position, or one tile. By the end, you need one faction, one speaker position, and your full quota of blue and red tiles. The order reverses each round."
-              : draft.phase === "discard"
-                ? "Keep exactly 3 blue and 2 red tiles. Everyone can remove their extras at the same time. Map building begins automatically when all hands are ready."
-                : draft.phase === "build"
-                  ? "The active player draws one tile privately, then places it in a highlighted space. Each player's five tiles become their own section of the map. A mulligan redraws without losing the previous tile."
-                  : "Your factions, speaker positions, and map are ready. Copy a map string below to set up your game."}
+              : draft.phase === "home"
+                ? "Keleres chooses the home system and hero of an unplayed Mentak, Xxcha, or Argent faction before map building."
+                : draft.phase === "discard"
+                  ? "Keep exactly 3 blue and 2 red tiles. Everyone can remove their extras at the same time. Map building begins automatically when all hands are ready."
+                  : draft.phase === "build"
+                    ? "The active player draws one tile privately, then places it in a highlighted space. Each player's five tiles become their own section of the map. A mulligan redraws without losing the previous tile."
+                    : "Your factions, speaker positions, and map are ready. Copy a map string below to set up your game."}
         </Alert>
         <Group gap="xs" aria-label="Mantis draft stages">
           {[
             "Draft faction + speaker + tiles",
+            "Choose Keleres home",
             "Discard extras",
             "Build map",
             "Play",
@@ -672,7 +790,8 @@ function ActiveMantisRoom({
             <Badge
               key={label}
               variant={
-                ["draft", "discard", "build", "complete"][index] === draft.phase
+                ["draft", "home", "discard", "build", "complete"][index] ===
+                draft.phase
                   ? "filled"
                   : "light"
               }
@@ -695,7 +814,11 @@ function ActiveMantisRoom({
                 <Table.Th>Player</Table.Th>
                 <Table.Th>Faction</Table.Th>
                 <Table.Th>Speaker / seat</Table.Th>
-                <Table.Th>Tiles</Table.Th>
+                <Table.Th>
+                  {draft.phase === "build" || draft.phase === "complete"
+                    ? "Tiles left to place"
+                    : "Drafted tiles"}
+                </Table.Th>
                 <Table.Th>Mulligans</Table.Th>
               </Table.Tr>
             </Table.Thead>
@@ -719,6 +842,12 @@ function ActiveMantisRoom({
                           "—"}
                       </Text>
                     </Group>
+                    {mantisChosenHome(draft, p.id) && (
+                      <Text size="xs" c="dimmed">
+                        {allFactions[mantisChosenHome(draft, p.id)!].name} home
+                        · {keleresHeroes[mantisChosenHome(draft, p.id)!].name}
+                      </Text>
+                    )}
                   </Table.Td>
                   <Table.Td>
                     {draft.seats[p.id] === undefined
@@ -739,6 +868,38 @@ function ActiveMantisRoom({
             </Table.Tbody>
           </Table>
         </Table.ScrollContainer>
+        {controlled &&
+          hand.length > 0 &&
+          (draft.phase === "draft" || draft.phase === "build") && (
+            <Section>
+              <SectionTitle
+                title={
+                  draft.phase === "draft"
+                    ? "Your drafted tiles"
+                    : "Your remaining tiles"
+                }
+              />
+              <Text size="sm" mb="sm">
+                {draft.phase === "draft"
+                  ? "Review your picks while choosing what to draft next."
+                  : "These tiles still need to be placed. A mulligan draws another tile from this hand; your current draw stays available for a later turn."}
+              </Text>
+              <Group gap="sm">
+                {hand.map((id) => (
+                  <Stack key={id} gap={4} align="center">
+                    <SystemTileCard
+                      systemId={id}
+                      radius={55}
+                      selected={draft.drawnTile === id}
+                    />
+                    {draft.drawnTile === id && (
+                      <Badge variant="light">Current draw</Badge>
+                    )}
+                  </Stack>
+                ))}
+              </Group>
+            </Section>
+          )}
         {draft.phase === "draft" && (
           <>
             <Section>
@@ -750,7 +911,11 @@ function ActiveMantisRoom({
                     (player) => draft.chosenFactions[player.id] === id,
                   );
                   const available =
-                    canPick && !draft.chosenFactions[playerId!] && !claimedBy;
+                    canPick &&
+                    !draft.chosenFactions[playerId!] &&
+                    canDraftMantisFaction(draft, id);
+                  const blocksKeleres =
+                    !claimedBy && !canDraftMantisFaction(draft, id);
                   const selectFaction = () =>
                     pick({ type: "faction", factionId: id });
                   return (
@@ -788,7 +953,17 @@ function ActiveMantisRoom({
                           )}
                         </Group>
                       }
-                      body={<FactionReference faction={faction} />}
+                      body={
+                        <>
+                          {blocksKeleres && (
+                            <Text c="orange" size="sm" p="sm">
+                              Unavailable: Keleres needs an unplayed Mentak,
+                              Xxcha, or Argent home.
+                            </Text>
+                          )}
+                          <FactionReference faction={faction} />
+                        </>
+                      }
                     />
                   );
                 })}
@@ -902,11 +1077,7 @@ function ActiveMantisRoom({
                 <SystemTileCard systemId={draft.drawnTile} radius={60} />
               )}
               <Button
-                disabled={
-                  !canPick ||
-                  draft.mulligansUsed[playerId!] >= draft.settings.mulligans ||
-                  hand.length < 2
-                }
+                disabled={!canPick || !canMantisMulligan(draft, playerId!)}
                 onClick={() => pick({ type: "mulligan" })}
               >
                 Mulligan
@@ -915,10 +1086,10 @@ function ActiveMantisRoom({
             <Text>
               Place the drawn tile in a highlighted position in your section of
               the map. Everyone fills their one stage 1 position before moving
-              to the two stage 2 positions, then the two stage 3 positions.
-              The highlighted spaces follow your map layout. Within each
-              group, the player with the most empty
-              spaces places next, with ties resolved in speaker order.
+              to the two stage 2 positions, then the two stage 3 positions. The
+              highlighted spaces follow your map layout. Within each group, the
+              player with the most empty spaces places next, with ties resolved
+              in speaker order.
             </Text>
           </Stack>
         )}
@@ -942,6 +1113,22 @@ function ActiveMantisRoom({
         )}
         {draft.phase === "complete" && (
           <Stack>
+            {draft.map.some(
+              (tile) => tile.type === "SYSTEM" && tile.systemId === "17",
+            ) && (
+              <Alert title="Creuss home system">
+                Creuss Gate (17) occupies the galaxy position. Place Creuss (51)
+                off the board.
+              </Alert>
+            )}
+            {draft.map.some(
+              (tile) => tile.type === "SYSTEM" && tile.systemId === "94",
+            ) && (
+              <Alert title="Crimson Rebellion home system">
+                The Sorrow (94) occupies the galaxy position. Place Ahk Creuxx
+                (118) off the board.
+              </Alert>
+            )}
             <Textarea
               label="Async map string"
               readOnly

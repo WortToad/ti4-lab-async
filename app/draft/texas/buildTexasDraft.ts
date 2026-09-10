@@ -1,10 +1,10 @@
 import { draftConfig } from "~/draft/draftConfig";
 import { generateEmptyMap } from "~/utils/map";
-import { getFactionPool } from "~/utils/factions";
 import { getSystemPool } from "~/utils/system";
-import { getDraftableFactions } from "~/draftStore";
+import { getTexasFactionPool, getTexasSetupErrors } from "./validation";
 import {
   createTexasSeatAssignments,
+  dealTexasFactionOptions,
   dealTexasTiles,
 } from "~/draft/texas/texasDraft";
 import type { Draft, DraftSettings, Player, DraftIntegrations } from "~/types";
@@ -25,24 +25,28 @@ export function buildTexasDraft({
   players,
   integrations,
 }: BuildTexasDraftInput): Omit<Draft, "pickOrder"> {
+  const errors = getTexasSetupErrors(settings, players.length);
+  if (errors.length) throw new Error(errors.join(" "));
   const config = draftConfig[settings.type];
 
   // Initialize pools
-  const factionPool = getFactionPool(settings.factionGameSets);
   const systemPool = getSystemPool(settings.tileGameSets);
 
   // Get draftable factions
-  const draftableFactions = getDraftableFactions(
-    factionPool,
-    null,
-    settings.allowedFactions ?? null,
-  );
+  const draftableFactions = getTexasFactionPool(settings);
 
   // Create texasDraft state with seat assignments and tile hands
-  // Faction hands are NOT dealt here because there's a ban phase first
+  // Faction hands are dealt after the ban phase when one is configured.
   const texasDraft = {
     ...createTexasSeatAssignments(players),
     ...dealTexasTiles(systemPool, players),
+    ...(!settings.modifiers?.banFactions?.numFactions
+      ? dealTexasFactionOptions(
+          draftableFactions,
+          players,
+          settings.texasFactionHandSize ?? 2,
+        )
+      : {}),
   };
 
   // Generate empty map for the selected map type

@@ -103,8 +103,21 @@ describe("map placement instructions", () => {
         renderedSeatTiles(html).map((tile) => [tile.title, tile]),
       );
 
-      for (let placed = 0; placed < playerCount * 5; placed++) {
+      while (state.phase === "build") {
         const turn = mantisBuildTurn(state)!;
+        state = applyMantisAction(
+          state,
+          turn.playerId,
+          { type: "place", mapIdx: turn.positions[0] },
+          () => 0,
+        );
+      }
+      const placements = state.history.filter(
+        (snapshot) => snapshot.phase === "build",
+      );
+      expect(placements).toHaveLength(playerCount * 5);
+      for (const [placed, snapshot] of placements.entries()) {
+        const turn = mantisBuildTurn(snapshot)!;
         const stage =
           placed < playerCount ? 1 : placed < playerCount * 3 ? 2 : 3;
         for (const position of turn.positions) {
@@ -117,12 +130,6 @@ describe("map placement instructions", () => {
             `translate(${point.x} ${point.y})`,
           );
         }
-        state = applyMantisAction(
-          state,
-          turn.playerId,
-          { type: "place", mapIdx: turn.positions[0] },
-          () => 0,
-        );
       }
       expect(state.phase).toBe("complete");
     },

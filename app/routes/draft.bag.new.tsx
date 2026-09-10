@@ -37,7 +37,10 @@ import {
 import { bagCategoryLabel } from "~/draft/bag/BagComponents";
 import { BagMapSetup } from "~/draft/bag/BagMapSetup";
 import { BagDraftGuide } from "~/draft/bag/BagDraftGuide";
+import { LobbyPlayerCount } from "~/draft/LobbyPlayerCount";
+import { makeLobbyPlayers, parseLobbyPlayerCount } from "~/draft/lobbySetup";
 import { bagCookie, createBagDraft } from "~/draft/bag/bagDraft.server";
+import { getBagSetupError } from "~/draft/bag/engine";
 import { BAG_VARIANTS, getBagRules } from "~/draft/bag/rules";
 
 type DraftInput = Parameters<typeof createBagDraft>[0];
@@ -54,6 +57,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
   return {
     variant,
+    playerCount: parseLobbyPlayerCount(
+      new URL(request.url).searchParams.get("playerCount"),
+      2,
+      8,
+    ),
     banPresets: BAG_BAN_PRESETS,
     factions: Array.from(factions, ([value, label]) => ({ value, label })).sort(
       (a, b) => a.label.localeCompare(b.label),
@@ -108,7 +116,7 @@ export default function NewBagDraft() {
   const [variant, setVariant] = useState<DraftInput["variant"]>(
     options.variant,
   );
-  const [playerCount, setPlayerCount] = useState(6);
+  const [playerCount, setPlayerCount] = useState(options.playerCount);
   const [includeDiscordantStars, setIncludeDiscordantStars] = useState(false);
   const [includeThundersEdge, setIncludeThundersEdge] = useState(true);
   const [includeBlueReverie, setIncludeBlueReverie] = useState(false);
@@ -125,10 +133,7 @@ export default function NewBagDraft() {
   const [bannedFactions, setBannedFactions] = useState<string[]>([]);
   const [priorityFactions, setPriorityFactions] = useState<string[]>([]);
   const [banPresetIds, setBanPresetIds] = useState<string[]>([]);
-  const players = Array.from(
-    { length: playerCount },
-    (_, index) => `Slot ${index + 1}`,
-  );
+  const players = makeLobbyPlayers(playerCount).map((player) => player.name);
   const settings: DraftInput = {
     variant,
     players,
@@ -154,6 +159,7 @@ export default function NewBagDraft() {
     includeLostLegacies,
   };
   const rules = getBagRules(settings);
+  const setupError = getBagSetupError(settings);
   const activeVariant = BAG_VARIANTS.find((entry) => entry.id === variant);
   const categories = [
     ...new Set([
@@ -193,15 +199,20 @@ export default function NewBagDraft() {
 
   return (
     <Stack className="ph-no-capture" maw={1100} mx="auto" py="xl" gap="lg">
-      <Anchor component={Link} to="/draft/prechoice" size="sm">
+      <Anchor
+        component={Link}
+        to={`/draft/prechoice?playerCount=${playerCount}`}
+        size="sm"
+      >
         ← All draft formats
       </Anchor>
       <div>
         <Title order={1}>Bag &amp; Franken drafts</Title>
         <Text c="dimmed" mt="xs">
-          Build your own faction by choosing components from bags that pass
-          around the table. Share one lobby link; players enter their name to
-          join and save a recovery UUID before the admin starts the draft.
+          Choose the format and player count, then create a shared lobby. Share
+          its link so everyone can enter their name and join. Start the draft
+          when everyone is ready to collect from passing bags and build their
+          faction.
         </Text>
       </div>
       <Form method="post">
@@ -250,36 +261,36 @@ export default function NewBagDraft() {
                 <Title order={2} size="h3">
                   Players
                 </Title>
-                <NumberInput
-                  label="Number of player slots"
+                <LobbyPlayerCount
                   description="Everyone joins through the same lobby link and sets their own name."
                   min={2}
                   max={8}
-                  allowDecimal={false}
-                  value={playerCount}
-                  onChange={(value) =>
-                    setPlayerCount(typeof value === "number" ? value : 0)
-                  }
+                  count={playerCount}
+                  onChange={setPlayerCount}
                 />
                 <Text size="sm" c="dimmed">
-                  Slots do not reveal seating positions. Bags and draft
-                  information stay hidden until the admin starts.
+                  Joining does not assign a map seat. Bags and draft information
+                  stay hidden until the admin starts.
                 </Text>
-                <Group justify="space-between">
-                  <Text size="sm" c="dimmed">
-                    {players.length} players
-                  </Text>
-                  <Switch
-                    label="Shuffle order when the draft starts"
-                    checked={shufflePlayers}
-                    onChange={(event) =>
-                      setShufflePlayers(event.currentTarget.checked)
-                    }
-                  />
-                </Group>
+                <Switch
+                  label="Shuffle bag passing order when the draft starts"
+                  description="Turn off to keep join order around the table. Speaker order is drafted separately when included."
+                  checked={shufflePlayers}
+                  onChange={(event) =>
+                    setShufflePlayers(event.currentTarget.checked)
+                  }
+                />
               </Stack>
             </Paper>
           </SimpleGrid>
+          {setupError && (
+            <Alert
+              color="orange"
+              title="Adjust the setup before creating your lobby"
+            >
+              {setupError}
+            </Alert>
+          )}
           <Paper withBorder p="lg" radius="md">
             <Stack>
               <Title order={2} size="h3">
@@ -515,9 +526,9 @@ export default function NewBagDraft() {
             </Accordion.Item>
           </Accordion>
           <Alert color="blue" title="Playing with friends">
-            Create the lobby, save your admin recovery UUID, and share its link
+            Create the lobby, save your admin recovery code, and share its link
             with everyone. Enter your name and join if you are playing. Each
-            player saves their own UUID; this browser will also remember it.
+            player saves their own code; this browser will also remember it.
             Start once everyone has joined. The admin can pause, restore turns
             or rounds, and export recovery saves without revealing other
             players’ hands.
@@ -526,15 +537,10 @@ export default function NewBagDraft() {
             type="submit"
             size="lg"
             loading={navigation.state === "submitting"}
-            disabled={players.length < 2 || players.length > 8}
+            disabled={!!setupError}
           >
             Create shared lobby
           </Button>
-          {(players.length < 2 || players.length > 8) && (
-            <Text size="sm" c="red">
-              Choose between 2 and 8 player slots.
-            </Text>
-          )}
         </Stack>
       </Form>
     </Stack>

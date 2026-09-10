@@ -10,10 +10,12 @@ import {
   Title,
 } from "@mantine/core";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { factions } from "~/data/factionData";
 import { buildMiniMiltySettings } from "~/draft/minimilty/buildMiniMilty";
 import { getFactionPool } from "~/utils/factions";
+import { LobbyPlayerCount } from "~/draft/LobbyPlayerCount";
+import { makeLobbyPlayers, parseLobbyPlayerCount } from "~/draft/lobbySetup";
 import type { FactionId } from "~/types";
 
 const baseFactions = getFactionPool(["base"]);
@@ -24,15 +26,16 @@ const factionOptions = baseFactions.map((id) => ({
 
 export default function MiniMiltySetup() {
   const navigate = useNavigate();
-  const [playerCount, setPlayerCount] = useState(6);
-  const [numFactions, setNumFactions] = useState(7);
+  const [search] = useSearchParams();
+  const [playerCount, setPlayerCount] = useState(() =>
+    parseLobbyPlayerCount(search.get("playerCount"), 3, 6),
+  );
+  const [customNumFactions, setCustomNumFactions] = useState<number>();
+  const numFactions = customNumFactions ?? playerCount + 1;
   const [banned, setBanned] = useState<string[]>([]);
   const [required, setRequired] = useState<string[]>([]);
   const [error, setError] = useState<string>();
-  const players = Array.from({ length: playerCount }, (_, id) => ({
-    id,
-    name: `Slot ${id + 1}`,
-  }));
+  const players = makeLobbyPlayers(playerCount);
 
   const preview = () => {
     try {
@@ -42,7 +45,9 @@ export default function MiniMiltySetup() {
         bannedFactions: banned as FactionId[],
         requiredFactions: required as FactionId[],
       });
-      navigate("/draft/new", { state: { draftSettings, players } });
+      navigate(`/draft/new?playerCount=${playerCount}`, {
+        state: { draftSettings, players },
+      });
     } catch (failure) {
       setError(
         failure instanceof Error
@@ -57,7 +62,11 @@ export default function MiniMiltySetup() {
       <Stack gap="lg">
         <Group justify="space-between">
           <Title order={1}>Mini-Milty</Title>
-          <Button component={Link} to="/draft/prechoice" variant="subtle">
+          <Button
+            component={Link}
+            to={`/draft/prechoice?playerCount=${playerCount}`}
+            variant="subtle"
+          >
             All draft formats
           </Button>
         </Group>
@@ -67,27 +76,41 @@ export default function MiniMiltySetup() {
           Each player takes a faction and a speaker position in two snake
           rounds; speaker position also determines their seat.
         </Text>
+        <Alert color="blue" title="Set up, share, join, then start">
+          Choose your player count and faction pool, then preview the map.
+          Create the shared lobby from the preview and share its link. Everyone
+          enters their own name to join, including you if you are playing. Start
+          once everyone has joined.
+        </Alert>
         {error && <Alert color="red">{error}</Alert>}
-        <NumberInput
-          label="Player slots"
+        <LobbyPlayerCount
           description="Players enter their name to join the shared lobby. The admin starts once everyone has joined."
-          value={playerCount}
-          onChange={(value) =>
-            setPlayerCount(typeof value === "number" ? value : 0)
-          }
+          count={playerCount}
+          onChange={setPlayerCount}
           min={3}
           max={6}
-          allowDecimal={false}
-          required
         />
         <NumberInput
           label="Factions in the draft"
-          description="The bot's default is one more faction than players."
+          description="Defaults to one more faction than players. Your custom count stays fixed when the player count changes."
           value={numFactions}
           min={players.length}
           max={baseFactions.length - banned.length}
-          onChange={(value) => setNumFactions(Number(value))}
+          onChange={(value) =>
+            setCustomNumFactions(typeof value === "number" ? value : undefined)
+          }
+          allowDecimal={false}
         />
+        {customNumFactions !== undefined && (
+          <Button
+            variant="subtle"
+            size="xs"
+            onClick={() => setCustomNumFactions(undefined)}
+            style={{ alignSelf: "flex-start" }}
+          >
+            Use recommended count ({playerCount + 1})
+          </Button>
+        )}
         <MultiSelect
           label="Banned factions"
           searchable

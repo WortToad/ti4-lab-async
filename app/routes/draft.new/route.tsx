@@ -1,26 +1,17 @@
-import {
-  Box,
-  Button,
-  Flex,
-  Grid,
-  Group,
-  List,
-  Popover,
-  Stack,
-} from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
+import { Alert, Box, Button, Flex, Grid, List, Stack } from "@mantine/core";
 import type { ActionFunctionArgs } from "react-router";
-import { redirect, useLocation, useNavigate } from "react-router";
+import { data, redirect } from "react-router";
 import { useEffect, useRef } from "react";
 import { PlanetFinder } from "~/routes/draft.$id/components/PlanetFinder";
-import { draftStore, useDraft } from "~/draftStore";
+import { useDraft } from "~/draftStore";
 import { Draft } from "~/types";
-import { DraftInput, useCreateDraft } from "./useCreateDraft";
+import { DraftInput, useCreateDraftPreview } from "./useCreateDraft";
+import { useDraftPreview } from "./useDraftPreview";
 import { LoadingOverlay } from "~/components/LoadingOverlay";
 import { SectionTitle } from "~/components/Section";
 import { SlicesTable } from "../draft/SlicesTable";
 import { createDraft } from "~/drizzle/draft.server";
-import { PlayerInputSection } from "./components/PlayerInputSection";
+import { LobbyPlayerCount } from "~/draft/LobbyPlayerCount";
 import {
   AvailableFactionsSection,
   MapSection,
@@ -34,22 +25,17 @@ import { AvailableReferenceCardPacksSection } from "./sections/AvailableReferenc
 import { ConnectedFactionSettingsModal } from "./components/ConnectedFactionSettingsModal";
 import { createDraftOrder } from "~/utils/draftOrder.server";
 import { OriginalArtToggle } from "~/components/OriginalArtToggle";
-import { validateTwilightsFallDraft } from "~/draft/twilightsFall/pools";
+import { getDraftValidationErrors } from "~/utils/draftValidation";
 
 export default function DraftNew() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { draft, actions, initialized } = useDraft();
+  const clearPreview = useDraftPreview();
+  const { draft, initialized } = useDraft();
   const config = useDraftConfig();
 
-  const createDraft = useCreateDraft();
+  const { createDraft, creating, error } = useCreateDraftPreview(clearPreview);
 
   const validationErrors = useDraftValidationErrors();
   const draftIsValid = validationErrors.length === 0;
-  const [
-    validationErrorsOpened,
-    { close: closeValidationErrors, open: openValidationErrors },
-  ] = useDisclosure(false);
 
   const showFullMap =
     config.modifiableMapTiles.length > 0 ||
@@ -57,37 +43,6 @@ export default function DraftNew() {
   const isTexasStyle = draft.settings.draftGameMode === "texasStyle";
   const isPresetMapDraft = draft.settings.draftGameMode === "presetMap";
   const autoCreatedRef = useRef(false);
-
-  useEffect(() => {
-    if (location.state == null) {
-      navigate("/draft/prechoice");
-      return;
-    }
-
-    if (location.state.savedDraftState) {
-      const savedState = location.state.savedDraftState;
-      actions.initializeDraftFromSavedState(savedState);
-      return;
-    }
-
-    const { draftSettings, players, discordData } = location.state;
-    actions.initializeDraft(draftSettings, players, { discord: discordData });
-
-    if (
-      draftSettings.draftGameMode !== "presetMap" &&
-      draftStore.getState().draft.slices.length === 0
-    ) {
-      navigate("/draft/prechoice", {
-        state: { invalidDraftParameters: true },
-      });
-      return;
-    }
-
-    // a bit hacky, but once we 'consume' the state, we remove it from the history
-    window.history.replaceState({ ...window.history.state, usr: null }, "");
-
-    return () => actions?.reset();
-  }, []);
 
   useEffect(() => {
     if (!initialized || !isTexasStyle || autoCreatedRef.current) return;
@@ -100,56 +55,46 @@ export default function DraftNew() {
 
   const advancedOptions = (
     <Stack gap="lg">
-      <Group gap="sm">
-        <Popover shadow="md" opened={validationErrorsOpened && !draftIsValid}>
-          <Popover.Target>
-            <Button
-              flex={1}
-              size="xl"
-              onClick={handleCreate}
-              disabled={!draftIsValid}
-              onMouseOver={openValidationErrors}
-              onMouseLeave={closeValidationErrors}
-              style={{
-                border: !draftIsValid
-                  ? "1px solid var(--mantine-color-red-3)"
-                  : undefined,
-              }}
-            >
-              Create
-            </Button>
-          </Popover.Target>
-          <Popover.Dropdown>
-            <List>
-              {validationErrors.map((error) => (
-                <List.Item key={error}>{error}</List.Item>
-              ))}
-            </List>
-          </Popover.Dropdown>
-        </Popover>
-      </Group>
+      <LobbyPlayerCount count={draft.players.length} />
+      {!draftIsValid && (
+        <Alert color="red" title="Finish preparing the draft">
+          <List size="sm">
+            {validationErrors.map((error) => (
+              <List.Item key={error}>{error}</List.Item>
+            ))}
+          </List>
+        </Alert>
+      )}
+      {error && (
+        <Alert color="red" title="Lobby not created">
+          {error}
+        </Alert>
+      )}
+      <Button
+        size="xl"
+        onClick={handleCreate}
+        disabled={!draftIsValid}
+        loading={creating}
+      >
+        Create shared lobby
+      </Button>
     </Stack>
   );
 
   if (!initialized) return <LoadingOverlay />;
-  if (isTexasStyle) return <LoadingOverlay />;
+  if (isTexasStyle)
+    return (
+      <Stack py="xl">{creating ? <LoadingOverlay /> : advancedOptions}</Stack>
+    );
   if (isPresetMapDraft) {
     return (
       <Flex py="lg" direction="column">
-
         <ConnectedFactionSettingsModal />
         <PlanetFinder />
 
         <Grid style={{ gap: 30 }} mt="lg">
           <Grid.Col span={{ base: 12, lg: 6 }}>
             <Stack gap="lg">
-              <PlayerInputSection
-                players={draft.players}
-                discordData={draft.integrations.discord}
-                onChangeName={(playerIdx, name) => {
-                  actions.updatePlayerName(playerIdx, name);
-                }}
-              />
               <AvailableReferenceCardPacksSection />
               <AvailableFactionsSection />
               <AvailableMinorFactionsSection />
@@ -166,7 +111,6 @@ export default function DraftNew() {
 
   return (
     <Flex py="lg" direction="column">
-
       <ConnectedFactionSettingsModal />
 
       <PlanetFinder />
@@ -217,9 +161,11 @@ export default function DraftNew() {
 
 export async function action({ request }: ActionFunctionArgs) {
   const body = (await request.json()) as DraftInput;
-  if (body.settings.draftGameMode === "twilightsFall") {
-    try { validateTwilightsFallDraft(body); }
-    catch (error) { throw new Response(error instanceof Error ? error.message : "Invalid Twilight's Fall pools.", { status: 400 }); }
+  const jsonResponse = request.headers.get("X-Draft-Response") === "json";
+  const errors = getDraftValidationErrors(body);
+  if (errors.length > 0) {
+    if (jsonResponse) return data({ error: errors.join(" ") }, { status: 400 });
+    throw new Response(errors.join("\n"), { status: 400 });
   }
 
   const presetUrl = body.presetUrl;
@@ -233,9 +179,32 @@ export async function action({ request }: ActionFunctionArgs) {
       availableFactions: body.availableFactions,
       presetMap: body.presetMap,
       texasDraft: body.texasDraft,
+      slices: body.slices,
+      availableMinorFactions: body.availableMinorFactions,
     }),
   };
 
+  // The generated private hands can be more restrictive than the source pool.
+  const dealtErrors = getDraftValidationErrors(draft);
+  if (dealtErrors.length > 0) {
+    if (jsonResponse)
+      return data({ error: dealtErrors.join(" ") }, { status: 400 });
+    throw new Response(dealtErrors.join("\n"), { status: 400 });
+  }
+
   const { prettyUrl, id, adminUuid } = await createDraft(draft, presetUrl);
-  return redirect(`/draft/${prettyUrl}`, { headers: { "Set-Cookie": await baseCookie(id, "admin").serialize(adminUuid) } });
+  if (jsonResponse)
+    return data(
+      { url: `/draft/${prettyUrl}` },
+      {
+        headers: {
+          "Set-Cookie": await baseCookie(id, "admin").serialize(adminUuid),
+        },
+      },
+    );
+  return redirect(`/draft/${prettyUrl}`, {
+    headers: {
+      "Set-Cookie": await baseCookie(id, "admin").serialize(adminUuid),
+    },
+  });
 }

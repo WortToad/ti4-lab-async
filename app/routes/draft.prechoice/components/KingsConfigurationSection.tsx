@@ -39,7 +39,7 @@ export function KingsConfigurationSection() {
                 kings.numKings <=
                 Math.max(playerCount, kings.prioritizedKings.length)
               }
-              onMouseDown={() => kings.setNumKings(kings.numKings - 1)}
+              onClick={() => kings.setNumKings(kings.numKings - 1)}
             >
               -
             </Button>
@@ -51,7 +51,7 @@ export function KingsConfigurationSection() {
               variant="subtle"
               color="gray"
               disabled={kings.numKings >= 8 - kings.bannedKings.length}
-              onMouseDown={() => kings.setNumKings(kings.numKings + 1)}
+              onClick={() => kings.setNumKings(kings.numKings + 1)}
             >
               +
             </Button>

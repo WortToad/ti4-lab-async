@@ -2,39 +2,52 @@ import { useEffect, useState } from "react";
 import { useSocket } from "./socketContext";
 
 type Props = {
-  onConnect?: () => void;
+  draftId: string;
 };
 
-export function useSocketConnection({ onConnect }: Props) {
+export function useSocketConnection({ draftId }: Props) {
   const socket = useSocket();
   const [isDisconnected, setIsDisconnected] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   useEffect(() => {
     if (!socket) return;
 
-    // join draft on every connect
-    // this way if there's a disconnection, a reconnection will rejoin the draft
-    socket.on("connect", () => {
-      onConnect?.();
+    const connected = () => {
+      socket.emit("joinDraft", draftId);
       setIsDisconnected(false);
-    });
-
-    socket.on("disconnect", () => {
-      setIsDisconnected(true);
-    });
-
-    socket.on("reconnecting", () => {
-      setIsReconnecting(true);
-    });
-
-    socket.on("reconnect_failed", () => {
       setIsReconnecting(false);
-    });
-  }, [socket]);
+    };
+    const disconnected = () => {
+      setIsDisconnected(true);
+      setIsReconnecting(false);
+    };
+    const reconnecting = () => {
+      setIsReconnecting(true);
+    };
+    const reconnectFailed = () => {
+      setIsDisconnected(true);
+      setIsReconnecting(false);
+    };
+    socket.on("connect", connected);
+    socket.on("disconnect", disconnected);
+    socket.on("connect_error", reconnectFailed);
+    socket.io.on("reconnect_attempt", reconnecting);
+    socket.io.on("reconnect_failed", reconnectFailed);
+    if (socket.connected) connected();
+    else setIsDisconnected(true);
+    return () => {
+      socket.off("connect", connected);
+      socket.off("disconnect", disconnected);
+      socket.off("connect_error", reconnectFailed);
+      socket.io.off("reconnect_attempt", reconnecting);
+      socket.io.off("reconnect_failed", reconnectFailed);
+      if (socket.connected) socket.emit("leaveDraft", draftId);
+    };
+  }, [socket, draftId]);
 
   const reconnect = () => {
-    setIsReconnecting(true);
     socket?.disconnect();
+    setIsReconnecting(true);
     socket?.connect();
   };
 
