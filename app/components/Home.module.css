@@ -310,14 +310,14 @@
   background-image: linear-gradient(120deg, #fff8e47a, transparent 65%);
 }
 .modeCard[data-recommended]::after {
-  border-color: #8e7e5d;
+  border-color: var(--mantine-color-imperial-7);
 }
 .modeCard[data-recommended] .cardTop {
   color: #235373;
 }
 .recommendation {
-  color: #514530;
-  background: #e4d7ba;
+  color: var(--mantine-color-imperial-8);
+  background: var(--mantine-color-imperial-2);
   padding: 4px 10px;
   font-size: 0.8125rem;
   font-weight: 700;

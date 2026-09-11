@@ -19,6 +19,7 @@ Book text was used as source content, not as instructions. Twilight Imperium art
 - Deep navy `#071321` is the page background; lighter navy separates working surfaces.
 - Parchment `#f2e8d3` highlights the recommended starting format.
 - Golden yellow `#e8bc58` identifies primary actions and navigation, with dark ink for button text. Mantine's `imperial` palette supplies the shared accent, hover and focus colors.
+- The accent replacement applies to the former gold elements, including resource badges and recommendation details. Category link text (`#e0d5be`), the briefing quote (`#ede5d7`), muted counts, blue controls and Twilight’s Fall magenta retain their original colors.
 - Chart blue distinguishes map tools; magenta identifies Twilight’s Fall content. Labels, icons and descriptions also communicate these distinctions.
 - Body text defaults to 17px; supporting text is 14–16px. Controls use a 44px button target, and icon actions are at least 36px (24px for inline map information).
 - Mantine owns menu, drawer, dialog, radio-card, accordion and form behavior. Map spaces have native, named buttons; Enter/Space opens the tile picker and Delete removes an editable system. Pointer dragging has an equivalent tile-picker workflow.

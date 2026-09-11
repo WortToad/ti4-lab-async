@@ -21,7 +21,7 @@ export function PlanetStats({
       style={{ zIndex: 1 }}
     >
       <Box
-        bg="#e1bb72"
+        bg="imperial.4"
         px={3}
         style={{ borderRadius: 3, border: "1px solid #071321" }}
       >
