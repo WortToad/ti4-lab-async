@@ -24,7 +24,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
         url: appUrl(`/draft/${draftId}`),
         type: "website",
         siteName: "TI4 Draft Command",
-        image: appUrl("/brand/ti4-draft-command.png"),
+        image: appUrl("/brand/ti4-draft-command-gold.png"),
       },
       { headers: { "Cache-Control": "no-store" } },
     );
@@ -38,7 +38,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return data({
     title: `${draftId} - TI4 Draft Command`,
     description: `${draftTypeDisplay} on TI4 Draft Command`,
-    image: appUrl("/brand/ti4-draft-command.png"),
+    image: appUrl("/brand/ti4-draft-command-gold.png"),
     url: appUrl(`/draft/${draftId}`),
     type: "website",
     siteName: "TI4 Draft Command",

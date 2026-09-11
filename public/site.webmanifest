@@ -3,7 +3,7 @@
   "short_name": "Draft Command",
   "start_url": "./",
   "scope": "./",
-  "icons": [{ "src": "./brand/ti4-draft-command.png", "sizes": "1920x1920", "type": "image/png", "purpose": "any" }],
+  "icons": [{ "src": "./brand/ti4-draft-command-gold.png", "sizes": "1920x1920", "type": "image/png", "purpose": "any" }],
   "theme_color": "#071321",
   "background_color": "#071321",
   "display": "standalone"

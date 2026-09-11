@@ -91,19 +91,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
           rel="icon"
           type="image/png"
           sizes="any"
-          href={appPath("/brand/ti4-draft-command.png")}
+          href={appPath("/brand/ti4-draft-command-gold.png")}
         />
         <link
           rel="apple-touch-icon"
-          href={appPath("/brand/ti4-draft-command.png")}
+          href={appPath("/brand/ti4-draft-command-gold.png")}
         />
-        <link rel="manifest" href={appPath("/site.webmanifest?v=4")} />
+        <link rel="manifest" href={appPath("/site.webmanifest?v=5")} />
         <meta name="theme-color" content="#071321" />
         <meta name="msapplication-TileColor" content="#071321" />
         <meta property="og:site_name" content="TI4 Draft Command" />
         <meta
           property="og:image"
-          content={appUrl("/brand/ti4-draft-command.png")}
+          content={appUrl("/brand/ti4-draft-command-gold.png")}
         />
         <meta property="og:image:type" content="image/png" />
         <meta property="og:image:width" content="1920" />
@@ -115,7 +115,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="twitter:card" content="summary" />
         <meta
           name="twitter:image"
-          content={appUrl("/brand/ti4-draft-command.png")}
+          content={appUrl("/brand/ti4-draft-command-gold.png")}
         />
         <meta
           name="twitter:image:alt"

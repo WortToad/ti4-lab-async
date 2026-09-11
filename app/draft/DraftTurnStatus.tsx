@@ -74,8 +74,8 @@ export function DraftTurnStatus({
     if (browserAlertsEnabled() && document.visibilityState === "hidden") {
       showNotification("Your turn to draft", {
         body: label,
-        icon: appPath("/brand/ti4-draft-command.png"),
-        badge: appPath("/brand/ti4-draft-command.png"),
+        icon: appPath("/brand/ti4-draft-command-gold.png"),
+        badge: appPath("/brand/ti4-draft-command-gold.png"),
         tag: `draft-turn:${identity}`,
         data: { url: window.location.href },
       });

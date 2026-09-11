@@ -5,7 +5,7 @@ export function Logo() {
   return (
     <span className={classes.logo}>
       <img
-        src={appPath("/brand/ti4-draft-command.png")}
+        src={appPath("/brand/ti4-draft-command-gold.png")}
         width={52}
         height={52}
         alt=""

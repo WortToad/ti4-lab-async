@@ -124,7 +124,7 @@ export async function loadAllAssets(): Promise<void> {
       process.cwd(),
       "public",
       "brand",
-      "ti4-draft-command.png",
+      "ti4-draft-command-gold.png",
     );
     try {
       logoCache = await loadImage(logoPath);
