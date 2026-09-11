@@ -14,11 +14,9 @@
 }
 
 .formatTitle {
-  font-family: var(--font-display);
+  font-family: var(--mantine-font-family);
   font-weight: 600;
-  font-size: 0.875rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 1.0625rem;
   color: var(--mantine-color-dimmed);
 }
 

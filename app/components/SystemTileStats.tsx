@@ -20,7 +20,7 @@ export function SystemTileStats({ system }: { system: System }) {
         withArrow
       >
         <Group gap={5} aria-label={`System value ${value}`}>
-          <Text size="10px" c="dimmed" fw={600} tt="uppercase">
+          <Text size="xs" c="dimmed" fw={600} tt="uppercase">
             SV
           </Text>
           <Text size="sm" fw={700} c="yellow.5">
@@ -40,7 +40,7 @@ export function SystemTileStats({ system }: { system: System }) {
           justify="center"
           aria-label={`Optimal spend: ${optimal.resources} resources, ${optimal.influence} influence, ${optimal.flex} flex; ${total} total`}
         >
-          <Text size="10px" c="dimmed" fw={600} tt="uppercase">
+          <Text size="xs" c="dimmed" fw={600} tt="uppercase">
             Opt
           </Text>
           <PlanetStatsPill {...optimal} size="xs" compact />

@@ -258,10 +258,7 @@ export function SliceSettingsModal({
       opened={opened}
       onClose={onClose}
       title={
-        <Text
-          fw={700}
-          style={{ fontFamily: "var(--font-display)", letterSpacing: "0.05em" }}
-        >
+        <Text size="lg" fw={600}>
           {FORMAT_TITLES[formatType]}
         </Text>
       }

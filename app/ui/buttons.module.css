@@ -1,8 +1,8 @@
 /* Primary CTA - bold, prominent, for main actions */
 .primaryCta {
     font-weight: 700;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
+    letter-spacing: 0;
+    text-transform: none;
     transition: all 0.15s ease;
 }
 

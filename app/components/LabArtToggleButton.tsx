@@ -10,8 +10,7 @@ export function LabArtToggleButton({ originalArt, onToggle }: Props) {
   return (
     <Button
       size="compact-xs"
-      variant="filled"
-      color={originalArt ? "orange" : "violet"}
+      variant="default"
       style={{ flexShrink: 0 }}
       styles={{ label: { whiteSpace: "nowrap" } }}
       leftSection={

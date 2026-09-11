@@ -8,7 +8,7 @@ type Props = {
   size?: "sm" | "md" | "lg" | "xl";
   visibleFrom?: MantineSize;
   hiddenFrom?: MantineSize;
-  /** Use compact mode for very tight spaces - clips text without ellipsis */
+  /** Use compact mode for names inside home tiles. */
   compact?: boolean;
 };
 
@@ -21,7 +21,7 @@ export function PlayerChip({
 }: Props) {
   const color = playerColors[player.id];
 
-  // Compact mode: show clipped text without ellipsis, allows slight overflow
+  // Preserve the full name in the accessible label when the tile is narrow.
   if (compact) {
     return (
       <Box
@@ -29,6 +29,8 @@ export function PlayerChip({
         visibleFrom={visibleFrom}
         hiddenFrom={hiddenFrom}
         data-color={color}
+        title={player.name}
+        aria-label={player.name}
         style={{
           ["--chip-color" as string]: `var(--mantine-color-${color}-filled)`,
           ["--chip-color-light" as string]: `var(--mantine-color-${color}-light)`,

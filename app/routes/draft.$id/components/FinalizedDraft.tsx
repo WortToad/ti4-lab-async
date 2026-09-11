@@ -355,7 +355,7 @@ export function FinalizedDraft() {
                     input: {
                       fontFamily:
                         "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace",
-                      fontSize: 12,
+                      fontSize: "var(--command-font-control)",
                       background: "var(--mantine-color-dark-7)",
                       border: "1px solid var(--mantine-color-dark-5)",
                       paddingRight: 44,

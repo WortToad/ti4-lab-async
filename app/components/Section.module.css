@@ -14,5 +14,5 @@
   background: var(--command-accent);
 }
 .section h2 {
-  color: #ede5d7;
+  color: var(--command-text-strong);
 }

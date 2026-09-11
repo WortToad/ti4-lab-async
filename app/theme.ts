@@ -1,6 +1,7 @@
 import {
   ActionIcon,
   Accordion,
+  Alert,
   Badge,
   Button,
   Checkbox,
@@ -23,7 +24,7 @@ export const commandTheme = createTheme({
   autoContrast: true,
   luminanceThreshold: 0.35,
   black: "#071321",
-  white: "#fffaf0",
+  white: "#f4f7fb",
   defaultRadius: "sm",
   cursorType: "pointer",
   respectReducedMotion: true,
@@ -56,9 +57,9 @@ export const commandTheme = createTheme({
   },
   colors: {
     dark: [
-      "#f3eee4",
-      "#c4cfd9",
-      "#aebfce",
+      "#edf2f7",
+      "#d5dfe8",
+      "#b6c6d4",
       "#8196a8",
       "#506b81",
       "#293f54",
@@ -78,6 +79,30 @@ export const commandTheme = createTheme({
       "#906920",
       "#684b16",
       "#49330e",
+    ],
+    success: [
+      "#e8fff3",
+      "#c7fce1",
+      "#a0f8cc",
+      "#6ff3b1",
+      "#3eeb91",
+      "#20d87a",
+      "#11b961",
+      "#0b8d48",
+      "#076936",
+      "#044625",
+    ],
+    sky: [
+      "#effaff",
+      "#dff3fe",
+      "#bbe8fd",
+      "#7dd5fc",
+      "#38bdf8",
+      "#0ea5e9",
+      "#0284c7",
+      "#0369a1",
+      "#075985",
+      "#0c4a6e",
     ],
     blue: [
       "#ebf7ff",
@@ -156,22 +181,30 @@ export const commandTheme = createTheme({
     Button: Button.extend({
       defaultProps: { variant: "filled", size: "md" },
       styles: {
-        root: { fontWeight: 600 },
+        root: { fontWeight: 600, fontSize: "var(--command-font-control)" },
         label: { whiteSpace: "normal", lineHeight: 1.25 },
       },
     }),
     ActionIcon: ActionIcon.extend({
-      defaultProps: { size: "lg", variant: "subtle" },
+      defaultProps: { size: "lg", variant: "light" },
     }),
     Input: Input.extend({ defaultProps: { size: "md" } }),
     Checkbox: Checkbox.extend({ defaultProps: { size: "md" } }),
     Radio: Radio.extend({ defaultProps: { size: "md" } }),
     Switch: Switch.extend({ defaultProps: { size: "md" } }),
     Badge: Badge.extend({
-      defaultProps: { variant: "light", radius: "sm", size: "lg" },
+      defaultProps: {
+        variant: "light",
+        color: "gray",
+        radius: "xl",
+        size: "lg",
+      },
       styles: {
         root: { textTransform: "none", letterSpacing: 0, fontWeight: 600 },
       },
+    }),
+    Alert: Alert.extend({
+      defaultProps: { color: "sky", variant: "light", radius: "sm" },
     }),
     Paper: Paper.extend({ defaultProps: { radius: "sm" } }),
     Modal: Modal.extend({

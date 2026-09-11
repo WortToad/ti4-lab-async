@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Text } from "@mantine/core";
 import "./AnimatedText.css";
 
@@ -62,8 +62,6 @@ export function AnimatedText({ text }: Props) {
             className="fading-text"
             fw={600}
             size="xl"
-            ff="heading"
-            tt="uppercase"
           >
             {item.text}
           </Text>

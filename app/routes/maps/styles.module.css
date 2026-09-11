@@ -44,14 +44,14 @@
 }
 
 .author {
-  font-size: 0.8rem;
+  font-size: var(--command-font-label);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--mantine-color-violet-4);
 }
 
 .description {
-  font-size: 0.9rem;
+  font-size: var(--command-font-body);
   line-height: 1.6;
   color: var(--mantine-color-gray-3);
   margin: 0;

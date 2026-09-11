@@ -50,8 +50,8 @@ export function DraftableFaction({
           <Group
             align="center"
             flex={1}
+            mih={76}
             style={{
-              overflow: "hidden",
               flexWrap: "nowrap",
             }}
             py="sm"
@@ -72,13 +72,12 @@ export function DraftableFaction({
             </Flex>
             <Text
               flex={1}
-              size="sm"
-              ff="heading"
+              size="lg"
               fw={600}
+              lh={1.35}
               style={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
+                minWidth: 0,
+                overflowWrap: "anywhere",
               }}
             >
               {faction.name}

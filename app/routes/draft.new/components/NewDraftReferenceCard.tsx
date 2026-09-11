@@ -39,7 +39,7 @@ export function NewDraftReferenceCard({ faction }: Props) {
             pt={5}
             pb={6}
           >
-            <Text flex={1} size="12px" ff="heading" fw="bold" pl="xs">
+            <Text flex={1} size="md" fw={600} pl="xs">
               {faction.name}
             </Text>
           </Group>

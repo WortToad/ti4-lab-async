@@ -79,17 +79,7 @@ export function TileSidebar() {
 
         <Tabs.Panel value="tiles">
           <Box px="sm" pt="xs" pb="xs">
-            <Text
-              size="xs"
-              fw={600}
-              tt="uppercase"
-              c="dimmed"
-              mb={6}
-              style={{
-                letterSpacing: "0.05em",
-                fontFamily: "var(--font-display)",
-              }}
-            >
+            <Text size="sm" fw={600} c="dimmed" mb={6}>
               Tiles ({availableSystems.length})
             </Text>
             <SegmentedControl
@@ -121,16 +111,7 @@ export function TileSidebar() {
                   bg="dark.6"
                   style={{ borderTop: "1px solid var(--mantine-color-dark-5)" }}
                 >
-                  <Text
-                    size="xs"
-                    fw={600}
-                    tt="uppercase"
-                    c="dimmed"
-                    style={{
-                      letterSpacing: "0.05em",
-                      fontFamily: "var(--font-display)",
-                    }}
-                  >
+                  <Text size="sm" fw={600} c="dimmed">
                     Used ({usedSystems.length})
                   </Text>
                 </Box>
@@ -149,16 +130,7 @@ export function TileSidebar() {
 
         <Tabs.Panel value="hyperlanes">
           <Box px="sm" pt="xs" pb="xs">
-            <Text
-              size="xs"
-              fw={600}
-              tt="uppercase"
-              c="dimmed"
-              style={{
-                letterSpacing: "0.05em",
-                fontFamily: "var(--font-display)",
-              }}
-            >
+            <Text size="sm" fw={600} c="dimmed">
               Hyperlanes ({hyperlaneOptions.length})
             </Text>
           </Box>

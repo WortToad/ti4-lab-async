@@ -72,7 +72,7 @@ export function DraftableSpeakerOrder({
         {isAvailable && (
           <Button
             size="compact-sm"
-            px="lg"
+            variant="outline"
             disabled={disabled}
             onClick={(e) => {
               e.stopPropagation();

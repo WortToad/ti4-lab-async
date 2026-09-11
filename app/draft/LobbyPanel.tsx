@@ -15,9 +15,28 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
+import {
+  IconAlertTriangle,
+  IconArrowBackUp,
+  IconCheck,
+  IconDeviceFloppy,
+  IconDownload,
+  IconKey,
+  IconLink,
+  IconPlayerPause,
+  IconPlayerPlay,
+  IconRestore,
+  IconSettings,
+  IconShield,
+  IconUserMinus,
+  IconUsers,
+} from "@tabler/icons-react";
 import { useEffect, useId, useRef, useState } from "react";
 import type { LobbyView } from "./lobby";
+import { LobbyPlayerKeyPrompt } from "./LobbyPlayerKeyPrompt";
 import { appUrl } from "~/utils/appUrl";
+import { StatusPill } from "~/ui/StatusPill";
+import classes from "./LobbyPanel.module.css";
 
 export type LobbyOperation =
   | { type: "join"; name: string; discordPlayerId?: number }
@@ -76,14 +95,20 @@ function RecoveryKey({
       <Group gap="xs">
         <CopyButton value={uuid}>
           {({ copied, copy }) => (
-            <Button size="xs" variant="light" onClick={copy}>
+            <Button
+              size="sm"
+              variant="default"
+              leftSection={<IconKey size={20} aria-hidden="true" />}
+              onClick={copy}
+            >
               {copied ? "Copied" : "Copy recovery code"}
             </Button>
           )}
         </CopyButton>
         <Button
-          size="xs"
-          variant="subtle"
+          size="sm"
+          variant="default"
+          leftSection={<IconDownload size={20} aria-hidden="true" />}
           onClick={() =>
             downloadLobbyFile(
               `${title}\n${uuid}\n\nLobby: ${lobbyUrl}\nKeep this recovery code private. It grants access to your lobby role.\n`,
@@ -200,34 +225,75 @@ export function LobbyPanel({
       radius="md"
       className="ph-no-capture command-lobby"
     >
+      {lobby.ownUuid && (
+        <LobbyPlayerKeyPrompt
+          key={`${storageKey}:${lobby.ownUuid}`}
+          uuid={lobby.ownUuid}
+          playerName={ownSlot?.name}
+          lobbyUrl={lobbyUrl}
+          storageKey={storageKey}
+          onDownload={() =>
+            downloadLobbyFile(
+              `TI4 Draft Command — player private key\nPlayer: ${ownSlot?.name || "Joined player"}\n\n${lobby.ownUuid}\n\nLobby: ${lobbyUrl}\nUse this key as your recovery code to rejoin your draft.\nKeep it private. Anyone with it can act as you in this lobby.\n`,
+              `ti4-${mode}-player-${lobbyId}.txt`,
+            )
+          }
+        />
+      )}
       <Stack gap="md">
-        <Group justify="space-between">
-          <Stack gap={0}>
-            <Title order={mode === "bag" ? 2 : 1} size="h2">
-              {lobby.started ? "Lobby" : "Draft lobby"}
-            </Title>
-            {lobby.started && ownSlot && (
-              <Text size="sm" c="dimmed">
-                Playing as {ownSlot.name}
-              </Text>
-            )}
+        <div className={classes.header}>
+          <Stack gap="xs" className={classes.heading}>
+            <Group gap="md" align="center">
+              <Title
+                order={mode === "bag" ? 2 : 1}
+                size={lobby.started ? "h3" : "h2"}
+              >
+                {lobby.started ? "Lobby" : "Draft lobby"}
+              </Title>
+              {isAdmin && (
+                <span className={classes.role}>
+                  <IconShield size={16} aria-hidden="true" />
+                  Admin
+                </span>
+              )}
+            </Group>
+            <Group gap="md" className={classes.metadata}>
+              <span className={classes.joined}>
+                <IconUsers size={18} aria-hidden="true" />
+                <span>
+                  <strong>{joined}</strong> / {lobby.slots.length} joined
+                </span>
+              </span>
+              {lobby.started && (
+                <StatusPill tone={lobby.paused ? "warning" : "success"}>
+                  {lobby.paused ? "Paused" : "Draft started"}
+                </StatusPill>
+              )}
+              {ownSlot && (
+                <Text size="sm">
+                  Playing as <strong>{ownSlot.name}</strong>
+                </Text>
+              )}
+            </Group>
           </Stack>
-          <Group gap="xs">
-            <Badge
-              color={lobby.paused ? "orange" : lobby.started ? "green" : "blue"}
-            >
-              {lobby.paused
-                ? "Paused"
-                : lobby.started
-                  ? "Draft started"
-                  : `${joined} / ${lobby.slots.length} joined`}
-            </Badge>
-            {isAdmin && <Badge variant="outline">Admin</Badge>}
+          <Group gap="sm" className={classes.actions}>
             <CopyButton value={lobbyUrl}>
               {({ copied, copy }) => (
                 <Button
-                  size="xs"
-                  variant="light"
+                  size="sm"
+                  variant={
+                    !lobby.started && (isAdmin || ownSlot)
+                      ? "filled"
+                      : "default"
+                  }
+                  color={copied ? "success.4" : "sky.4"}
+                  leftSection={
+                    copied ? (
+                      <IconCheck size={20} aria-hidden="true" />
+                    ) : (
+                      <IconLink size={20} aria-hidden="true" />
+                    )
+                  }
                   onClick={copy}
                   disabled={!lobbyUrl}
                 >
@@ -237,8 +303,9 @@ export function LobbyPanel({
             </CopyButton>
             {canCollapse && (
               <Button
-                variant="subtle"
-                size="xs"
+                variant="default"
+                leftSection={<IconSettings size={20} aria-hidden="true" />}
+                size="sm"
                 aria-expanded={showDetails}
                 aria-controls={detailsId}
                 onClick={() => setDetailsOpened((opened) => !opened)}
@@ -251,29 +318,40 @@ export function LobbyPanel({
               </Button>
             )}
           </Group>
-        </Group>
-        {!lobby.started && (
+        </div>
+        {!lobby.started && !ownSlot && (
           <Text size="sm" c="dimmed">
-            {ownSlot
-              ? "You’re ready. The admin starts the draft once everyone has joined."
-              : isAdmin
-                ? "Share the invite link with your group. If you’re playing too, enter your name below."
-                : "Enter your name to join. The admin starts the draft once everyone is here."}
+            {isAdmin
+              ? "Share the invite link with your group. If you’re playing too, enter your name below."
+              : "Enter your name to join. The admin starts the draft once everyone is here."}
           </Text>
         )}
         {lobby.paused && (
-          <Alert color="orange" title="The admin has paused the draft">
+          <Alert
+            color="orange.3"
+            icon={<IconPlayerPause size={24} />}
+            title="The admin has paused the draft"
+          >
             Picks are on hold. You can still rejoin; the admin will resume when
             everyone is ready.
           </Alert>
         )}
         {error && (
-          <Alert color="red" role="alert">
+          <Alert
+            color="red.3"
+            icon={<IconAlertTriangle size={24} />}
+            title="Action could not be completed"
+            role="alert"
+          >
             {error}
           </Alert>
         )}
         {storageError && (
-          <Alert color="orange">
+          <Alert
+            color="orange.3"
+            icon={<IconAlertTriangle size={24} />}
+            title="Save your recovery code"
+          >
             {lobby.ownUuid || lobby.adminUuid
               ? "This browser could not save a backup of your access. Copy or download your recovery code from Recovery & access before leaving."
               : "This browser could not restore saved access automatically. If you already joined, paste your recovery code below."}
@@ -347,7 +425,8 @@ export function LobbyPanel({
                     <Badge
                       key={player.id}
                       variant="light"
-                      color="green"
+                      className={classes.playerChip}
+                      data-own={player.id === ownPlayerId || undefined}
                       size="lg"
                       tt="none"
                     >
@@ -370,10 +449,8 @@ export function LobbyPanel({
               </Text>
             )}
             {ownPlayerId !== undefined && (
-              <Alert
-                title={`Playing as ${ownSlot?.name || "a joined player"}`}
-                color="green"
-              >
+              <div className={classes.playerNotice}>
+                <IconCheck size={20} aria-hidden="true" />
                 <Stack gap="sm">
                   <Text size="sm">
                     {lobby.started
@@ -385,7 +462,7 @@ export function LobbyPanel({
                     after clearing browser data.
                   </Text>
                 </Stack>
-              </Alert>
+              </div>
             )}
             <Accordion variant="contained">
               <Accordion.Item value="recovery">
@@ -452,7 +529,7 @@ export function LobbyPanel({
                           />
                           <Button
                             type="submit"
-                            variant="light"
+                            variant="default"
                             disabled={busy || !uuid.trim()}
                           >
                             Rejoin
@@ -467,23 +544,41 @@ export function LobbyPanel({
             {isAdmin && (
               <>
                 {!lobby.started && (
-                  <Stack gap="xs">
+                  <div className={classes.startRow}>
+                    <div>
+                      <Text fw={600}>
+                        {allJoined
+                          ? "Your table is ready"
+                          : "Waiting for the full table"}
+                      </Text>
+                      <Text size="sm" c="dimmed">
+                        {allJoined
+                          ? "Start to reveal the draft and its order."
+                          : `${lobby.slots.length - joined} more player${lobby.slots.length - joined === 1 ? "" : "s"} needed before you can start.`}
+                      </Text>
+                    </div>
                     <Button
+                      color="imperial"
+                      leftSection={
+                        <IconPlayerPlay size={20} aria-hidden="true" />
+                      }
                       disabled={busy || !allJoined}
                       onClick={() => onOperation({ type: "start" })}
                     >
                       Start draft
                     </Button>
-                    <Text size="sm" c="dimmed">
-                      {allJoined
-                        ? "Everyone has joined. Starting reveals the draft and its order."
-                        : `Waiting for ${lobby.slots.length - joined} more player${lobby.slots.length - joined === 1 ? "" : "s"} before you can start.`}
-                    </Text>
-                  </Stack>
+                  </div>
                 )}
-                <Accordion variant="contained">
+                <Accordion
+                  variant="contained"
+                  className="command-admin-controls"
+                >
                   <Accordion.Item value="admin">
-                    <Accordion.Control>Admin controls</Accordion.Control>
+                    <Accordion.Control
+                      icon={<IconShield size={24} aria-hidden="true" />}
+                    >
+                      Admin controls
+                    </Accordion.Control>
                     <Accordion.Panel>
                       <Stack gap="md">
                         <Text size="sm">
@@ -493,139 +588,31 @@ export function LobbyPanel({
                           {ownPlayerId === undefined &&
                             " Join above if you are also playing."}
                         </Text>
-                        <Text fw={600}>Player recovery</Text>
-                        <Text size="sm" c="dimmed">
-                          Give each player only their own recovery code.
-                          Replacing a code invalidates their old one; they will
-                          need the replacement to rejoin.
-                        </Text>
-                        {lobby.slots
-                          .filter((s) => s.claimed)
-                          .map((s) => (
-                            <Paper key={s.id} withBorder p="sm">
-                              <Stack gap="xs">
-                                <Text fw={600}>{s.name}</Text>
-                                {s.uuid && (
-                                  <Group gap="xs">
-                                    <Text
-                                      size="xs"
-                                      style={{
-                                        overflowWrap: "anywhere",
-                                        fontFamily: "monospace",
-                                        flex: "1 1 240px",
-                                      }}
-                                    >
-                                      {s.uuid}
-                                    </Text>
-                                    <CopyButton value={s.uuid}>
-                                      {({ copied, copy }) => (
-                                        <Button
-                                          size="xs"
-                                          variant="light"
-                                          onClick={copy}
-                                        >
-                                          {copied
-                                            ? "Copied"
-                                            : "Copy recovery code"}
-                                        </Button>
-                                      )}
-                                    </CopyButton>
-                                  </Group>
-                                )}
-                                <Group gap="xs">
-                                  <Button
-                                    variant="subtle"
-                                    size="xs"
-                                    disabled={busy}
-                                    onClick={() =>
-                                      confirm(
-                                        "Replace player recovery code?",
-                                        `${s.name} will need their new recovery code to rejoin. Their picks are preserved.`,
-                                        { type: "rotate", playerId: s.id },
-                                      )
-                                    }
-                                  >
-                                    Replace recovery code
-                                  </Button>
-                                  {
-                                    <Button
-                                      variant="subtle"
-                                      color="red"
-                                      size="xs"
-                                      disabled={busy}
-                                      onClick={() =>
-                                        confirm(
-                                          "Replace this player?",
-                                          `${s.name}'s recovery code will stop working and another player can join in their place. Their picks are preserved. An active draft pauses until the replacement is ready.`,
-                                          { type: "release", playerId: s.id },
-                                        )
-                                      }
-                                    >
-                                      Replace player
-                                    </Button>
-                                  }
-                                </Group>
-                              </Stack>
-                            </Paper>
-                          ))}
-                        <form
-                          onSubmit={(event) => {
-                            event.preventDefault();
-                            if (!busy && renameId !== null && renameName.trim())
-                              onOperation({
-                                type: "rename",
-                                playerId: Number(renameId),
-                                name: renameName.trim(),
-                              });
-                          }}
-                        >
-                          <Group align="end">
-                            <Select
-                              label="Rename player"
-                              value={renameId}
-                              onChange={(value) => {
-                                setRenameId(value);
-                                setRenameName(
-                                  lobby.slots.find(
-                                    (slot) => String(slot.id) === value,
-                                  )?.name ?? "",
-                                );
-                              }}
-                              disabled={busy}
-                              data={lobby.slots
-                                .filter((s) => s.claimed)
-                                .map((s) => ({
-                                  value: String(s.id),
-                                  label: s.name,
-                                }))}
-                              style={{ flex: "1 1 160px" }}
-                            />
-                            <TextInput
-                              label="New name"
-                              value={renameName}
-                              onChange={(event) =>
-                                setRenameName(event.currentTarget.value)
-                              }
-                              maxLength={60}
-                              disabled={busy || renameId === null}
-                              style={{ flex: "1 1 160px" }}
-                            />
-                            <Button
-                              type="submit"
-                              variant="light"
-                              disabled={
-                                busy || renameId === null || !renameName.trim()
-                              }
-                            >
-                              Rename
-                            </Button>
-                          </Group>
-                        </form>
                         {lobby.started && (
-                          <>
+                          <Stack gap="md" className="command-admin-section">
+                            <Title
+                              order={3}
+                              className="command-admin-section-title"
+                            >
+                              Draft controls
+                            </Title>
                             <Group>
                               <Button
-                                color={lobby.paused ? "green" : "orange"}
+                                variant={lobby.paused ? "filled" : "outline"}
+                                color={lobby.paused ? "imperial" : "orange.3"}
+                                leftSection={
+                                  lobby.paused ? (
+                                    <IconPlayerPlay
+                                      size={20}
+                                      aria-hidden="true"
+                                    />
+                                  ) : (
+                                    <IconPlayerPause
+                                      size={20}
+                                      aria-hidden="true"
+                                    />
+                                  )
+                                }
                                 disabled={busy || (lobby.paused && !allJoined)}
                                 onClick={() =>
                                   onOperation({
@@ -636,7 +623,13 @@ export function LobbyPanel({
                                 {lobby.paused ? "Resume draft" : "Pause draft"}
                               </Button>
                               <Button
-                                variant="light"
+                                variant="default"
+                                leftSection={
+                                  <IconDeviceFloppy
+                                    size={20}
+                                    aria-hidden="true"
+                                  />
+                                }
                                 disabled={busy}
                                 onClick={() =>
                                   onOperation({ type: "checkpoint" })
@@ -645,8 +638,14 @@ export function LobbyPanel({
                                 Save checkpoint
                               </Button>
                               <Button
-                                color="orange"
-                                variant="light"
+                                color="orange.3"
+                                leftSection={
+                                  <IconArrowBackUp
+                                    size={20}
+                                    aria-hidden="true"
+                                  />
+                                }
+                                variant="outline"
                                 disabled={busy || !lobby.checkpoints?.length}
                                 onClick={() =>
                                   confirm(
@@ -679,8 +678,11 @@ export function LobbyPanel({
                                 style={{ flex: "1 1 240px" }}
                               />
                               <Button
-                                variant="light"
-                                color="orange"
+                                variant="outline"
+                                color="orange.3"
+                                leftSection={
+                                  <IconRestore size={20} aria-hidden="true" />
+                                }
                                 disabled={busy || !checkpointId}
                                 onClick={() =>
                                   checkpointId &&
@@ -694,73 +696,244 @@ export function LobbyPanel({
                                 Restore checkpoint
                               </Button>
                             </Group>
-                          </>
+                          </Stack>
                         )}
-                        <Text fw={600}>Save files</Text>
-                        <Text size="sm">
-                          Exports are encrypted to keep private hands hidden.
-                          Import them back into this same lobby to recover a
-                          saved state. Keep a downloaded copy before making
-                          major changes.
-                        </Text>
-                        <Group>
-                          <Button
-                            variant="light"
-                            disabled={busy}
-                            onClick={() => onOperation({ type: "export" })}
+                        <Stack gap="md" className="command-admin-section">
+                          <Title
+                            order={3}
+                            className="command-admin-section-title"
                           >
-                            Export current state
-                          </Button>
-                          {checkpointId && (
+                            Players & recovery
+                          </Title>
+                          <Text size="sm" c="dimmed">
+                            Give each player only their own recovery code.
+                            Replacing a code invalidates their old one; they
+                            will need the replacement to rejoin.
+                          </Text>
+                          {lobby.slots
+                            .filter((s) => s.claimed)
+                            .map((s) => (
+                              <Paper key={s.id} withBorder p="sm">
+                                <Stack gap="xs">
+                                  <Text fw={600}>{s.name}</Text>
+                                  {s.uuid && (
+                                    <Group gap="xs">
+                                      <Text
+                                        size="sm"
+                                        style={{
+                                          overflowWrap: "anywhere",
+                                          fontFamily: "monospace",
+                                          flex: "1 1 240px",
+                                        }}
+                                      >
+                                        {s.uuid}
+                                      </Text>
+                                      <CopyButton value={s.uuid}>
+                                        {({ copied, copy }) => (
+                                          <Button
+                                            size="sm"
+                                            variant="default"
+                                            leftSection={
+                                              <IconKey
+                                                size={20}
+                                                aria-hidden="true"
+                                              />
+                                            }
+                                            onClick={copy}
+                                          >
+                                            {copied
+                                              ? "Copied"
+                                              : "Copy recovery code"}
+                                          </Button>
+                                        )}
+                                      </CopyButton>
+                                    </Group>
+                                  )}
+                                  <Group gap="xs">
+                                    <Button
+                                      variant="outline"
+                                      color="orange.3"
+                                      leftSection={
+                                        <IconKey size={20} aria-hidden="true" />
+                                      }
+                                      size="sm"
+                                      disabled={busy}
+                                      onClick={() =>
+                                        confirm(
+                                          "Replace player recovery code?",
+                                          `${s.name} will need their new recovery code to rejoin. Their picks are preserved.`,
+                                          { type: "rotate", playerId: s.id },
+                                        )
+                                      }
+                                    >
+                                      Replace recovery code
+                                    </Button>
+                                    {
+                                      <Button
+                                        variant="outline"
+                                        color="red.3"
+                                        leftSection={
+                                          <IconUserMinus
+                                            size={20}
+                                            aria-hidden="true"
+                                          />
+                                        }
+                                        size="sm"
+                                        disabled={busy}
+                                        onClick={() =>
+                                          confirm(
+                                            "Replace this player?",
+                                            `${s.name}'s recovery code will stop working and another player can join in their place. Their picks are preserved. An active draft pauses until the replacement is ready.`,
+                                            { type: "release", playerId: s.id },
+                                          )
+                                        }
+                                      >
+                                        Replace player
+                                      </Button>
+                                    }
+                                  </Group>
+                                </Stack>
+                              </Paper>
+                            ))}
+                          <form
+                            onSubmit={(event) => {
+                              event.preventDefault();
+                              if (
+                                !busy &&
+                                renameId !== null &&
+                                renameName.trim()
+                              )
+                                onOperation({
+                                  type: "rename",
+                                  playerId: Number(renameId),
+                                  name: renameName.trim(),
+                                });
+                            }}
+                          >
+                            <Group align="end">
+                              <Select
+                                label="Rename player"
+                                value={renameId}
+                                onChange={(value) => {
+                                  setRenameId(value);
+                                  setRenameName(
+                                    lobby.slots.find(
+                                      (slot) => String(slot.id) === value,
+                                    )?.name ?? "",
+                                  );
+                                }}
+                                disabled={busy}
+                                data={lobby.slots
+                                  .filter((s) => s.claimed)
+                                  .map((s) => ({
+                                    value: String(s.id),
+                                    label: s.name,
+                                  }))}
+                                style={{ flex: "1 1 160px" }}
+                              />
+                              <TextInput
+                                label="New name"
+                                value={renameName}
+                                onChange={(event) =>
+                                  setRenameName(event.currentTarget.value)
+                                }
+                                maxLength={60}
+                                disabled={busy || renameId === null}
+                                style={{ flex: "1 1 160px" }}
+                              />
+                              <Button
+                                type="submit"
+                                variant="default"
+                                disabled={
+                                  busy ||
+                                  renameId === null ||
+                                  !renameName.trim()
+                                }
+                              >
+                                Rename
+                              </Button>
+                            </Group>
+                          </form>
+                        </Stack>
+                        <Stack gap="md" className="command-admin-section">
+                          <Title
+                            order={3}
+                            className="command-admin-section-title"
+                          >
+                            Save files
+                          </Title>
+                          <Text size="sm">
+                            Exports are encrypted to keep private hands hidden.
+                            Import them back into this same lobby to recover a
+                            saved state. Keep a downloaded copy before making
+                            major changes.
+                          </Text>
+                          <Group>
                             <Button
-                              variant="subtle"
-                              disabled={busy}
-                              onClick={() =>
-                                onOperation({ type: "export", checkpointId })
+                              variant="default"
+                              leftSection={
+                                <IconDownload size={20} aria-hidden="true" />
                               }
+                              disabled={busy}
+                              onClick={() => onOperation({ type: "export" })}
                             >
-                              Export selected checkpoint
+                              Export current state
                             </Button>
+                            {checkpointId && (
+                              <Button
+                                variant="default"
+                                disabled={busy}
+                                onClick={() =>
+                                  onOperation({ type: "export", checkpointId })
+                                }
+                              >
+                                Export selected checkpoint
+                              </Button>
+                            )}
+                          </Group>
+                          <FileInput
+                            label="Import a saved state"
+                            placeholder="Choose a .ti4-state.json file"
+                            accept=".json,application/json,text/plain"
+                            disabled={busy || readingFile}
+                            description={
+                              readingFile ? "Reading save file…" : undefined
+                            }
+                            value={null}
+                            resetRef={resetImportFile}
+                            onChange={async (file) => {
+                              resetImportFile.current?.();
+                              setFileError(null);
+                              if (!file) return;
+                              if (file.size > 8 * 1024 * 1024) {
+                                setFileError(
+                                  "Choose a save file smaller than 8 MB.",
+                                );
+                                return;
+                              }
+                              setReadingFile(true);
+                              try {
+                                const state = await file.text();
+                                confirm(
+                                  "Import this saved state?",
+                                  `Restore ${file.name} in this lobby, paused for review. A recovery checkpoint is kept before the change.`,
+                                  { type: "import", state },
+                                );
+                              } catch {
+                                setFileError(
+                                  "The save file could not be read. Try selecting it again.",
+                                );
+                              } finally {
+                                setReadingFile(false);
+                              }
+                            }}
+                          />
+                          {fileError && (
+                            <Alert color="red.3" title="Import failed">
+                              {fileError}
+                            </Alert>
                           )}
-                        </Group>
-                        <FileInput
-                          label="Import a saved state"
-                          placeholder="Choose a .ti4-state.json file"
-                          accept=".json,application/json,text/plain"
-                          disabled={busy || readingFile}
-                          description={
-                            readingFile ? "Reading save file…" : undefined
-                          }
-                          value={null}
-                          resetRef={resetImportFile}
-                          onChange={async (file) => {
-                            resetImportFile.current?.();
-                            setFileError(null);
-                            if (!file) return;
-                            if (file.size > 8 * 1024 * 1024) {
-                              setFileError(
-                                "Choose a save file smaller than 8 MB.",
-                              );
-                              return;
-                            }
-                            setReadingFile(true);
-                            try {
-                              const state = await file.text();
-                              confirm(
-                                "Import this saved state?",
-                                `Restore ${file.name} in this lobby, paused for review. A recovery checkpoint is kept before the change.`,
-                                { type: "import", state },
-                              );
-                            } catch {
-                              setFileError(
-                                "The save file could not be read. Try selecting it again.",
-                              );
-                            } finally {
-                              setReadingFile(false);
-                            }
-                          }}
-                        />
-                        {fileError && <Alert color="red">{fileError}</Alert>}
+                        </Stack>
                       </Stack>
                     </Accordion.Panel>
                   </Accordion.Item>
@@ -783,7 +956,11 @@ export function LobbyPanel({
               Cancel
             </Button>
             <Button
-              color="orange"
+              color={
+                confirmation?.operation.type === "release"
+                  ? "red.3"
+                  : "orange.3"
+              }
               disabled={busy}
               onClick={() => {
                 if (confirmation) onOperation(confirmation.operation);

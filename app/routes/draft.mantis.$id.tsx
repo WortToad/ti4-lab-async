@@ -106,11 +106,13 @@ export function headers() {
   return privateHeaders;
 }
 
-const loadClientDraft = createOrderedLoader<
-  Awaited<ReturnType<typeof loader>>["data"]
->();
+const loadClientDraft =
+  createOrderedLoader<Awaited<ReturnType<typeof loader>>["data"]>();
 
-export function clientLoader({ request, serverLoader }: ClientLoaderFunctionArgs) {
+export function clientLoader({
+  request,
+  serverLoader,
+}: ClientLoaderFunctionArgs) {
   return loadClientDraft(new URL(request.url).pathname, () =>
     serverLoader<typeof loader>(),
   );
@@ -754,7 +756,9 @@ function ActiveMantisRoom({
         </Group>
         {fetcher.data?.error && <Alert color="red">{fetcher.data.error}</Alert>}
         <Alert
-          color={canPick ? "teal" : "blue"}
+          color={
+            room.lobby.paused ? "orange.3" : canPick ? "success.4" : "sky.4"
+          }
           title={
             draft.phase === "complete"
               ? "Ready to play"
@@ -807,7 +811,13 @@ function ActiveMantisRoom({
             .join(" → ")}{" "}
           (reverses each round)
         </Text>
-        <Table.ScrollContainer minWidth={650}>
+        <Table.ScrollContainer
+          minWidth={650}
+          type="native"
+          tabIndex={0}
+          role="region"
+          aria-label="Player status — scroll to see all columns"
+        >
           <Table striped withTableBorder>
             <Table.Thead>
               <Table.Tr>
@@ -824,9 +834,14 @@ function ActiveMantisRoom({
             </Table.Thead>
             <Table.Tbody>
               {draft.players.map((p) => (
-                <Table.Tr key={p.id}>
+                <Table.Tr
+                  key={p.id}
+                  className="command-player-row"
+                  data-own={p.id === playerId || undefined}
+                >
                   <Table.Td fw={p.id === activeId ? 700 : 400}>
                     {p.name}
+                    {p.id === playerId ? " (you)" : ""}
                   </Table.Td>
                   <Table.Td>
                     <Group gap="xs" wrap="nowrap">

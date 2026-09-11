@@ -1,0 +1,90 @@
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px 32px;
+  flex-wrap: wrap;
+}
+.heading {
+  min-width: 0;
+  flex: 1 1 320px;
+}
+.role {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-inline-start: 14px;
+  border-inline-start: 1px solid #62798d;
+  font-size: var(--command-font-label);
+  font-weight: 600;
+  color: var(--command-text-body);
+}
+.role svg {
+  color: var(--command-accent);
+}
+.metadata {
+  color: var(--command-text-body);
+}
+.joined {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--command-font-control);
+  font-variant-numeric: tabular-nums;
+}
+.joined svg {
+  color: var(--command-text-muted);
+}
+.joined strong {
+  color: var(--command-text-strong);
+}
+.actions {
+  flex-shrink: 0;
+}
+.playerChip[data-own] {
+  background: #1b3c56;
+  color: #dff3fe;
+  box-shadow: inset 3px 0 var(--command-info);
+}
+.playerNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 0;
+  border-block: 1px solid var(--command-border);
+}
+.playerNotice > svg {
+  flex-shrink: 0;
+  color: var(--command-success);
+  margin-top: 3px;
+}
+.playerNotice :global(.mantine-Stack-root) {
+  gap: 4px;
+}
+.startRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding: 20px;
+  border: 1px solid var(--command-border);
+  border-radius: 8px;
+  background: #0b1b2b;
+}
+.startRow > div {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 36em) {
+  .actions {
+    width: 100%;
+  }
+  .actions > :global(.mantine-Button-root) {
+    flex: 1 1 auto;
+  }
+  .startRow {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+  }
+}

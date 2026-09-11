@@ -1,5 +1,4 @@
 import {
-  Badge,
   Divider,
   Group,
   Paper,
@@ -10,7 +9,10 @@ import {
   Title,
 } from "@mantine/core";
 import type { ReactNode } from "react";
+import { IconCheck, IconClock, IconUser } from "@tabler/icons-react";
 import type { BagDraftView } from "./types";
+import classes from "./BagDraftProgress.module.css";
+import { StatusPill } from "~/ui/StatusPill";
 
 export function BagDraftProgress({
   view,
@@ -43,21 +45,20 @@ export function BagDraftProgress({
               </Text>
             )}
           </div>
-          <Badge
-            variant="light"
-            color={donePlayers === view.players.length ? "green" : "blue"}
-          >
-            {donePlayers} / {view.players.length}{" "}
+          <Text size="sm" className={classes.summary}>
+            <strong>{donePlayers}</strong> / {view.players.length}{" "}
             {drafting ? "ready to pass" : "finished"}
-          </Badge>
+          </Text>
         </Group>
         <Progress
+          color={donePlayers === view.players.length ? "success.4" : "blue.3"}
+          size="sm"
           value={
             view.players.length ? (donePlayers / view.players.length) * 100 : 0
           }
           aria-label={drafting ? "Players ready to pass" : "Players finished"}
         />
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="xs">
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="sm">
           {view.players.map((player, index) => {
             const done = drafting ? player.ready : player.finished;
             const passingTo =
@@ -70,23 +71,37 @@ export function BagDraftProgress({
                 key={player.id}
                 withBorder
                 radius="sm"
-                p="sm"
-                bg={ownSeat ? "var(--mantine-color-violet-light)" : undefined}
+                p="md"
+                className={classes.player}
+                data-own={ownSeat || undefined}
+                aria-label={`${player.name}${ownSeat ? " (you)" : ""} draft progress`}
               >
-                <Stack gap={6}>
+                <Stack gap="sm">
                   <Group justify="space-between" gap="xs" align="flex-start">
                     <Text
-                      size="sm"
-                      fw={600}
+                      size="lg"
+                      fw={700}
                       style={{ overflowWrap: "anywhere", flex: 1 }}
                     >
                       {player.name}
-                      {ownSeat ? " (you)" : ""}
                     </Text>
-                    <Badge
-                      size="sm"
-                      color={done ? "green" : "gray"}
-                      variant="light"
+                    {ownSeat && (
+                      <span className={classes.you}>
+                        <IconUser size={16} aria-hidden="true" /> You
+                      </span>
+                    )}
+                  </Group>
+                  <Group>
+                    <StatusPill
+                      prominent
+                      tone={done ? "success" : "warning"}
+                      icon={
+                        done ? (
+                          <IconCheck size={18} aria-hidden="true" />
+                        ) : (
+                          <IconClock size={18} aria-hidden="true" />
+                        )
+                      }
                     >
                       {drafting
                         ? done
@@ -95,18 +110,18 @@ export function BagDraftProgress({
                         : done
                           ? "Finished"
                           : "Building faction"}
-                    </Badge>
+                    </StatusPill>
                   </Group>
                   {drafting && (
                     <Text size="sm" style={{ overflowWrap: "anywhere" }}>
-                      <Text span c="dimmed">
+                      <Text span inherit>
                         Passes to →{" "}
                       </Text>
-                      {passingTo.name}
+                      <strong>{passingTo.name}</strong>
                     </Text>
                   )}
-                  <Text size="xs" c="dimmed">
-                    {player.draftedCount} components collected
+                  <Text size="sm" className={classes.collected}>
+                    <strong>{player.draftedCount}</strong> components collected
                   </Text>
                 </Stack>
               </Paper>

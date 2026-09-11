@@ -47,23 +47,20 @@ export function DraftOrderSection() {
     }
   };
 
-  // Compact control bar with grouped controls using Mantine components
   const ControlBar = (
     <Group gap="xs" wrap="wrap">
-      {/* Primary action: Share */}
       <Button
         component="a"
         href={appPath(`/draft/${draftUrl}.png`)}
         target="_blank"
         rel="noreferrer"
         size="compact-xs"
-        color="green"
+        variant="default"
         leftSection={<IconShare size={12} />}
       >
         Share
       </Button>
 
-      {/* Art toggle - prominent with different colors for each state */}
       <LabArtToggleButton
         originalArt={originalArt}
         onToggle={() => setOriginalArt(!originalArt)}
@@ -95,8 +92,9 @@ export function DraftOrderSection() {
             {!managedLobby && (
               <Button
                 size="compact-xs"
-                variant={adminMode ? "filled" : "default"}
-                color={adminMode ? "violet" : "gray"}
+                variant={adminMode ? "outline" : "default"}
+                color="imperial"
+                aria-pressed={adminMode}
                 onClick={handleAdminToggle}
                 title="Toggle admin mode"
               >
@@ -108,8 +106,9 @@ export function DraftOrderSection() {
             {showPickForAnyoneControl && (
               <Button
                 size="compact-xs"
-                variant={pickForAnyone ? "filled" : "default"}
-                color={pickForAnyone ? "violet" : "gray"}
+                variant={pickForAnyone ? "outline" : "default"}
+                color="imperial"
+                aria-pressed={pickForAnyone}
                 onClick={() => setPickForAnyone(!pickForAnyone)}
                 title="Pick for any player"
               >
@@ -124,8 +123,8 @@ export function DraftOrderSection() {
               {showUndoLastSelection && (
                 <Button
                   size="compact-xs"
-                  variant="subtle"
-                  color="red"
+                  variant="outline"
+                  color="orange.3"
                   leftSection={<IconArrowBackUp size={12} />}
                   onClick={handleUndo}
                   disabled={selections.length === 0}

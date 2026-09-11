@@ -127,8 +127,7 @@ export function MapTile(props: Props) {
         <HomeTile
           mapId={props.mapId}
           tile={tile}
-          selectable={!!props.homeSelectable}
-          onSelect={props.onSelect}
+          selectable={canSelect}
           sliceValue={props.sliceValue}
           sliceStats={props.sliceStats}
           coreSliceData={derivedCoreSliceData}

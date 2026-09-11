@@ -24,7 +24,10 @@ export function DraftableMinorFactionsSection() {
   return (
     <Section>
       <SectionTitle title="Available Minor Factions" />
-      <SimpleGrid cols={{ base: 2, sm: 3, md: 4, lg: 3, xl: 4 }}>
+      <SimpleGrid
+        type="container"
+        cols={{ base: 1, "440px": 2, "700px": 3, "960px": 4 }}
+      >
         {factions.map((factionId) => {
           const blocked =
             factionId === "keleres" ||

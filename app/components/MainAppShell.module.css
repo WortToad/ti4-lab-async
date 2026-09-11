@@ -13,7 +13,7 @@
 }
 .brand {
   text-decoration: none;
-  flex-shrink: 0;
+  min-width: 0;
   display: flex;
 }
 .desktopMenu {
@@ -36,7 +36,7 @@
   padding: 8px 0;
 }
 .navLink:hover {
-  color: #fffaf0;
+  color: var(--command-text-strong);
   border-color: #8196a8;
 }
 .navLink[aria-current] {
@@ -53,6 +53,7 @@
 }
 .burger {
   display: none;
+  flex-shrink: 0;
 }
 .mobileLink {
   padding: 14px;
@@ -76,7 +77,7 @@
   position: fixed;
   top: -100px;
   left: 16px;
-  background: #f2e8d3;
+  background: var(--command-accent);
   color: #071321;
   padding: 12px 20px;
   z-index: 2000;
@@ -104,7 +105,7 @@
   color: var(--command-accent);
 }
 .footer p {
-  color: #aebfce;
+  color: var(--command-text-muted);
   margin: 8px 0;
   font-size: 0.875rem;
 }

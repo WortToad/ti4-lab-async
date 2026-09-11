@@ -61,7 +61,7 @@ function TechSkipIcon({
           transform: "translate(-50%, -50%)",
           WebkitTextStroke: "1.5px black",
           paintOrder: "stroke fill",
-          fontSize: "0.65rem",
+          fontSize: "var(--command-font-label)",
         }}
       >
         {count}
@@ -110,7 +110,7 @@ function LegendaryDisplay({ count }: { count: number | null }) {
           transform: "translate(-50%, -50%)",
           WebkitTextStroke: "1.5px black",
           paintOrder: "stroke fill",
-          fontSize: "0.65rem",
+          fontSize: "var(--command-font-label)",
         }}
       >
         {count}

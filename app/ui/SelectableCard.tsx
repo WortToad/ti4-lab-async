@@ -39,7 +39,7 @@ export function SelectableCard({
         onClick={isInteractive ? onSelect : undefined}
         style={{
           cursor: isInteractive ? "pointer" : "default",
-          opacity: disabled ? 0.5 : selected ? 0.5 : 1,
+          filter: disabled && !selected ? "saturate(0.45)" : undefined,
           position: "relative",
         }}
       >
@@ -63,7 +63,7 @@ export function SelectableCard({
         onClick={headerInteractive ? onSelect : undefined}
         style={{
           cursor: headerInteractive && isInteractive ? "pointer" : "default",
-          opacity: disabled ? 0.5 : selected ? 0.5 : 1,
+          filter: disabled && !selected ? "saturate(0.45)" : undefined,
           position: "relative",
         }}
       >
@@ -73,7 +73,9 @@ export function SelectableCard({
         <Surface
           variant={bodyInteractive ? variant : "card"}
           onClick={bodyInteractive ? onSelect : undefined}
-          style={{ cursor: bodyInteractive && isInteractive ? "pointer" : "default" }}
+          style={{
+            cursor: bodyInteractive && isInteractive ? "pointer" : "default",
+          }}
         >
           {body}
         </Surface>

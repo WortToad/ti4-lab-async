@@ -175,10 +175,10 @@
 
 /* Position indicator badge */
 .positionBadge {
-  font-family: "Quantico", sans-serif;
-  font-size: 9px;
+  font-family: var(--mantine-font-family);
+  font-size: var(--command-font-label);
   font-weight: 700;
-  letter-spacing: 0.15em;
+  letter-spacing: 0;
   text-transform: uppercase;
   padding: 2px 6px;
   border-radius: 1px;
@@ -199,7 +199,7 @@
 @mixin dark {
   .positionBadge {
     background: rgba(60, 80, 120, 0.3);
-    color: rgba(140, 160, 200, 0.8);
+    color: var(--command-text-body);
     border: 1px solid rgba(100, 120, 160, 0.2);
   }
 
@@ -212,7 +212,7 @@
 
 /* Selected/claimed state */
 .claimed {
-  opacity: 0.6;
+  opacity: 1;
 }
 
 @mixin light {

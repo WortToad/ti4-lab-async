@@ -16,20 +16,20 @@ export function BagSelectionActions({
       p="sm"
       radius="md"
       shadow="sm"
+      className="command-state-panel"
       style={{
         position: "sticky",
         top: "calc(var(--app-shell-header-height, 48px) + 8px)",
         zIndex: 20,
-        background: "var(--mantine-color-body)",
       }}
     >
       <Group justify="space-between" gap="sm" wrap="wrap">
         <Stack gap={2} style={{ flex: "1 1 180px", minWidth: 0 }}>
-          <Text size="sm" fw={600} role="status">
+          <Text size="md" fw={700} role="status">
             {status}
           </Text>
           {detail && (
-            <Text size="xs" c="dimmed" lineClamp={2}>
+            <Text size="sm" style={{ overflowWrap: "anywhere" }}>
               {detail}
             </Text>
           )}

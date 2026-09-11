@@ -22,10 +22,13 @@ export function DraftableReferenceCard({
   onSelect,
 }: Props) {
   const playerColor =
-    player?.id !== undefined ? (playerColors[player.id] as PlayerColor) : undefined;
+    player?.id !== undefined
+      ? (playerColors[player.id] as PlayerColor)
+      : undefined;
 
   const homeSystem = factionSystems[faction.id];
-  const priorityOrder = faction.priorityOrder ?? Math.floor(Math.random() * 100);
+  const priorityOrder =
+    faction.priorityOrder ?? Math.floor(Math.random() * 100);
 
   return (
     <SelectableCard
@@ -40,7 +43,7 @@ export function DraftableReferenceCard({
             flex={1}
             style={{
               overflow: "hidden",
-              flexWrap: "nowrap",
+              flexWrap: "wrap",
             }}
             pt={5}
             pb={10}
@@ -52,10 +55,10 @@ export function DraftableReferenceCard({
                 style={{ width: 25, height: 25 }}
               />
             </Flex>
-            <Text flex={1} size="14px" ff="heading" fw="bold">
+            <Text flex={1} size="md" fw={600}>
               {faction.name}
             </Text>
-            <Badge size="sm" color="blue" variant="filled">
+            <Badge size="sm" color="blue.3" variant="light">
               Priority: {priorityOrder}
             </Badge>
           </Group>
@@ -78,50 +81,70 @@ export function DraftableReferenceCard({
       }
       body={
         <Box p="xs">
-        <Group align="flex-start" gap="xs" wrap="nowrap">
-          {homeSystem && (
-            <Box>
-              <SystemTileCard
-                systemId={homeSystem.id}
-                radius={40}
-                padding={0}
-                showStats={false}
-                style={{ background: "transparent", border: 0 }}
-              />
-            </Box>
-          )}
-          <Table
-            horizontalSpacing={4}
-            verticalSpacing={1}
-            style={{
-              fontSize: "10px",
-              flex: 1,
-            }}
-          >
-            <Table.Tbody>
-              <Table.Tr>
-                <Table.Td c="dimmed" p={2}>Carrier</Table.Td>
-                <Table.Td ta="right" p={2}>2</Table.Td>
-              </Table.Tr>
-              <Table.Tr>
-                <Table.Td c="dimmed" p={2}>Dreadnought</Table.Td>
-                <Table.Td ta="right" p={2}>1</Table.Td>
-              </Table.Tr>
-              <Table.Tr>
-                <Table.Td c="dimmed" p={2}>Fighter</Table.Td>
-                <Table.Td ta="right" p={2}>3</Table.Td>
-              </Table.Tr>
-              <Table.Tr>
-                <Table.Td c="dimmed" p={2}>Infantry</Table.Td>
-                <Table.Td ta="right" p={2}>4</Table.Td>
-              </Table.Tr>
-              <Table.Tr>
-                <Table.Td c="dimmed" p={2}>Space Dock</Table.Td>
-                <Table.Td ta="right" p={2}>1</Table.Td>
-              </Table.Tr>
-            </Table.Tbody>
-          </Table>
-        </Group>
+          <Group align="flex-start" gap="xs" wrap="nowrap">
+            {homeSystem && (
+              <Box>
+                <SystemTileCard
+                  systemId={homeSystem.id}
+                  radius={40}
+                  padding={0}
+                  showStats={false}
+                  style={{ background: "transparent", border: 0 }}
+                />
+              </Box>
+            )}
+            <Table
+              horizontalSpacing={4}
+              verticalSpacing={1}
+              style={{
+                fontSize: "var(--command-font-label)",
+                flex: 1,
+              }}
+            >
+              <Table.Tbody>
+                <Table.Tr>
+                  <Table.Td c="dimmed" p={2}>
+                    Carrier
+                  </Table.Td>
+                  <Table.Td ta="right" p={2}>
+                    2
+                  </Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Td c="dimmed" p={2}>
+                    Dreadnought
+                  </Table.Td>
+                  <Table.Td ta="right" p={2}>
+                    1
+                  </Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Td c="dimmed" p={2}>
+                    Fighter
+                  </Table.Td>
+                  <Table.Td ta="right" p={2}>
+                    3
+                  </Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Td c="dimmed" p={2}>
+                    Infantry
+                  </Table.Td>
+                  <Table.Td ta="right" p={2}>
+                    4
+                  </Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Td c="dimmed" p={2}>
+                    Space Dock
+                  </Table.Td>
+                  <Table.Td ta="right" p={2}>
+                    1
+                  </Table.Td>
+                </Table.Tr>
+              </Table.Tbody>
+            </Table>
+          </Group>
         </Box>
       }
     />

@@ -36,7 +36,7 @@ export function TexasFactionSelectionPhase() {
 
   const options =
     phase.currentPlayer && texasDraft?.factionOptions
-      ? texasDraft.factionOptions[phase.currentPlayer.id] ?? []
+      ? (texasDraft.factionOptions[phase.currentPlayer.id] ?? [])
       : [];
   const selectedFaction =
     phase.currentPlayer && phase.stagingValues
@@ -118,7 +118,11 @@ export function TexasFactionSelectionPhase() {
 
           <Grid.Col span={{ base: 12, md: 8 }}>
             <Stack gap="lg">
-              <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="md">
+              <SimpleGrid
+                type="container"
+                cols={{ base: 1, "440px": 2, "700px": 3 }}
+                spacing="md"
+              >
                 {options.map((factionId) => {
                   const isSelected = selectedFaction === factionId;
                   return (

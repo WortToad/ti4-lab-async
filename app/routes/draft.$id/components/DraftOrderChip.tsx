@@ -33,7 +33,7 @@ export function DraftOrderChip({
       data-active={entry.isActive ? "true" : undefined}
       style={chipSize === "sm" ? { borderRadius: "var(--mantine-radius-sm)" } : undefined}
     >
-      <Text ff="heading" size={textSize} fw={"bold"} lh={1}>
+      <Text size={textSize} fw={600} lh={1.4}>
         {entry.player.name}
       </Text>
     </Group>

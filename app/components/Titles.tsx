@@ -7,7 +7,7 @@ const Slice = ({ children, ...rest }: { children: string } & TitleProps) => (
 );
 
 const Player = ({ children, ...rest }: { children: string } & TitleProps) => (
-  <Title order={4} ta="center" fw={700} c="violet.9" {...rest}>
+  <Title order={4} ta="center" fw={700} c="var(--command-text-strong)" {...rest}>
     {children}
   </Title>
 );

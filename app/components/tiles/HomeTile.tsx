@@ -25,7 +25,6 @@ type Props = {
   mapId: string;
   tile: HomeTile;
   selectable?: boolean;
-  onSelect?: () => void;
   sliceValue?: number;
   sliceStats?: SliceStats;
   coreSliceData?: CoreSliceData;
@@ -35,7 +34,6 @@ type Props = {
 export function HomeTile({
   mapId,
   tile,
-  onSelect,
   selectable = false,
   sliceValue,
   sliceStats,
@@ -43,7 +41,7 @@ export function HomeTile({
   onHomeHover,
 }: Props) {
   const { originalArt } = useSafeOutletContext();
-  const { radius, disabled } = useContext(MapContext);
+  const { radius } = useContext(MapContext);
   const { hydratedPlayers } = useHydratedDraft();
   const rawDraftContext = useRawDraftContext();
 
@@ -156,8 +154,6 @@ export function HomeTile({
             seat={tile.seat}
             coreSliceData={coreSliceData}
             selectable={selectable}
-            onSelect={onSelect}
-            disabled={disabled}
           />
         )}
       </Hex>

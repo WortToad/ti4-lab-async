@@ -1,0 +1,33 @@
+.player {
+  min-width: 0;
+  background: #11263a;
+  border: 1px solid #496176;
+  color: var(--command-text-strong);
+}
+
+.player[data-own] {
+  background: linear-gradient(135deg, #164566, #102d45);
+  border-color: #6caacb;
+  border-inline-start: 4px solid var(--command-info);
+  box-shadow: 0 4px 16px #020a1430;
+}
+.you {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #bde8ff;
+  font-size: var(--command-font-label);
+  font-weight: 600;
+}
+.summary {
+  white-space: nowrap;
+  color: var(--command-text-body);
+  font-variant-numeric: tabular-nums;
+}
+.summary strong {
+  color: var(--command-text-strong);
+}
+.collected {
+  padding-top: 10px;
+  border-top: 1px solid #496176;
+}

@@ -194,18 +194,10 @@ export function FactionSettingsModal({
       size="90%"
       title={
         <Group gap="xs">
-          <ThemeIcon size="sm" variant="light" color="orange" radius="sm">
-            <IconAlien size={12} />
+          <ThemeIcon size="lg" variant="light" color="orange" radius="sm">
+            <IconAlien size={20} aria-hidden="true" />
           </ThemeIcon>
-          <Text
-            size="sm"
-            fw={600}
-            tt="uppercase"
-            style={{
-              letterSpacing: "0.05em",
-              fontFamily: "var(--font-display)",
-            }}
-          >
+          <Text size="lg" fw={600}>
             Configure Faction Pool
           </Text>
         </Group>
@@ -286,16 +278,7 @@ export function FactionSettingsModal({
                       "1px dashed var(--mantine-color-default-border)",
                   }}
                 >
-                  <Text
-                    size="xs"
-                    fw={600}
-                    tt="uppercase"
-                    c="dimmed"
-                    style={{
-                      letterSpacing: "0.08em",
-                      fontFamily: "var(--font-display)",
-                    }}
-                  >
+                  <Text size="sm" fw={600} c="dimmed">
                     {gameSetLabel[gameSet]}
                   </Text>
                   <Badge size="xs" variant="light" color="gray">

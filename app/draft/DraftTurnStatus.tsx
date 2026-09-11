@@ -1,5 +1,4 @@
 import {
-  Badge,
   Button,
   Group,
   Paper,
@@ -8,7 +7,13 @@ import {
   Switch,
   Text,
 } from "@mantine/core";
-import { IconBell } from "@tabler/icons-react";
+import {
+  IconBell,
+  IconBolt,
+  IconCheck,
+  IconClock,
+  IconPlayerPause,
+} from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { appPath } from "~/utils/appUrl";
 import { isAudioAlertEnabled, setAudioAlertEnabled } from "~/utils/audioAlert";
@@ -23,6 +28,7 @@ import {
   setBrowserAlertsEnabled,
 } from "./turnNotifications";
 import type { PendingDraftAction } from "./turn";
+import { StatusPill } from "~/ui/StatusPill";
 
 export function DraftTurnStatus({
   roomKey,
@@ -119,18 +125,32 @@ export function DraftTurnStatus({
   };
 
   return (
-    <Paper withBorder p="sm" radius="md">
+    <Paper
+      withBorder
+      p="md"
+      radius="md"
+      className="command-state-panel"
+      data-state={
+        complete || actionKey ? "success" : paused ? "warning" : "waiting"
+      }
+    >
       <Group justify="space-between" gap="sm">
         <Group gap="sm" style={{ flex: "1 1 220px" }}>
-          <Badge
-            color={
-              complete
-                ? "teal"
-                : paused
-                  ? "orange"
-                  : actionKey
-                    ? "green"
-                    : "gray"
+          <StatusPill
+            tone={
+              complete || actionKey ? "success" : paused ? "warning" : "neutral"
+            }
+            prominent
+            icon={
+              complete ? (
+                <IconCheck size={18} aria-hidden="true" />
+              ) : paused ? (
+                <IconPlayerPause size={18} aria-hidden="true" />
+              ) : actionKey ? (
+                <IconBolt size={18} aria-hidden="true" />
+              ) : (
+                <IconClock size={18} aria-hidden="true" />
+              )
             }
           >
             {complete
@@ -140,8 +160,8 @@ export function DraftTurnStatus({
                 : actionKey
                   ? "Your turn"
                   : "Waiting"}
-          </Badge>
-          <Text size="sm" role="status">
+          </StatusPill>
+          <Text size="md" fw={600} role="status">
             {complete
               ? "Your draft is complete."
               : paused
@@ -158,9 +178,9 @@ export function DraftTurnStatus({
         >
           <Popover.Target>
             <Button
-              size="xs"
-              variant="subtle"
-              leftSection={<IconBell size={14} />}
+              size="sm"
+              variant="default"
+              leftSection={<IconBell size={20} aria-hidden="true" />}
             >
               Turn alerts
             </Button>

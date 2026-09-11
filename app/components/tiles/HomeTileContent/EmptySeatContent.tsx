@@ -1,4 +1,4 @@
-import { Button, Group, Stack, Text } from "@mantine/core";
+import { Group, Stack, Text } from "@mantine/core";
 import { useDraft } from "~/draftStore";
 import type { CoreSliceData } from "~/hooks/useCoreSliceValues";
 import { SliceValuePopover } from "../../Slice/SliceValuePopover";
@@ -10,21 +10,13 @@ type Props = {
   seat?: number;
   coreSliceData?: CoreSliceData;
   selectable?: boolean;
-  onSelect?: () => void;
-  disabled?: boolean;
 };
 
 /**
  * Content for empty home tile seats during draft.
- * Shows seat label, slice value with popover, and optional select button.
+ * The surrounding MapTile supplies the full-size, keyboard-accessible button.
  */
-export function EmptySeatContent({
-  seat,
-  coreSliceData,
-  selectable,
-  onSelect,
-  disabled,
-}: Props) {
+export function EmptySeatContent({ seat, coreSliceData, selectable }: Props) {
   const hydrated = useDraft((state) => state.hydrated);
   const draftSpeaker = useDraft((state) => state.draft.settings.draftSpeaker);
 
@@ -48,16 +40,9 @@ export function EmptySeatContent({
         </Group>
       )}
       {selectable && (
-        <Button
-          ta="center"
-          lh={1}
-          size="xs"
-          onMouseDown={onSelect}
-          disabled={disabled}
-          style={{ zIndex: 1 }}
-        >
-          Select Seat
-        </Button>
+        <Text span size="xs" fw={700} c="imperial.4" lh={1.4}>
+          Choose
+        </Text>
       )}
     </Stack>
   );

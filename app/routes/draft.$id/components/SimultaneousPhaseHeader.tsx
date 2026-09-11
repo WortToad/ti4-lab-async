@@ -48,7 +48,6 @@ export function SimultaneousPhaseHeader({
           <Text
             size="sm"
             fw={600}
-            tt="uppercase"
             style={{
               letterSpacing: "0.04em",
               color: `var(--mantine-color-${phaseColor}-4)`,
@@ -56,14 +55,12 @@ export function SimultaneousPhaseHeader({
           >
             {phaseName}
           </Text>
-          <Text size="xs" c="dimmed">
-            {description}
-          </Text>
+          <Text size="sm">{description}</Text>
         </Group>
         <Group gap={4}>
           {!managedLobby && (
             <Button
-              size="compact-xs"
+              size="sm"
               variant={adminMode ? "filled" : "default"}
               color={adminMode ? "violet" : "gray"}
               onClick={onAdminToggle}
@@ -80,7 +77,7 @@ export function SimultaneousPhaseHeader({
               disabled={!showPickAnyWarning}
             >
               <Button
-                size="compact-xs"
+                size="sm"
                 variant={pickForAnyone ? "filled" : "default"}
                 color={
                   pickForAnyone
@@ -98,20 +95,20 @@ export function SimultaneousPhaseHeader({
           {showUndo && (
             <>
               <Button
-                size="compact-xs"
-                variant="subtle"
-                color="red"
-                leftSection={<IconArrowBackUp size={12} />}
+                size="sm"
+                variant="outline"
+                color="orange.3"
+                leftSection={<IconArrowBackUp size={20} />}
                 onClick={onUndoPick}
                 disabled={undoPickDisabled}
               >
                 Undo Pick
               </Button>
               <Button
-                size="compact-xs"
-                variant="subtle"
-                color="red"
-                leftSection={<IconArrowBackUp size={12} />}
+                size="sm"
+                variant="outline"
+                color="orange.3"
+                leftSection={<IconArrowBackUp size={20} />}
                 onClick={onUndoPhase}
                 disabled={undoPhaseDisabled}
               >

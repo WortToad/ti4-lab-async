@@ -41,7 +41,6 @@ export function BaseSlice({
   return (
     <Paper
       shadow="sm"
-      style={{ opacity: selectedColor ? 0.5 : 1 }}
       className={selectedColor ? classes[selectedColor] : ""}
     >
       <Stack flex={1} gap={0}>

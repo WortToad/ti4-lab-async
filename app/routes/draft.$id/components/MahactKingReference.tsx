@@ -27,7 +27,7 @@ export function MahactKingReference({ faction, reference }: Props) {
       style={{ borderTop: `4px solid ${reference.accent}` }}
     >
       <Stack gap="lg">
-        <Group justify="space-between" align="center" wrap="nowrap">
+        <Group justify="space-between" align="center">
           <Group gap="md" wrap="nowrap" miw={0}>
             <Box
               component="img"
@@ -47,19 +47,15 @@ export function MahactKingReference({ faction, reference }: Props) {
                 fw={700}
                 ff="var(--font-display)"
                 lh={1.2}
+                style={{ overflowWrap: "anywhere" }}
               >
                 {faction.name}
               </Text>
             </Box>
           </Group>
-          <Badge
-            size="lg"
-            variant="light"
-            color="gray"
-            style={{ flexShrink: 0, color: reference.accent }}
-          >
+          <Text size="sm" fw={600} c="var(--command-text-body)">
             {reference.commodities} commodities
-          </Badge>
+          </Text>
         </Group>
 
         {reference.units.map((unit) => (
@@ -71,16 +67,7 @@ export function MahactKingReference({ faction, reference }: Props) {
           >
             <Stack gap="sm">
               <Group gap="xs" align="center">
-                <Badge
-                  variant="filled"
-                  color={reference.accent}
-                  size="lg"
-                  radius="sm"
-                  h="auto"
-                  py={4}
-                  fz={{ base: "sm", sm: "md" }}
-                  fw={700}
-                >
+                <Badge variant="light" color="gray" size="lg">
                   {unit.type}
                 </Badge>
                 <Text fw={700} fz={{ base: "md", sm: "lg" }}>

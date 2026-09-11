@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Box, Group, Paper, Stack, Text, TextInput } from "@mantine/core";
+import { Box, Group, Paper, Stack, TextInput } from "@mantine/core";
 import { PlayerColor } from "./types";
 import classes from "./SliceCard.module.css";
 import { Titles } from "~/components/Titles";
@@ -30,7 +30,6 @@ export function SliceCard({
   return (
     <Paper
       shadow="sm"
-      style={{ opacity: playerColor ? 0.5 : 1 }}
       className={colorClass}
     >
       <Stack flex={1} gap={0}>

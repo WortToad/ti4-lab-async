@@ -1,4 +1,4 @@
-import { Badge, Button, Group } from "@mantine/core";
+import { Badge, Box, Button, Group } from "@mantine/core";
 import { PlayerChip } from "./PlayerChip";
 import { HydratedPlayer } from "~/types";
 
@@ -20,18 +20,14 @@ export function PlayerChipOrSelect({
   onSelectMinor,
 }: Props) {
   const selectText = selectTitle || "Select";
+  if (!player && !onSelect && !onSelectMinor) return null;
+
   return (
-    <div
-      style={{
-        position: "absolute",
-        top: -15,
-        right: -10,
-      }}
-    >
+    <Box px="sm" pb="sm">
       {player && (
         <Group gap={2}>
           {isMinor && (
-            <Badge size="xs" color="pink" variant="filled">
+            <Badge size="xs" color="pink.3" variant="light">
               Minor Faction
             </Badge>
           )}
@@ -49,8 +45,8 @@ export function PlayerChipOrSelect({
                 onSelectMinor(event);
               }}
               disabled={disabled}
-              variant="filled"
-              color="pink"
+              variant="outline"
+              color="pink.3"
             >
               Minor
             </Button>
@@ -58,6 +54,8 @@ export function PlayerChipOrSelect({
           {onSelect && (
             <Button
               size="compact-xs"
+              variant="outline"
+              color="imperial"
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -70,6 +68,6 @@ export function PlayerChipOrSelect({
           )}
         </Group>
       )}
-    </div>
+    </Box>
   );
 }

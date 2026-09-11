@@ -53,7 +53,8 @@ export function BanPhase() {
         <Grid.Col span={12}>
           <SectionTitle title="Ban Phase" />
           <SimpleGrid
-            cols={{ base: 2, xs: 2, sm: 3, md: 4, xl: 6, xxl: 8 }}
+            type="container"
+            cols={{ base: 1, "440px": 2, "700px": 3, "960px": 4 }}
             spacing="xs"
             mt="md"
           >

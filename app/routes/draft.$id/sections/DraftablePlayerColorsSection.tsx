@@ -36,7 +36,10 @@ export function DraftablePlayerColorsSection() {
   return (
     <Section>
       <SectionTitle title="Player In-Game Color" />
-      <SimpleGrid cols={{ base: 2, sm: 3, md: 4, lg: 3, xl: 4 }}>
+      <SimpleGrid
+        type="container"
+        cols={{ base: 1, "440px": 2, "700px": 3, "960px": 4 }}
+      >
         {colors.map((color) => {
           const player = hydratedPlayers.find((p) => p.factionColor === color);
           const playerColor =
@@ -66,7 +69,7 @@ export function DraftablePlayerColorsSection() {
               onClick={handleSelect}
               style={{
                 cursor: handleSelect ? "pointer" : "default",
-                opacity: disabled ? 0.5 : player ? 0.5 : 1,
+                filter: disabled && !player ? "saturate(0.45)" : undefined,
                 position: "relative",
                 borderRadius: "var(--mantine-radius-md)",
               }}
@@ -76,13 +79,13 @@ export function DraftablePlayerColorsSection() {
                 flex={1}
                 style={{
                   overflow: "hidden",
-                  flexWrap: "nowrap",
+                  flexWrap: "wrap",
                 }}
                 pt={5}
                 pb={15}
                 px="sm"
               >
-                <Text flex={1} size="14px" ff="heading" fw="bold">
+                <Text flex={1} size="md" fw={600}>
                   {color}
                 </Text>
               </Group>

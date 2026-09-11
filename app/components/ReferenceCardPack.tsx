@@ -24,7 +24,6 @@ export function ReferenceCardPack({ pack, packIdx, player, onSelect }: Props) {
       color={player ? playerColor : undefined}
       style={{
         cursor: onSelect ? "pointer" : "default",
-        opacity: player ? 0.5 : 1,
       }}
       onClick={onSelect && !player ? onSelect : undefined}
     >
@@ -39,8 +38,11 @@ export function ReferenceCardPack({ pack, packIdx, player, onSelect }: Props) {
               py={6}
               px={10}
               h="auto"
-              onMouseDown={onSelect}
-              variant="filled"
+              onClick={(event) => {
+                event.stopPropagation();
+                onSelect();
+              }}
+              variant="outline"
               size="sm"
             >
               Select

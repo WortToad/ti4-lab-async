@@ -1,8 +1,9 @@
 .logo {
   display: inline-flex;
+  min-width: 0;
   align-items: center;
   gap: 12px;
-  color: #f3eee4;
+  color: var(--command-text-strong);
 }
 .logo img {
   flex: 0 0 auto;
@@ -11,13 +12,14 @@
 }
 .wordmark {
   display: flex;
+  min-width: 0;
   flex-direction: column;
   gap: 3px;
 }
 .prefix {
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   color: #acbdd0;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .name {
@@ -42,6 +44,6 @@
     display: none;
   }
   .name {
-    font-size: 0.875rem;
+    font-size: 1rem;
   }
 }

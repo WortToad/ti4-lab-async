@@ -183,9 +183,7 @@ function UnitDetails({
           ))}
         </Group>
       )}
-      {showText && unit.text && (
-        <BagItemDescription description={unit.text} />
-      )}
+      {showText && unit.text && <BagItemDescription description={unit.text} />}
     </Stack>
   );
 }
@@ -225,18 +223,13 @@ export function BagItemCard({
   return (
     <Surface
       variant="card"
-      color={selected ? "violet" : undefined}
+      color={selected ? "blue" : undefined}
       className={classes.card}
       data-selected={selected || undefined}
       data-disabled={disabled || undefined}
       style={king ? { borderTop: `3px solid ${king.accent}` } : undefined}
     >
-      <Group
-        gap="sm"
-        wrap="nowrap"
-        align="center"
-        className={classes.header}
-      >
+      <Group gap="sm" wrap="nowrap" align="center" className={classes.header}>
         <Box className={classes.icon}>
           <ComponentIcon item={item} />
         </Box>
@@ -257,6 +250,7 @@ export function BagItemCard({
           </Group>
           {onSelect ? (
             <Checkbox
+              color="sky"
               checked={selected ?? false}
               disabled={disabled}
               onChange={(event) => onSelect(event.currentTarget.checked)}
@@ -320,7 +314,7 @@ export function BagItemCard({
           />
         ) : null}
         {note && (
-          <Text size="xs" c="dimmed" className={classes.note}>
+          <Text size="sm" className={classes.note}>
             {note}
           </Text>
         )}

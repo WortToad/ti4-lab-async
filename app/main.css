@@ -62,12 +62,30 @@
   --command-blue: #82c7ed;
   --command-ink: #071321;
   --command-paper: #f2e8d3;
+  --command-paper-ink: #102a3f;
+  --command-paper-body: #334b5a;
+  --command-paper-muted: #486071;
+  --command-paper-border: #b9ad90;
+  --command-text-strong: #f4f7fb;
+  --command-text: #edf2f7;
+  --command-text-body: #d5dfe8;
+  --command-text-muted: #b6c6d4;
   --command-border: #405a70;
+  --command-font-label: 0.875rem;
+  --command-font-control: 1rem;
+  --command-font-body: 1.0625rem;
+  --command-font-card-title: 1.1875rem;
+  --command-surface: #102235;
+  --command-surface-active: #123b59;
+  --command-info: #38bdf8;
+  --command-warning: #ffc078;
+  --command-danger: #ffa8a8;
+  --command-success: #3eeb91;
 }
 :root[data-mantine-color-scheme="dark"] {
   --mantine-color-body: #071321;
-  --mantine-color-text: #f3eee4;
-  --mantine-color-dimmed: #aebfce;
+  --mantine-color-text: var(--command-text);
+  --mantine-color-dimmed: var(--command-text-muted);
   --mantine-color-default: #102235;
   --mantine-color-default-hover: #1a3248;
   --mantine-color-default-border: #405a70;
@@ -96,10 +114,94 @@ a {
 .mantine-Title-root {
   letter-spacing: 0.015em;
 }
+.mantine-Title-root:where(h3, h4, h5, h6) {
+  font-family: var(--mantine-font-family);
+  letter-spacing: 0;
+}
 .mantine-Button-root {
   min-height: 44px;
   height: auto;
   padding-block: 10px;
+  padding-inline: 16px;
+  border-radius: 6px;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+.mantine-Button-section > svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.mantine-Button-root[data-variant="outline"]:not(:disabled):not(
+    [data-disabled]
+  ) {
+  background: var(--command-surface);
+  border: 1px solid
+    color-mix(in srgb, var(--button-color) 65%, var(--command-surface));
+}
+.mantine-Button-root[data-variant="outline"]:not(:disabled):not(
+    [data-disabled]
+  ):hover {
+  background: color-mix(
+    in srgb,
+    var(--button-color) 12%,
+    var(--command-surface)
+  );
+  border-color: var(--button-color);
+}
+.mantine-Button-root:where(
+    [data-variant="default"],
+    [data-variant="light"]
+  ):not(:disabled):not([data-disabled]) {
+  color: var(--command-text-strong);
+  background: #1a3045;
+  border: 1px solid #62798d;
+}
+.mantine-Button-root:where(
+    [data-variant="default"],
+    [data-variant="light"]
+  ):not(:disabled):not([data-disabled]):hover {
+  background: #24425b;
+  border-color: var(--command-blue);
+}
+.mantine-Button-root[data-variant="subtle"]:not(:disabled):not(
+    [data-disabled]
+  ) {
+  color: var(--command-text-body);
+  background: transparent;
+  border: 1px solid transparent;
+}
+.mantine-Button-root[data-variant="subtle"]:not(:disabled):not(
+    [data-disabled]
+  ):hover {
+  color: var(--command-text-strong);
+  background: #1a3045;
+  border-color: var(--command-border);
+}
+.mantine-Badge-root {
+  font-size: var(--command-font-label);
+  min-height: 28px;
+  height: auto;
+  max-width: 100%;
+  padding: 4px 10px;
+  line-height: 1.35;
+  flex-shrink: 0;
+}
+.mantine-Badge-root:where([data-size="xl"]) {
+  font-size: var(--command-font-control);
+  min-height: 32px;
+}
+.mantine-Badge-root:where([data-variant="light"]) {
+  background: #203348;
+  border: 1px solid transparent;
+  color: var(--badge-color, var(--command-text-body));
+}
+.mantine-Badge-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: inherit;
 }
 .mantine-ActionIcon-root {
   min-width: 36px;
@@ -114,10 +216,12 @@ a {
   font-size: 1rem;
 }
 .mantine-InputWrapper-label {
+  font-size: var(--command-font-control);
   font-weight: 600;
   margin-bottom: 5px;
 }
 .mantine-InputWrapper-description {
+  font-size: var(--command-font-label);
   margin-bottom: 8px;
 }
 .mantine-Checkbox-label,
@@ -138,7 +242,7 @@ a {
 }
 .mantine-Modal-title,
 .mantine-Drawer-title {
-  font-family: var(--font-display);
+  font-family: var(--mantine-font-family);
   font-size: 1.25rem;
   font-weight: 600;
 }
@@ -161,8 +265,25 @@ a {
   color: var(--mantine-color-text);
   font-size: 1rem;
 }
+.mantine-Alert-root:where([data-variant="light"], [data-variant="outline"]) {
+  background: color-mix(in srgb, var(--alert-color) 6%, var(--command-surface));
+  border: 1px solid var(--command-border);
+  border-inline-start: 3px solid var(--alert-color);
+}
 .mantine-Alert-title {
-  font-size: 1.0625rem;
+  color: var(--command-text-strong);
+  font-size: var(--command-font-card-title);
+  font-weight: 700;
+  line-height: 1.35;
+}
+.mantine-Alert-root:where([data-variant="filled"])
+  :where(.mantine-Alert-title, .mantine-Alert-message) {
+  color: var(--alert-color);
+}
+.mantine-Accordion-label,
+.mantine-Menu-itemLabel,
+.mantine-Select-option {
+  font-size: var(--command-font-control);
 }
 .mantine-Tabs-list {
   gap: 6px;
@@ -177,7 +298,7 @@ a {
   color: #bdcbd7;
 }
 .mantine-SegmentedControl-label[data-active] {
-  color: #fffaf0;
+  color: var(--command-text-strong);
 }
 .mantine-SegmentedControl-indicator {
   background: #28445d;
@@ -193,9 +314,9 @@ a {
   color: #a5b2be;
 }
 .command-eyebrow {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--command-accent);
 }
@@ -229,7 +350,65 @@ a {
   height: 20px;
 }
 .command-lobby {
-  margin-block: 28px;
+  margin-block: 20px;
   padding: clamp(16px, 2vw, 28px);
-  border-top: 2px solid var(--command-accent);
+  border: 1px solid #496176;
+  background: linear-gradient(135deg, #132a3e, #0d1f31 65%);
+  box-shadow: 0 8px 24px #020a1426;
+}
+.command-state-panel {
+  border: 1px solid #486b86;
+  border-inline-start: 4px solid var(--command-info);
+  background: linear-gradient(100deg, #123b59, #10283d);
+}
+.command-state-panel[data-state="success"] {
+  border-color: #40695c;
+  border-inline-start-color: var(--command-success);
+  background: linear-gradient(100deg, #103c35, #102b2e);
+}
+.command-state-panel[data-state="warning"] {
+  border-color: #80684b;
+  border-inline-start-color: var(--command-warning);
+  background: linear-gradient(100deg, #3c2c20, #272a2e);
+}
+.command-state-panel[data-state="waiting"] {
+  border-color: var(--command-border);
+  border-inline-start-color: var(--command-blue);
+  background: var(--command-surface);
+}
+.command-player-row[data-own] {
+  --table-striped-color: var(--command-surface-active);
+  background: var(--command-surface-active);
+  box-shadow: inset 4px 0 var(--command-info);
+}
+.command-admin-controls {
+  border: 1px solid #62798d;
+  border-radius: var(--mantine-radius-sm);
+  overflow: hidden;
+}
+.command-admin-controls .mantine-Accordion-control {
+  background: #172f43;
+  color: var(--command-text-strong);
+}
+.command-admin-controls .mantine-Accordion-control:hover {
+  background: #213e55;
+}
+.command-admin-controls .mantine-Accordion-icon {
+  color: var(--command-accent);
+}
+.command-admin-controls .mantine-Accordion-label {
+  font-size: var(--command-font-card-title);
+  font-weight: 700;
+}
+.command-admin-controls .mantine-Accordion-content {
+  padding-top: 20px;
+}
+.command-admin-section {
+  padding-block: 20px 4px;
+  border-top: 1px solid var(--command-border);
+}
+.command-admin-section-title {
+  font-family: var(--mantine-font-family);
+  font-size: var(--command-font-card-title);
+  font-weight: 700;
 }

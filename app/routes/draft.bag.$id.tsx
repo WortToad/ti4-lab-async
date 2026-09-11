@@ -311,7 +311,8 @@ function DraftPicking({
               )}
               {seat.canUndo && (
                 <Button
-                  variant="light"
+                  variant="outline"
+                  color="orange.3"
                   onClick={() => submit({ action: "undo", round: view.round })}
                   disabled={busy}
                   style={{ alignSelf: "flex-start" }}
@@ -353,8 +354,9 @@ function DraftPicking({
         >
           {selectedIds.length > 0 && (
             <Button
-              variant="subtle"
-              size="xs"
+              variant="outline"
+              color="sky.4"
+              size="sm"
               disabled={busy}
               onClick={() => setSelectedIds([])}
             >
@@ -411,12 +413,12 @@ function DraftPicking({
                     Collected {collected} of {draftLimit} max
                   </Badge>
                   {category !== "FACTION" && (
-                    <Badge variant="light" color="violet">
+                    <Badge variant="light" color="sky">
                       Keep {keepLimit} afterward
                     </Badge>
                   )}
                   {selectedCount > 0 && (
-                    <Badge variant="outline">
+                    <Badge variant="filled" color="sky.4">
                       {selectedCount} selected this pass
                     </Badge>
                   )}
@@ -891,7 +893,7 @@ export default function BagDraftPage() {
         <Anchor component={Link} to="/draft/bag/new" size="sm">
           ← Create another bag draft
         </Anchor>
-        <Badge variant="light">
+        <Text size="xs" c="dimmed">
           {view.viewer.isAdmin
             ? playerName
               ? `Admin · Playing as ${playerName}`
@@ -899,7 +901,7 @@ export default function BagDraftPage() {
             : playerName
               ? `Playing as ${playerName}`
               : "Spectator"}
-        </Badge>
+        </Text>
       </Group>
       <Group justify="space-between" align="flex-start">
         <div>

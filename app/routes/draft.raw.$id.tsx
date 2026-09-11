@@ -1,3 +1,4 @@
+import { StatusPill } from "~/ui/StatusPill";
 import {
   Alert,
   Anchor,
@@ -52,11 +53,13 @@ import { createOrderedLoader } from "~/hooks/orderedLoader";
 export const loader = loadRawRoom;
 export const action = actRawRoom;
 
-const loadClientDraft = createOrderedLoader<
-  Awaited<ReturnType<typeof loader>>["data"]
->();
+const loadClientDraft =
+  createOrderedLoader<Awaited<ReturnType<typeof loader>>["data"]>();
 
-export function clientLoader({ request, serverLoader }: ClientLoaderFunctionArgs) {
+export function clientLoader({
+  request,
+  serverLoader,
+}: ClientLoaderFunctionArgs) {
   return loadClientDraft(new URL(request.url).pathname, () =>
     serverLoader<typeof loader>(),
   );
@@ -351,7 +354,13 @@ function RawGame({
             hand and make choices. Spectators can watch the shared map.
           </Text>
         )}
-        <Table.ScrollContainer minWidth={650}>
+        <Table.ScrollContainer
+          minWidth={650}
+          type="native"
+          tabIndex={0}
+          role="region"
+          aria-label="Player status — scroll to see all columns"
+        >
           <Table striped withTableBorder>
             <Table.Thead>
               <Table.Tr>
@@ -381,9 +390,14 @@ function RawGame({
                         ? room.spliceReady[entry.id]
                         : false;
                 return (
-                  <Table.Tr key={entry.id}>
+                  <Table.Tr
+                    key={entry.id}
+                    className="command-player-row"
+                    data-own={entry.id === playerId || undefined}
+                  >
                     <Table.Td fw={entry.id === activeId ? 700 : 400}>
                       {entry.name}
+                      {entry.id === playerId ? " (you)" : ""}
                     </Table.Td>
                     <Table.Td>
                       {pendingSeats
@@ -408,15 +422,19 @@ function RawGame({
                     </Table.Td>
                     <Table.Td>{room.handCounts[entry.id] ?? 0}</Table.Td>
                     <Table.Td>
-                      {draft.phase === "complete"
-                        ? "Complete"
-                        : entry.id === activeId
-                          ? entry.id === playerId
-                            ? "Your turn"
-                            : "Taking their turn"
-                          : isReady
-                            ? "Ready"
-                            : "—"}
+                      {draft.phase === "complete" ? (
+                        "Complete"
+                      ) : entry.id === activeId ? (
+                        entry.id === playerId ? (
+                          <StatusPill tone="success">Your turn</StatusPill>
+                        ) : (
+                          "Taking their turn"
+                        )
+                      ) : isReady ? (
+                        "Ready"
+                      ) : (
+                        "—"
+                      )}
                     </Table.Td>
                   </Table.Tr>
                 );

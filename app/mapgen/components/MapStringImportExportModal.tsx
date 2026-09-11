@@ -103,7 +103,7 @@ export function MapStringImportExportModal({
               autosize
               minRows={2}
               maxRows={5}
-              styles={{ input: { fontFamily: "monospace", fontSize: 12 } }}
+              styles={{ input: { fontFamily: "monospace", fontSize: "var(--command-font-control)" } }}
             />
             <Group justify="flex-end" mt="xs">
               <CopyButton value={exportString}>
@@ -159,7 +159,7 @@ export function MapStringImportExportModal({
             minRows={3}
             autosize
             maxRows={6}
-            styles={{ input: { fontFamily: "monospace", fontSize: 12 } }}
+            styles={{ input: { fontFamily: "monospace", fontSize: "var(--command-font-control)" } }}
           />
 
           <Group justify="flex-end" mt="md">

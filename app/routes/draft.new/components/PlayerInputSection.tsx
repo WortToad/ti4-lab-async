@@ -27,12 +27,7 @@ export function PlayerInputSection({
     <Stack gap="xs">
       {/* Header */}
       <Group justify="space-between">
-        <Text
-          size="sm"
-          fw={600}
-          tt="uppercase"
-          style={{ letterSpacing: "0.05em", fontFamily: "var(--font-display)" }}
-        >
+        <Text size="sm" fw={600}>
           Players
         </Text>
         {onIncreasePlayers && onDecreasePlayers && (

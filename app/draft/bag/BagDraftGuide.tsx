@@ -68,14 +68,15 @@ export function BagDraftGuide({
             withBorder
             p="sm"
             radius="md"
-            bg={
-              index === active ? "var(--mantine-color-blue-light)" : undefined
-            }
+            className={index === active ? "command-state-panel" : undefined}
             aria-current={index === active ? "step" : undefined}
           >
             <Stack gap="xs">
               <Group gap="xs">
-                <Badge variant={index === active ? "filled" : "light"}>
+                <Badge
+                  color="sky"
+                  variant={index === active ? "filled" : "light"}
+                >
                   {index + 1}
                 </Badge>
                 <Text size="sm" fw={600}>

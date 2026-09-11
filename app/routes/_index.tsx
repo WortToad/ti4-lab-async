@@ -75,7 +75,7 @@ function ModeCard({
           <span className={classes.recommendation}>Start here</span>
         ) : (
           <span className={classes.playerRange}>
-            <IconUsers size={16} aria-hidden="true" />
+            <IconUsers size={18} aria-hidden="true" />
             {range} players
           </span>
         )}
@@ -161,11 +161,6 @@ export default function Home() {
               <IconUsers size={18} aria-hidden="true" />
               One shared link. Every player at the table.
             </div>
-          </div>
-          <div className={classes.orbitalCaption} aria-hidden="true">
-            <span>Imperial cartography / 001</span>
-            <strong>The galaxy awakens</strong>
-            <span>Guide to the Imperium</span>
           </div>
         </section>
 
@@ -265,7 +260,7 @@ export default function Home() {
                 Pass the bags. Keep your picks. Assemble something formidable.
               </Text>
             </div>
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="lg">
+            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
               {DRAFT_MODES.filter((m) => m.group === "custom").map((mode) => (
                 <ModeCard key={mode.id} mode={mode} players={players} />
               ))}
@@ -293,7 +288,7 @@ export default function Home() {
                 Requires Twilight’s Fall
               </Badge>
             </div>
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="lg">
+            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
               {DRAFT_MODES.filter((m) => m.group === "twilight").map((mode) => (
                 <ModeCard key={mode.id} mode={mode} players={players} />
               ))}
