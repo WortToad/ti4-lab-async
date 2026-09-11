@@ -6,8 +6,8 @@ import { useContext, useEffect, useState, useMemo, type JSX } from "react";
 import { getHexPosition } from "~/utils/positioning";
 import { MecatolTile } from "./tiles/MecatolTile";
 import { HomeTile } from "./tiles/HomeTile";
-import { Button, Stack, alpha } from "@mantine/core";
-import { Hex } from "./Hex";
+import { ActionIcon } from "@mantine/core";
+import { IconPlus, IconTrash } from "@tabler/icons-react";
 
 import "./MapTile.css";
 import { MapContext } from "~/contexts/MapContext";
@@ -59,11 +59,17 @@ export function MapTile(props: Props) {
     onHomeHover,
     closeTileMode = false,
   } = props;
-  const { radius, gap, hOffset, wOffset } = useContext(MapContext);
+  const { radius, gap, hOffset, wOffset, disabled } = useContext(MapContext);
+  const canSelect =
+    !disabled &&
+    !!onSelect &&
+    (tile.type !== "HOME" || !!props.homeSelectable) &&
+    !(closeTileMode && tile.idx === 0);
+  const editable =
+    canSelect && (modifiable || closeTileMode || tile.type === "OPEN");
   const { x, y } = getHexPosition(position.x, position.y, radius, gap);
 
   const {
-    attributes,
     listeners,
     setNodeRef: setDraggableNodeRef,
     transform,
@@ -72,7 +78,10 @@ export function MapTile(props: Props) {
     id: `${props.mapId}-${tile.idx}-draggable`,
     data: { tile },
     disabled:
-      (tile.type !== "SYSTEM" && tile.type !== "HOME") || isTouchDevice(),
+      disabled ||
+      (!modifiable && !droppable) ||
+      (tile.type !== "SYSTEM" && tile.type !== "HOME") ||
+      isTouchDevice(),
   });
 
   const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({
@@ -96,18 +105,6 @@ export function MapTile(props: Props) {
         zIndex: isDragging ? 2 : undefined,
       }
     : undefined;
-
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hovered]);
-
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (!hovered) return;
-    if (e.key === "Delete") {
-      onDelete?.();
-    }
-  };
 
   // Convert sliceBreakdown to coreSliceData format if provided
   const derivedCoreSliceData: CoreSliceData | undefined = useMemo(() => {
@@ -145,11 +142,19 @@ export function MapTile(props: Props) {
           {...props}
           tile={tile}
           hoverEffects={
-            hoverEffects && !modifiable && !droppable && !closeTileMode && !isDragging
+            hoverEffects &&
+            !modifiable &&
+            !droppable &&
+            !closeTileMode &&
+            !isDragging
           }
         />
       ) : (
-        <SystemTile {...props} tile={tile} disablePopover={isDragging} />
+        <SystemTile
+          {...props}
+          tile={tile}
+          disablePopover={isDragging || editable}
+        />
       );
       break;
     case "OPEN":
@@ -157,7 +162,7 @@ export function MapTile(props: Props) {
         <EmptyTile
           {...props}
           tile={tile}
-          onSelect={closeTileMode ? undefined : onSelect}
+          onSelect={undefined}
           isOver={isOver}
           ringHighlight={ringHighlight}
           hoverEffects={hoverEffects}
@@ -175,8 +180,18 @@ export function MapTile(props: Props) {
       break;
   }
 
-  if (!originalArt && tile.type === "SYSTEM" && tile.systemId === MECATOL_REX_ID) {
-    Tile = <MecatolTile {...props} tile={tile} disablePopover={isDragging} />;
+  if (
+    !originalArt &&
+    tile.type === "SYSTEM" &&
+    tile.systemId === MECATOL_REX_ID
+  ) {
+    Tile = (
+      <MecatolTile
+        {...props}
+        tile={tile}
+        disablePopover={isDragging || editable}
+      />
+    );
   }
 
   // Show overlay on modifiable tiles when hovered or being dropped on
@@ -190,26 +205,27 @@ export function MapTile(props: Props) {
     tile.type !== "CLOSED" &&
     (hovered || tile.type === "OPEN" || isOver);
 
-  const overlayColor = hovered
-    ? alpha("var(--mantine-primary-color-filled)", 0.7)
-    : isOver
-      ? alpha("var(--mantine-primary-color-filled)", 0.3)
-      : "rgba(0, 0, 0, 0)";
-
   // Determine if tile should be dimmed when a home is being hovered
   // Dim if: hoveredHomeIdx is set AND this tile has no contribution to that home
   // Don't dim: the hovered home itself, tiles that contribute
-  const isHomeHoverActive = hoveredHomeIdx !== null && hoveredHomeIdx !== undefined;
-  const isThisTheHoveredHome = tile.type === "HOME" && tile.idx === hoveredHomeIdx;
-  const shouldDim = isHomeHoverActive && !isThisTheHoveredHome && !tileContribution;
+  const isHomeHoverActive =
+    hoveredHomeIdx !== null && hoveredHomeIdx !== undefined;
+  const isThisTheHoveredHome =
+    tile.type === "HOME" && tile.idx === hoveredHomeIdx;
+  const shouldDim =
+    isHomeHoverActive && !isThisTheHoveredHome && !tileContribution;
 
   // Show contribution badge if tile has partial contribution (equidistantCount > 1)
-  const showContributionBadge = isHomeHoverActive && tileContribution && tileContribution.equidistantCount > 1;
+  const showContributionBadge =
+    isHomeHoverActive &&
+    tileContribution &&
+    tileContribution.equidistantCount > 1;
 
   // Cursor style for close tile mode
-  const cursorStyle = closeTileMode && tile.type !== "HOME" && tile.idx !== 0
-    ? { cursor: "crosshair" }
-    : undefined;
+  const cursorStyle =
+    closeTileMode && tile.type !== "HOME" && tile.idx !== 0
+      ? { cursor: "crosshair" }
+      : undefined;
 
   return (
     <>
@@ -220,6 +236,8 @@ export function MapTile(props: Props) {
           .join(" ")}
         style={{
           position: "absolute",
+          width: radius * 2,
+          height: radius * 2,
           left: x + wOffset,
           top: y + hOffset,
           ...dragStyle,
@@ -228,89 +246,78 @@ export function MapTile(props: Props) {
         onMouseOver={() => setHovered(true)}
         onMouseOut={() => setHovered(false)}
         onFocus={() => setHovered(true)}
-        onBlur={() => setHovered(false)}
-        onClick={closeTileMode ? onSelect : undefined}
-        {...listeners}
-        {...attributes}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(event) => {
-          if (closeTileMode && (event.key === "Enter" || event.key === " ")) {
-            event.preventDefault();
-            onSelect?.();
-          } else {
-            listeners?.onKeyDown?.(event);
-          }
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget))
+            setHovered(false);
         }}
+        {...listeners}
       >
-        {Tile}
+        <div inert={editable ? true : undefined}>{Tile}</div>
 
         {/* Contribution badge for equidistant tiles */}
         {showContributionBadge && tileContribution && (
           <ContributionBadge percentage={tileContribution.percentage} />
         )}
 
-        {/* debug information */}
-        {/* <div
-          style={{
-            position: "absolute",
-            top: radius * 0.5,
-            left: radius * 0.5,
-            color: "white",
-            backgroundColor: "black",
-            padding: "2px",
-          }}
-        >
-          <Text>{tile.idx}</Text>
-        </div> */}
-
-        {showOverlay && !isDragging && !isOver && (
-          <div
-            role="button"
-            tabIndex={0}
-            aria-label={tile.type === "SYSTEM" ? "Replace system tile" : "Add system tile"}
-            className="modify-tile-overlay"
-            onClick={onSelect}
+        {canSelect && (
+          <button
+            type="button"
+            className="tile-edit-target"
+            aria-label={
+              closeTileMode
+                ? `${tile.type === "CLOSED" ? "Open" : "Close"} map space ${tile.idx}`
+                : tile.type === "SYSTEM"
+                  ? `Replace system ${tile.systemId} at position ${tile.idx}`
+                  : tile.type === "HOME"
+                    ? `Choose seat ${tile.seat === undefined ? tile.idx : tile.seat + 1}`
+                    : `Add system at position ${tile.idx}`
+            }
+            style={{ width: radius * 2, height: radius * 2 }}
+            onClick={(event) => {
+              event.stopPropagation();
+              onSelect();
+            }}
             onKeyDown={(event) => {
-              if (
-                event.target === event.currentTarget &&
-                (event.key === "Enter" || event.key === " ")
-              ) {
+              if (event.key === "Delete" && tile.type === "SYSTEM") {
                 event.preventDefault();
                 event.stopPropagation();
-                onSelect?.();
+                onDelete?.();
               }
             }}
           >
-            <Hex
-              id={`${props.mapId}-${tile.idx}-overlay`}
-              color={overlayColor}
-              radius={radius}
-            >
-              <Stack gap={2}>
-                <Button px="6" py="4" h="auto" variant="filled">
-                  +
-                </Button>
-                {tile.type === "SYSTEM" && (
-                  <Button
-                    px="6"
-                    py="4"
-                    h="auto"
-                    variant="filled"
-                    bg="red"
-                    size="xs"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete?.();
-                    }}
-                  >
-                    Del
-                  </Button>
-                )}
-              </Stack>
-            </Hex>
-          </div>
+            {showOverlay && !isDragging && !isOver && (
+              <IconPlus
+                className="tile-add-icon"
+                size={24}
+                aria-hidden="true"
+              />
+            )}
+          </button>
         )}
+        {editable &&
+          tile.type === "SYSTEM" &&
+          hovered &&
+          !isDragging &&
+          !closeTileMode && (
+            <ActionIcon
+              className="tile-delete-target"
+              color="red.8"
+              variant="filled"
+              aria-label={`Remove system ${tile.systemId} at position ${tile.idx}`}
+              style={{
+                position: "absolute",
+                top: radius * 1.2,
+                left: radius - 18,
+                zIndex: 3,
+              }}
+              onClick={(event) => {
+                event.stopPropagation();
+                onDelete?.();
+              }}
+            >
+              <IconTrash size={18} aria-hidden="true" />
+            </ActionIcon>
+          )}
       </div>
     </>
   );

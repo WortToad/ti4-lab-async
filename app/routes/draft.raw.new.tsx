@@ -1,6 +1,6 @@
+import { DraftSetupHeading } from "~/components/DraftSetupHeading";
 import {
   Alert,
-  Anchor,
   Button,
   Checkbox,
   Container,
@@ -15,7 +15,6 @@ import { useState } from "react";
 import {
   data,
   Form,
-  Link,
   redirect,
   useActionData,
   useNavigation,
@@ -89,19 +88,13 @@ export default function RawNew() {
   return (
     <Container size="sm" py="xl">
       <Stack gap="lg">
-        <Anchor
-          component={Link}
-          to={`/draft/prechoice?playerCount=${count}`}
-          size="sm"
-        >
-          ← All draft formats
-        </Anchor>
-        <div>
-          <Title order={1}>Rules as written (RAW)</Title>
-          <Text c="dimmed" mt="xs">
-            Draft and build your galaxy using the official setup rules.
-          </Text>
-        </div>
+        <DraftSetupHeading
+          title={
+            twilight ? "Twilight’s Fall · Official setup" : "Rules as written"
+          }
+          description="Build the galaxy as the rulebooks intended. Choose your game, prepare the systems, and invite the great powers to the table."
+          players={count}
+        />
         <Form method="post">
           <input type="hidden" name="mode" value={mode} />
           <input type="hidden" name="layout" value={layout?.id ?? ""} />

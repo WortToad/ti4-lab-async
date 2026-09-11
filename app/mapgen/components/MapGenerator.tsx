@@ -1,6 +1,10 @@
+import mapClasses from "./MapGenerator.module.css";
 import { appUrl, appPath } from "~/utils/appUrl";
 import {
-  AppShell,
+  Drawer,
+  Menu,
+  Stack,
+  Title,
   Box,
   Button,
   Group,
@@ -38,7 +42,8 @@ import {
 import { useMapBuilder } from "~/mapBuilderStore";
 import { MapBuilderPlanetFinder } from "~/components/MapBuilderPlanetFinder";
 import {
-  IconRefresh,
+  IconChevronDown,
+  IconHexagons,
   IconTrash,
   IconArrowsShuffle,
   IconShare,
@@ -97,6 +102,7 @@ function MapGeneratorContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const [savedLocally, setSavedLocally] = useState(true);
+  const [libraryOpened, library] = useDisclosure(false);
   const map = useMapBuilder((state) => state.state.map);
   const systemPool = useMapBuilder((state) => state.state.systemPool);
   const mapConfigId = useMapBuilder((state) => state.state.mapConfigId);
@@ -280,7 +286,12 @@ function MapGeneratorContent() {
       return false;
     }
 
-    loadDecodedMap(decoded.map, decoded.ringCount, decoded.gameSets, mapConfigId);
+    loadDecodedMap(
+      decoded.map,
+      decoded.ringCount,
+      decoded.gameSets,
+      mapConfigId,
+    );
 
     const systemsPlaced = decoded.map.filter(
       (tile) => tile.type === "SYSTEM" && tile.idx !== 0,
@@ -642,291 +653,314 @@ function MapGeneratorContent() {
             </Alert>
           </Box>
         )}
-        <AppShell
-          navbar={{
-            width: 250,
-            breakpoint: "md",
-            collapsed: { mobile: true },
-          }}
-          padding={0}
+        <div className={mapClasses.heading}>
+          <div>
+            <Text className="command-eyebrow" mb="xs">
+              Imperial cartography
+            </Text>
+            <Title order={1}>Chart your galaxy</Title>
+            <Text c="dimmed" mt="xs">
+              Generate a map, refine the systems, and choose where your empires
+              will rise.
+            </Text>
+          </div>
+          <Group>
+            <Button
+              variant="outline"
+              onClick={openShare}
+              leftSection={<IconShare size={20} />}
+            >
+              Share map
+            </Button>
+            <Menu position="bottom-end" withinPortal>
+              <Menu.Target>
+                <Button rightSection={<IconChevronDown size={20} />}>
+                  Create a draft
+                </Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>
+                  {isMapComplete
+                    ? "Use this galaxy"
+                    : "Fill all open systems to use this map"}
+                </Menu.Label>
+                <Menu.Item
+                  onClick={handleCreateDraft}
+                  disabled={!isMapComplete}
+                >
+                  Draft slices from this map
+                </Menu.Item>
+                <Menu.Item
+                  onClick={handleCreatePresetDraft}
+                  disabled={!isMapComplete}
+                >
+                  Draft factions on this map
+                </Menu.Item>
+                <Menu.Divider />
+                <Menu.Item onClick={() => navigate("/draft/raw/new")}>
+                  Build a new galaxy with official rules
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          </Group>
+        </div>
+        <Drawer
+          opened={libraryOpened}
+          onClose={library.close}
+          title="System library"
+          size="sm"
         >
-          <AppShell.Navbar p={0} visibleFrom="sm">
+          <TileSidebar />
+        </Drawer>
+        <div className={mapClasses.workspace}>
+          <aside className={mapClasses.library} aria-label="System library">
             <TileSidebar />
-          </AppShell.Navbar>
-          <AppShell.Main p={0} h="calc(100vh - 60px)" mih="calc(100vh - 60px)">
-            <Box bg="dark.7" px="sm" py={8}>
-              <Group gap="sm" wrap="wrap">
-                <OriginalArtToggle />
+          </aside>
+          <div className={mapClasses.editor}>
+            <div className={mapClasses.toolbar}>
+              <div className={mapClasses.settings}>
                 <Select
+                  label="Galaxy layout"
                   data={Object.values(mapConfigs).map((config) => ({
                     value: config.id,
                     label: config.name,
                   }))}
                   value={mapConfigId}
-                  aria-label="Map layout"
                   onChange={(value) => {
-                    if (value && mapConfigs[value]) {
-                      setMapConfig(value);
-                    }
+                    if (value && mapConfigs[value]) setMapConfig(value);
                   }}
-                  size="xs"
-                  w={140}
                 />
                 <MultiSelect
+                  label="Game content"
                   data={[
-                    { value: "base", label: "Base" },
-                    { value: "pok", label: "PoK" },
+                    { value: "base", label: "Base game" },
+                    { value: "pok", label: "Prophecy of Kings" },
                     { value: "te", label: "Thunder's Edge" },
                     { value: "unchartedstars", label: "Uncharted Stars" },
                   ]}
                   value={gameSets}
-                  aria-label="Game sets"
                   onChange={(value) => setGameSets(value as GameSet[])}
-                  placeholder="Game Sets"
-                  size="xs"
-                  w={160}
                   checkIconPosition="right"
                 />
-                <Group gap={4}>
-                  <ActionIcon
-                    aria-label="Remove outer ring"
-                    variant="subtle"
-                    color="gray"
-                    size="sm"
-                    onClick={() => setRingCount(ringCount - 1)}
-                    disabled={ringCount <= 2}
-                  >
-                    <IconMinus size={14} />
-                  </ActionIcon>
-                  <Text size="xs" c="dimmed" w={50} ta="center">
-                    {ringCount} rings
+                <Stack gap={5}>
+                  <Text size="sm" fw={600}>
+                    Map size
                   </Text>
-                  <ActionIcon
-                    aria-label="Add outer ring"
-                    variant="subtle"
-                    color="gray"
-                    size="sm"
-                    onClick={() => setRingCount(ringCount + 1)}
-                    disabled={ringCount >= 5}
-                  >
-                    <IconPlus size={14} />
-                  </ActionIcon>
-                </Group>
+                  <Group gap="xs">
+                    <Group gap={2} wrap="nowrap">
+                      <ActionIcon
+                        aria-label="Remove outer ring"
+                        variant="default"
+                        onClick={() => setRingCount(ringCount - 1)}
+                        disabled={ringCount <= 2}
+                      >
+                        <IconMinus size={18} />
+                      </ActionIcon>
+                      <Text size="sm" w={55} ta="center">
+                        {ringCount} rings
+                      </Text>
+                      <ActionIcon
+                        aria-label="Add outer ring"
+                        variant="default"
+                        onClick={() => setRingCount(ringCount + 1)}
+                        disabled={ringCount >= 5}
+                      >
+                        <IconPlus size={18} />
+                      </ActionIcon>
+                    </Group>
+                    <Group gap={2} wrap="nowrap">
+                      <ActionIcon
+                        aria-label="Remove home system"
+                        variant="default"
+                        onClick={removeHomeSystem}
+                        disabled={playerCount <= 1}
+                      >
+                        <IconMinus size={18} />
+                      </ActionIcon>
+                      <Text size="sm" w={65} ta="center">
+                        {playerCount} players
+                      </Text>
+                      <ActionIcon
+                        aria-label="Add home system"
+                        variant="default"
+                        onClick={addHomeSystem}
+                      >
+                        <IconPlus size={18} />
+                      </ActionIcon>
+                    </Group>
+                  </Group>
+                </Stack>
+              </div>
+              <Group className={mapClasses.tools} gap="sm">
                 <Button
-                  leftSection={<IconFileExport size={14} />}
-                  variant="subtle"
-                  color="gray"
-                  size="xs"
-                  onClick={openMapStrings}
-                >
-                  Map Strings
-                </Button>
-                <Group gap={4}>
-                  <ActionIcon
-                    aria-label="Remove home system"
-                    variant="subtle"
-                    color="gray"
-                    size="sm"
-                    onClick={removeHomeSystem}
-                    disabled={playerCount <= 1}
-                  >
-                    <IconMinus size={14} />
-                  </ActionIcon>
-                  <Text size="xs" c="dimmed" w={55} ta="center">
-                    {playerCount} players
-                  </Text>
-                  <ActionIcon
-                    aria-label="Add home system"
-                    variant="subtle"
-                    color="gray"
-                    size="sm"
-                    onClick={addHomeSystem}
-                  >
-                    <IconPlus size={14} />
-                  </ActionIcon>
-                </Group>
-                <ActionIcon
-                  variant={closeTileMode ? "filled" : "subtle"}
-                  color={closeTileMode ? "red" : "gray"}
-                  size="sm"
-                  onClick={toggleCloseTileMode}
-                  title="Close tile tool"
-                  aria-label="Close tile tool"
-                  aria-pressed={closeTileMode}
-                >
-                  <IconHexagonOff size={16} />
-                </ActionIcon>
-                <Button
-                  leftSection={<IconRefresh size={14} />}
-                  variant="subtle"
-                  color="gray"
-                  size="xs"
                   onClick={handleRandomize}
+                  leftSection={<IconWand size={20} />}
                 >
-                  Randomize
+                  Generate map
                 </Button>
                 <Button
-                  leftSection={<IconArrowsShuffle size={14} />}
-                  variant="subtle"
-                  color="gray"
-                  size="xs"
+                  variant="default"
                   onClick={handleImproveBalance}
                   disabled={balanceGap === 0}
+                  leftSection={<IconArrowsShuffle size={20} />}
                 >
                   Balance
                 </Button>
+                <Tooltip label="Undo map edit">
+                  <ActionIcon
+                    variant="default"
+                    aria-label="Undo map edit"
+                    onClick={undo}
+                    disabled={!canUndo}
+                  >
+                    <IconArrowBackUp size={20} />
+                  </ActionIcon>
+                </Tooltip>
+                <Tooltip label="Redo map edit">
+                  <ActionIcon
+                    variant="default"
+                    aria-label="Redo map edit"
+                    onClick={redo}
+                    disabled={!canRedo}
+                  >
+                    <IconArrowForwardUp size={20} />
+                  </ActionIcon>
+                </Tooltip>
                 <Button
-                  leftSection={<IconTrash size={14} />}
+                  variant={closeTileMode ? "filled" : "default"}
+                  color="red"
+                  aria-pressed={closeTileMode}
+                  onClick={toggleCloseTileMode}
+                  leftSection={<IconHexagonOff size={20} />}
+                >
+                  Close spaces
+                </Button>
+                <Button
                   variant="subtle"
-                  color="gray"
-                  size="xs"
+                  color="gray.2"
                   onClick={clearMap}
+                  leftSection={<IconTrash size={20} />}
                 >
                   Reset
                 </Button>
-                <Group gap={4}>
-                  <Tooltip label="Undo map edit">
-                    <ActionIcon
-                      aria-label="Undo map edit"
-                      variant="subtle"
-                      color="gray"
-                      onClick={undo}
-                      disabled={!canUndo}
+                <Menu position="bottom-end" withinPortal>
+                  <Menu.Target>
+                    <Button
+                      variant="default"
+                      rightSection={<IconChevronDown size={18} />}
                     >
-                      <IconArrowBackUp size={18} />
-                    </ActionIcon>
-                  </Tooltip>
-                  <Tooltip label="Redo map edit">
-                    <ActionIcon
-                      aria-label="Redo map edit"
-                      variant="subtle"
-                      color="gray"
-                      onClick={redo}
-                      disabled={!canRedo}
+                      Import & export
+                    </Button>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    <Menu.Item
+                      onClick={openMapStrings}
+                      leftSection={<IconFileExport size={20} />}
                     >
-                      <IconArrowForwardUp size={18} />
-                    </ActionIcon>
-                  </Tooltip>
-                </Group>
+                      Map strings
+                    </Menu.Item>
+                    <Menu.Item
+                      onClick={() => window.open(imageUrl, "_blank")}
+                      disabled={!isMapComplete}
+                      leftSection={<IconPhoto size={20} />}
+                    >
+                      Download map image
+                    </Menu.Item>
+                    <Menu.Item onClick={openPublish} disabled={!isMapComplete}>
+                      Publish map
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
+              </Group>
+              <Group justify="space-between" gap="sm" pt="md">
+                <OriginalArtToggle />
+                <Button
+                  variant="light"
+                  hiddenFrom="md"
+                  onClick={library.open}
+                  leftSection={<IconHexagons size={20} />}
+                >
+                  Browse systems
+                </Button>
                 {balanceGap > 0 && (
                   <Button
                     variant="subtle"
-                    color="yellow"
-                    size="xs"
+                    color="imperial.3"
                     onClick={openInfo}
                     aria-label="Explain map balance"
                   >
-                    Gap: {balanceGap.toFixed(1)}
+                    Balance gap: {balanceGap.toFixed(1)}
                   </Button>
                 )}
-                <Box style={{ marginLeft: "auto" }}>
-                  <Group gap="xs">
-                    <Button
-                      leftSection={<IconShare size={14} />}
-                      variant="subtle"
-                      color="gray"
-                      size="xs"
-                      onClick={openShare}
-                    >
-                      Share
-                    </Button>
-                    <Button
-                      leftSection={<IconPhoto size={14} />}
-                      variant="subtle"
-                      color="gray"
-                      size="xs"
-                      onClick={() => window.open(imageUrl, "_blank")}
-                      disabled={!isMapComplete}
-                    >
-                      Image
-                    </Button>
-                    <Button
-                      variant="light"
-                      color="blue"
-                      size="xs"
-                      onClick={handleCreateDraft}
-                      disabled={!isMapComplete}
-                    >
-                      Slice Draft
-                    </Button>
-                    <Button
-                      variant="light"
-                      size="xs"
-                      onClick={() => navigate("/draft/raw/new")}
-                    >
-                      Build a RAW galaxy
-                    </Button>
-                    <Button
-                      leftSection={<IconWand size={14} />}
-                      variant="filled"
-                      color="blue"
-                      size="xs"
-                      onClick={handleCreatePresetDraft}
-                      disabled={!isMapComplete}
-                    >
-                      Preset Draft
-                    </Button>
-                    <Button
-                      variant="light"
-                      color="teal"
-                      size="xs"
-                      onClick={openPublish}
-                      disabled={!isMapComplete}
-                    >
-                      Publish
-                    </Button>
-                  </Group>
-                </Box>
               </Group>
-              <Text size="xs" c={savedLocally ? "dimmed" : "yellow"} mt={4}>
+              <Text
+                size="sm"
+                c={savedLocally ? "dimmed" : "yellow"}
+                mt="sm"
+                role="status"
+              >
                 {savedLocally
-                  ? "Map edits are saved in this tab. Undo restores the previous edit, including resets."
-                  : "This browser could not save your edits. Use Share or Map Strings to keep a copy before leaving."}
+                  ? "Saved in this tab. Select any map space to choose a system. Undo also restores resets."
+                  : "This browser could not save your edits. Share or export the map to keep a copy before leaving."}
               </Text>
-            </Box>
+            </div>
+            <Text size="sm" c="dimmed" hiddenFrom="sm" p="md">
+              Scroll across the galaxy to inspect each system. Select a space to
+              edit it.
+            </Text>
             <Box
-              w="100%"
-              pos="relative"
-              p="md"
-              style={{
-                aspectRatio: "740 / 800",
-                maxHeight: "calc(100vh - 140px)",
-                maxWidth: "100%",
-              }}
+              className={mapClasses.mapViewport}
+              role="region"
+              aria-label="Galaxy map"
+              tabIndex={0}
             >
-              {/* Desktop: Overlay on map */}
-              {stats && (
-                <Box visibleFrom="sm">
-                  <MapStatsOverlay stats={stats} />
-                </Box>
-              )}
-              <Map
-                id="map-generator"
-                modifiableMapTiles={modifiableMapTiles}
-                map={map}
-                disabled={false}
-                interactions={MAP_INTERACTIONS.mapGenerator}
-                onSelectSystemTile={(tile) => openPlanetFinderForMap(tile.idx)}
-                onDeleteSystemTile={(tile) => removeSystemFromMap(tile.idx)}
-                sliceValues={sliceValues}
-                sliceStats={sliceStats}
-                sliceBreakdowns={sliceBreakdowns}
-                tileContributions={tileContributions}
-                hoveredHomeIdx={hoveredHomeIdx}
-                onHomeHover={setHoveredHomeIdx}
-                closeTileMode={closeTileMode}
-                onToggleTileClosed={toggleTileClosed}
-              />
+              <Box
+                w="100%"
+                pos="relative"
+                p="md"
+                style={{
+                  aspectRatio: "740 / 800",
+                  minHeight: 320,
+                  minWidth: 640,
+                  maxHeight: 950,
+                  maxWidth: "100%",
+                }}
+              >
+                {/* Desktop: Overlay on map */}
+                {stats && (
+                  <Box visibleFrom="sm">
+                    <MapStatsOverlay stats={stats} />
+                  </Box>
+                )}
+                <Map
+                  id="map-generator"
+                  modifiableMapTiles={modifiableMapTiles}
+                  map={map}
+                  disabled={false}
+                  interactions={MAP_INTERACTIONS.mapGenerator}
+                  onSelectSystemTile={(tile) =>
+                    openPlanetFinderForMap(tile.idx)
+                  }
+                  onDeleteSystemTile={(tile) => removeSystemFromMap(tile.idx)}
+                  sliceValues={sliceValues}
+                  sliceStats={sliceStats}
+                  sliceBreakdowns={sliceBreakdowns}
+                  tileContributions={tileContributions}
+                  hoveredHomeIdx={hoveredHomeIdx}
+                  onHomeHover={setHoveredHomeIdx}
+                  closeTileMode={closeTileMode}
+                  onToggleTileClosed={toggleTileClosed}
+                />
+              </Box>
             </Box>
-
             {/* Mobile: Stats below map */}
             {stats && (
               <Box hiddenFrom="sm" p="md" mt="lg" bg="dark.8">
                 <MapStatsOverlay stats={stats} mobile />
               </Box>
             )}
-          </AppShell.Main>
-        </AppShell>
+          </div>
+        </div>
         <DragOverlay dropAnimation={null}>
           {activeSystemId ? (
             <DragTile
@@ -953,7 +987,7 @@ export default function MapGenerator() {
   return (
     <TileArtContext.Provider value={{ originalArt, setOriginalArt }}>
       <MainAppShell>
-        <ClientOnly fallback={<Box w="100%" h="calc(100vh - 60px)" />}>
+        <ClientOnly fallback={<Box w="100%" h="calc(100vh - 80px)" />}>
           {() => <MapGeneratorContent />}
         </ClientOnly>
       </MainAppShell>

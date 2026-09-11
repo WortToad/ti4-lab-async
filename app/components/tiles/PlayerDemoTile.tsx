@@ -24,8 +24,11 @@ export function PlayerDemoTile({ tile, title, color }: Props) {
       {tile.isHomeSystem && (
         <Text
           fz={Math.min(24, radius * 0.38)}
-          ff="Orbitron"
+          ff="var(--font-display)"
           fw={600}
+          bg="#071321"
+          px={5}
+          py={2}
           style={{ zIndex: 1, whiteSpace: "nowrap" }}
           className={classes.title}
         >

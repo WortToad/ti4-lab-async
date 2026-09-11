@@ -40,7 +40,7 @@ export function SlicesSection() {
 
   return (
     <Section>
-      <div style={{ position: "sticky", top: 60, zIndex: 11 }}>
+      <div style={{ position: "sticky", top: 88, zIndex: 11 }}>
         <SectionTitle title="Slices" />
       </div>
 

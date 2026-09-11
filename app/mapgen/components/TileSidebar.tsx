@@ -1,11 +1,16 @@
-import { Box, ScrollArea, SegmentedControl, Stack, Tabs, Text } from "@mantine/core";
+import {
+  Box,
+  ScrollArea,
+  SegmentedControl,
+  Stack,
+  Tabs,
+  Text,
+} from "@mantine/core";
 import { useMemo, useState } from "react";
 import { useMapBuilder } from "~/mapBuilderStore";
 import { getSystemGameSet, systemData } from "~/data/systemData";
 import { systemsFromIds } from "~/utils/system";
 import { DraggableSidebarTile } from "./DraggableSidebarTile";
-import { MiniHex } from "./MiniHex";
-import { MiniWormhole } from "./MiniWormhole";
 
 type TileFilter = "all" | "blue" | "red" | "wormhole";
 
@@ -65,7 +70,7 @@ export function TileSidebar() {
   }, [gameSets]);
 
   return (
-    <Box h="calc(100vh - 60px)" bg="dark.7">
+    <Box h="calc(100dvh - 130px)" bg="dark.7">
       <Tabs defaultValue="tiles" variant="outline" h="100%">
         <Tabs.List grow>
           <Tabs.Tab value="tiles">Tiles</Tabs.Tab>
@@ -80,7 +85,10 @@ export function TileSidebar() {
               tt="uppercase"
               c="dimmed"
               mb={6}
-              style={{ letterSpacing: "0.05em", fontFamily: "Orbitron" }}
+              style={{
+                letterSpacing: "0.05em",
+                fontFamily: "var(--font-display)",
+              }}
             >
               Tiles ({availableSystems.length})
             </Text>
@@ -91,35 +99,14 @@ export function TileSidebar() {
               fullWidth
               data={[
                 { value: "all", label: "All" },
-                {
-                  value: "blue",
-                  label: (
-                    <Box style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <MiniHex color="#4dabf7" />
-                    </Box>
-                  ),
-                },
-                {
-                  value: "red",
-                  label: (
-                    <Box style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <MiniHex color="#ff6b6b" />
-                    </Box>
-                  ),
-                },
-                {
-                  value: "wormhole",
-                  label: (
-                    <Box style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <MiniWormhole />
-                    </Box>
-                  ),
-                },
+                { value: "blue", label: "Blue" },
+                { value: "red", label: "Red" },
+                { value: "wormhole", label: "Wormholes" },
               ]}
             />
           </Box>
 
-          <ScrollArea h="calc(100vh - 60px - 110px)" type="scroll">
+          <ScrollArea h="calc(100dvh - 130px - 110px)" type="scroll">
             <Stack gap="xs" px="sm" pb="sm">
               {availableSystems.map((system) => (
                 <DraggableSidebarTile key={system.id} systemId={system.id} />
@@ -139,14 +126,20 @@ export function TileSidebar() {
                     fw={600}
                     tt="uppercase"
                     c="dimmed"
-                    style={{ letterSpacing: "0.05em", fontFamily: "Orbitron" }}
+                    style={{
+                      letterSpacing: "0.05em",
+                      fontFamily: "var(--font-display)",
+                    }}
                   >
                     Used ({usedSystems.length})
                   </Text>
                 </Box>
                 <Stack gap="xs" px="sm" py="sm">
                   {usedSystems.map((system) => (
-                    <DraggableSidebarTile key={system.id} systemId={system.id} />
+                    <DraggableSidebarTile
+                      key={system.id}
+                      systemId={system.id}
+                    />
                   ))}
                 </Stack>
               </>
@@ -161,12 +154,15 @@ export function TileSidebar() {
               fw={600}
               tt="uppercase"
               c="dimmed"
-              style={{ letterSpacing: "0.05em", fontFamily: "Orbitron" }}
+              style={{
+                letterSpacing: "0.05em",
+                fontFamily: "var(--font-display)",
+              }}
             >
               Hyperlanes ({hyperlaneOptions.length})
             </Text>
           </Box>
-          <ScrollArea h="calc(100vh - 60px - 86px)" type="scroll">
+          <ScrollArea h="calc(100dvh - 130px - 86px)" type="scroll">
             <Stack gap="xs" px="sm" pb="sm">
               {hyperlaneOptions.map(({ systemId, rotation }) => (
                 <DraggableSidebarTile

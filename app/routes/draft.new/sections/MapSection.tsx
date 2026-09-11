@@ -81,7 +81,7 @@ export function MapSection() {
   const sensors = useSensors(delayedPointerSensor);
 
   return (
-    <div style={{ position: "sticky", width: "auto", top: 60 }}>
+    <div style={{ position: "sticky", width: "auto", top: 88 }}>
       <SectionTitle title="Full Map">
         <Group gap={2}>
           {(isMiniMilty ||
@@ -112,7 +112,8 @@ export function MapSection() {
         ref={ref}
         style={{
           height,
-          width: "100%",
+          width: "calc(100% - 8px)",
+          marginInline: 4,
           position: "relative",
         }}
         mt="md"

@@ -406,9 +406,8 @@ function DraftBoard({
       )}
 
       <PlanetFinder onSystemSelected={syncDraft} />
-      <Stack gap="sm" mb="60" mt="lg">
+      <Stack gap="sm" mb="xl" mt="lg">
         <CurrentPickBanner />
-        <div style={{ height: 15 }} />
       </Stack>
 
       <Grid gutter="xl">
@@ -722,7 +721,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const typed = data as LoaderData | undefined;
   if (!typed?.data)
     return [
-      { title: "Draft lobby · TI4Toad" },
+      { title: "Draft lobby · TI4 Draft Command" },
       { name: "robots", content: "noindex, nofollow" },
     ];
 
@@ -732,8 +731,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const draftType = draft.settings?.type || "Unknown";
   const playerCount = draft.players?.length || 0;
   const draftTypeDisplay = formatDraftType(draftType, playerCount);
-  const title = `${draftId} - TI4Toad`;
-  const description = `${draftTypeDisplay} on TI4Toad`;
+  const title = `${draftId} - TI4 Draft Command`;
+  const description = `${draftTypeDisplay} on TI4 Draft Command`;
 
   return [
     { title },

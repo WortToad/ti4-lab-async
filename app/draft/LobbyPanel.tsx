@@ -194,11 +194,18 @@ export function LobbyPanel({
     operation: LobbyOperation,
   ) => setConfirmation({ title, description, operation });
   return (
-    <Paper withBorder p="md" radius="md" className="ph-no-capture">
+    <Paper
+      withBorder
+      p="md"
+      radius="md"
+      className="ph-no-capture command-lobby"
+    >
       <Stack gap="md">
         <Group justify="space-between">
           <Stack gap={0}>
-            <Title order={2}>{lobby.started ? "Lobby" : "Draft lobby"}</Title>
+            <Title order={mode === "bag" ? 2 : 1} size="h2">
+              {lobby.started ? "Lobby" : "Draft lobby"}
+            </Title>
             {lobby.started && ownSlot && (
               <Text size="sm" c="dimmed">
                 Playing as {ownSlot.name}

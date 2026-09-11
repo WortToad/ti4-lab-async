@@ -1,4 +1,4 @@
-import { Popover, Text, Title } from "@mantine/core";
+import { Popover, Text, Title, UnstyledButton } from "@mantine/core";
 import { ReactNode, useState } from "react";
 
 type Props = {
@@ -8,7 +8,12 @@ type Props = {
   disabled?: boolean;
 };
 
-export function LegendaryPopover({ children, title, description, disabled = false }: Props) {
+export function LegendaryPopover({
+  children,
+  title,
+  description,
+  disabled = false,
+}: Props) {
   const [opened, setOpened] = useState(false);
 
   const handleMouseEnter = () => {
@@ -23,6 +28,8 @@ export function LegendaryPopover({ children, title, description, disabled = fals
     }
   };
 
+  if (disabled) return <>{children}</>;
+
   return (
     <Popover
       opened={disabled ? false : opened}
@@ -32,13 +39,18 @@ export function LegendaryPopover({ children, title, description, disabled = fals
       width={300}
     >
       <Popover.Target>
-        <div
+        <UnstyledButton
+          aria-label={title ?? "Legendary planet ability"}
+          onClick={() => setOpened(!opened)}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          style={{ display: "inline-block", pointerEvents: disabled ? "none" : "auto" }}
+          style={{
+            display: "inline-block",
+            pointerEvents: disabled ? "none" : "auto",
+          }}
         >
           {children}
-        </div>
+        </UnstyledButton>
       </Popover.Target>
       <Popover.Dropdown>
         {title && (

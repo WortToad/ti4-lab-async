@@ -170,6 +170,7 @@ function InlineDecimal({
         labelElement
       )}
       <NumberInput
+        aria-label={label}
         value={value}
         onChange={(val) => onChange(typeof val === "number" ? val : 0)}
         step={step}
@@ -259,7 +260,7 @@ export function SliceSettingsModal({
       title={
         <Text
           fw={700}
-          style={{ fontFamily: "Orbitron", letterSpacing: "0.05em" }}
+          style={{ fontFamily: "var(--font-display)", letterSpacing: "0.05em" }}
         >
           {FORMAT_TITLES[formatType]}
         </Text>
@@ -309,10 +310,10 @@ export function SliceSettingsModal({
           <Stack gap="xs">
             {/* Special Features */}
             <Box>
-              <Text size="10px" c="dimmed" tt="uppercase" mb={4} opacity={0.7}>
+              <Text size="xs" c="dimmed" tt="uppercase" mb={4} opacity={1}>
                 Features
               </Text>
-              <SimpleGrid cols={2} spacing={6}>
+              <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
                 <InlineDecimal
                   label="Tech Skip"
                   tooltip="Bonus value added for each tech specialty (red/blue/green/yellow skip) on a planet"
@@ -348,10 +349,10 @@ export function SliceSettingsModal({
 
             {/* Legendaries */}
             <Box>
-              <Text size="10px" c="dimmed" tt="uppercase" mb={4} opacity={0.7}>
+              <Text size="xs" c="dimmed" tt="uppercase" mb={4} opacity={1}>
                 Legendaries
               </Text>
-              <SimpleGrid cols={2} spacing={6}>
+              <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
                 <InlineDecimal
                   label="Hope's End"
                   value={localSettings.hopesEndValue}
@@ -379,10 +380,10 @@ export function SliceSettingsModal({
 
             {/* Path Penalties */}
             <Box>
-              <Text size="10px" c="dimmed" tt="uppercase" mb={4} opacity={0.7}>
+              <Text size="xs" c="dimmed" tt="uppercase" mb={4} opacity={1}>
                 Path Penalties
               </Text>
-              <SimpleGrid cols={2} spacing={6}>
+              <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
                 <InlineDecimal
                   label="Supernova"
                   tooltip="Penalty applied when a supernova blocks the direct path to Mecatol Rex"
@@ -473,7 +474,9 @@ export function SliceSettingsModal({
         style={{ borderTop: "1px solid var(--mantine-color-default-border)" }}
       >
         <UnstyledButton onClick={handleReset}>
-          <Text size="xs" c="dimmed">Reset to defaults</Text>
+          <Text size="xs" c="dimmed">
+            Reset to defaults
+          </Text>
         </UnstyledButton>
         <Group gap="xs">
           <Button

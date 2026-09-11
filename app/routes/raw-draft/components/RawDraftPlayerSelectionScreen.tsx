@@ -71,7 +71,7 @@ export function RawDraftPlayerSelectionScreen({ onDraftJoined }: Props) {
       >
         <Button
           size="xl"
-          variant="gradient"
+          variant="filled"
           w="100%"
           disabled={selectedPlayer === undefined}
           onMouseDown={() =>
@@ -83,7 +83,7 @@ export function RawDraftPlayerSelectionScreen({ onDraftJoined }: Props) {
       </Box>
       <Button
         size="xl"
-        variant="gradient"
+        variant="filled"
         w="75vw"
         maw="1200px"
         mt="xl"

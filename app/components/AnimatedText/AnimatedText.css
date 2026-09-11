@@ -3,7 +3,9 @@
 }
 
 .fading-text {
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
   color: black;
   @mixin dark { color: white;}
 }

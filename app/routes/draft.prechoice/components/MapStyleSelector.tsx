@@ -1,12 +1,5 @@
-import {
-  ActionIcon,
-  Box,
-  Group,
-  Stack,
-  Text,
-  UnstyledButton,
-} from "@mantine/core";
-import { IconChevronRight, IconSettings } from "@tabler/icons-react";
+import { ActionIcon, Button, Group, Radio, Stack, Text } from "@mantine/core";
+import { IconInfoCircle, IconSettings } from "@tabler/icons-react";
 import { MAPS, ChoosableDraftType } from "../maps";
 import { SliceSettingsFormatType } from "~/components/SliceSettingsModal";
 
@@ -18,135 +11,81 @@ type Props = {
   onOpenSettings: (formatType: SliceSettingsFormatType) => void;
   onOpenMinorFactionsInfo: () => void;
 };
-
-// Map draft types to their settings format type
-function getSettingsFormatType(
-  draftType: ChoosableDraftType,
-): SliceSettingsFormatType | undefined {
-  if (draftType.startsWith("miltyeq")) return "miltyeq";
-  if (draftType.startsWith("milty")) return "milty";
-  if (draftType.startsWith("heisen")) return "heisen";
-  return undefined;
+function settingsFormat(type: string): SliceSettingsFormatType | undefined {
+  if (type.startsWith("miltyeq")) return "miltyeq";
+  if (type.startsWith("milty")) return "milty";
+  if (type.startsWith("heisen")) return "heisen";
 }
-
 export function MapStyleSelector({
   playerCount,
   selectedMapType,
-  onMapTypeHover,
   onMapTypeSelect,
   onOpenSettings,
   onOpenMinorFactionsInfo,
 }: Props) {
   return (
-    <Stack
-      gap={4}
-      onMouseLeave={() => onMapTypeHover(undefined)}
-      mt="xs"
-      miw={180}
-      w={{ base: "100%", xs: 180 }}
-    >
-      {Object.entries(MAPS).map(
-        ([type, { title, playerCount: mapPlayerCount }]) => {
-          if (mapPlayerCount !== playerCount) return null;
-
-          const isSelected = selectedMapType === type;
-          const settingsFormat = getSettingsFormatType(
-            type as ChoosableDraftType,
-          );
-
-          return (
-            <Group key={type} gap={4} wrap="nowrap">
-              <UnstyledButton
-                aria-pressed={isSelected}
-                onMouseOver={() => onMapTypeHover(type as ChoosableDraftType)}
-                onClick={() => onMapTypeSelect(type as ChoosableDraftType)}
-                style={{ flex: 1 }}
-              >
-                <Group
-                  gap="xs"
-                  py={6}
-                  px="sm"
-                  wrap="nowrap"
-                  style={{
-                    borderRadius: 4,
-                    border: isSelected
-                      ? "1px solid var(--mantine-color-blue-6)"
-                      : "1px solid var(--mantine-color-default-border)",
-                    background: isSelected
-                      ? "var(--mantine-color-blue-light)"
-                      : "var(--mantine-color-default)",
-                    transition: "all 100ms ease",
-                  }}
-                >
-                  <Box
-                    w={3}
-                    h={16}
-                    style={{
-                      borderRadius: 1,
-                      background: isSelected
-                        ? "var(--mantine-color-blue-6)"
-                        : "var(--mantine-color-dimmed)",
-                      opacity: isSelected ? 1 : 0.3,
-                      transition: "all 100ms ease",
-                    }}
-                  />
-                  <Text
-                    size="xs"
-                    fw={isSelected ? 600 : 500}
+    <Stack w="100%" gap="md" mt="sm">
+      <Radio.Group
+        label="Galaxy layout"
+        description="Choose a layout to see its map and draft rules."
+        value={selectedMapType}
+        onChange={(value) => onMapTypeSelect(value as ChoosableDraftType)}
+      >
+        <Stack gap="xs" mt="md">
+          {Object.entries(MAPS)
+            .filter(([, map]) => map.playerCount === playerCount)
+            .map(([type, map]) => {
+              const format = settingsFormat(type);
+              return (
+                <Group key={type} gap="xs" wrap="nowrap">
+                  <Radio.Card
+                    value={type}
+                    p="sm"
+                    radius="sm"
                     style={{
                       flex: 1,
-                      fontFamily: "Orbitron",
-                      letterSpacing: "0.03em",
+                      minWidth: 0,
+                      background:
+                        selectedMapType === type
+                          ? "var(--mantine-color-blue-light)"
+                          : undefined,
+                      borderColor:
+                        selectedMapType === type
+                          ? "#82c7ed"
+                          : "var(--mantine-color-default-border)",
                     }}
                   >
-                    {title}
-                  </Text>
-                  <IconChevronRight
-                    size={12}
-                    style={{
-                      opacity: isSelected ? 0.7 : 0.3,
-                      transition: "opacity 100ms ease",
-                    }}
-                  />
+                    <Group wrap="nowrap" gap="sm">
+                      <Radio.Indicator color="blue" />
+                      <Text fw={600}>{map.title}</Text>
+                    </Group>
+                  </Radio.Card>
+                  {format && (
+                    <ActionIcon
+                      variant="default"
+                      size="lg"
+                      aria-label={`Configure ${map.title} slice generation`}
+                      onClick={() => {
+                        onMapTypeSelect(type as ChoosableDraftType);
+                        onOpenSettings(format);
+                      }}
+                    >
+                      <IconSettings size={21} aria-hidden="true" />
+                    </ActionIcon>
+                  )}
                 </Group>
-              </UnstyledButton>
-              {settingsFormat && (
-                <ActionIcon
-                  size="sm"
-                  variant="subtle"
-                  color="gray"
-                  aria-label={`Configure ${title}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMapTypeSelect(type as ChoosableDraftType);
-                    onOpenSettings(settingsFormat);
-                  }}
-                >
-                  <IconSettings size={14} />
-                </ActionIcon>
-              )}
-            </Group>
-          );
-        },
-      )}
-
-      {/* Minor Factions Info Link */}
-      <UnstyledButton onClick={onOpenMinorFactionsInfo}>
-        <Group
-          gap="xs"
-          py={4}
-          px="sm"
-          mt="xs"
-          style={{
-            borderTop: "1px dashed var(--mantine-color-default-border)",
-          }}
-        >
-          <Text size="xs" c="orange.5" fw={500}>
-            Minor Factions Info
-          </Text>
-          <IconChevronRight size={10} color="var(--mantine-color-orange-5)" />
-        </Group>
-      </UnstyledButton>
+              );
+            })}
+        </Stack>
+      </Radio.Group>
+      <Button
+        variant="subtle"
+        color="blue.3"
+        leftSection={<IconInfoCircle size={20} />}
+        onClick={onOpenMinorFactionsInfo}
+      >
+        About minor factions
+      </Button>
     </Stack>
   );
 }

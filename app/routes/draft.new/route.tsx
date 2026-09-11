@@ -1,3 +1,4 @@
+import { DraftSetupHeading } from "~/components/DraftSetupHeading";
 import { Alert, Box, Button, Flex, Grid, List, Stack } from "@mantine/core";
 import type { ActionFunctionArgs } from "react-router";
 import { data, redirect } from "react-router";
@@ -89,6 +90,12 @@ export default function DraftNew() {
   if (isPresetMapDraft) {
     return (
       <Flex py="lg" direction="column">
+        <DraftSetupHeading
+          preview
+          title="Review your draft"
+          description="Inspect the galaxy and faction pool below. When everything is ready, create the shared lobby and invite your players."
+          players={draft.players.length}
+        />
         <ConnectedFactionSettingsModal />
         <PlanetFinder />
 
@@ -111,6 +118,12 @@ export default function DraftNew() {
 
   return (
     <Flex py="lg" direction="column">
+      <DraftSetupHeading
+        preview
+        title="Review your draft"
+        description="Inspect the galaxy and faction pool below. When everything is ready, create the shared lobby and invite your players."
+        players={draft.players.length}
+      />
       <ConnectedFactionSettingsModal />
 
       <PlanetFinder />

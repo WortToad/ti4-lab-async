@@ -1,7 +1,7 @@
+import { DraftSetupHeading } from "~/components/DraftSetupHeading";
 import {
   Accordion,
   Alert,
-  Anchor,
   Badge,
   Button,
   Group,
@@ -20,7 +20,6 @@ import { useState } from "react";
 import {
   data,
   Form,
-  Link,
   redirect,
   useActionData,
   useLoaderData,
@@ -199,22 +198,11 @@ export default function NewBagDraft() {
 
   return (
     <Stack className="ph-no-capture" maw={1100} mx="auto" py="xl" gap="lg">
-      <Anchor
-        component={Link}
-        to={`/draft/prechoice?playerCount=${playerCount}`}
-        size="sm"
-      >
-        ← All draft formats
-      </Anchor>
-      <div>
-        <Title order={1}>Bag &amp; Franken drafts</Title>
-        <Text c="dimmed" mt="xs">
-          Choose the format and player count, then create a shared lobby. Share
-          its link so everyone can enter their name and join. Start the draft
-          when everyone is ready to collect from passing bags and build their
-          faction.
-        </Text>
-      </div>
+      <DraftSetupHeading
+        title={activeVariant?.name ?? "Bag & Franken drafts"}
+        description="Pass the bags and assemble your empire. Choose your components and content, then create one shared lobby for your table."
+        players={playerCount}
+      />
       <Form method="post">
         <input type="hidden" name="settings" value={JSON.stringify(settings)} />
         <Stack gap="lg">

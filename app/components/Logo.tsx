@@ -1,28 +1,23 @@
 import { appPath } from "~/utils/appUrl";
-import { Group, Text } from "@mantine/core";
-
 import classes from "./Logo.module.css";
 
 export function Logo() {
   return (
-    <Group align="center" gap="xs" className={classes.logo}>
+    <span className={classes.logo}>
       <img
-        src={appPath("/ti4toad.png?v=3")}
-        width={36}
-        height={36}
-        style={{ objectFit: "contain" }}
-        alt="TI4Toad logo"
+        src={appPath("/brand/ti4-draft-command.png")}
+        width={52}
+        height={52}
+        alt=""
       />
-      <Text
-        fw={700}
-        size="sm"
-        style={{
-          fontFamily: "Orbitron",
-          letterSpacing: "0.05em",
-        }}
-      >
-        TI4Toad
-      </Text>
-    </Group>
+      <span className={classes.wordmark}>
+        <span className={classes.prefix}>
+          Twilight Imperium · Fourth Edition
+        </span>
+        <span className={classes.name}>
+          TI4 <span>Draft Command</span>
+        </span>
+      </span>
+    </span>
   );
 }

@@ -40,7 +40,7 @@ export function SliceStatsContent({
             <SliceValuePopover
               breakdown={coreSliceData.breakdown}
               title="Seat Value"
-              variant="dark"
+              variant="light"
             />
           )}
         </Group>

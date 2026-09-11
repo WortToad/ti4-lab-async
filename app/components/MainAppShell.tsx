@@ -1,18 +1,14 @@
 import {
   AppShell,
-  Badge,
   Box,
   Burger,
+  Button,
   Drawer,
   Group,
-  rem,
   Stack,
-  Text,
-  UnstyledButton,
 } from "@mantine/core";
-
+import { IconArrowRight, IconMap, IconRestore } from "@tabler/icons-react";
 import { Link, useLocation } from "react-router";
-
 import { useState } from "react";
 import { Logo } from "~/components/Logo";
 import classes from "./MainAppShell.module.css";
@@ -22,165 +18,124 @@ type Props = {
   headerRightSection?: React.ReactNode;
 };
 
-type NavItemProps = {
-  to?: string;
-  label: string;
-  isActive: boolean;
-  onClick?: () => void;
-  badge?: string;
-  badgeColor?: string;
-  mobile?: boolean;
-};
-
-function NavItem({
-  to,
-  label,
-  isActive,
-  onClick,
-  badge,
-  badgeColor = "orange",
-  mobile = false,
-}: NavItemProps) {
-  const content = (
-    <Box
-      className={classes.navItem}
-      data-active={isActive || undefined}
-      data-mobile={mobile || undefined}
-    >
-      <Box className={classes.navItemIndicator} />
-      <Text size="sm" fw={isActive ? 600 : 500}>
-        {label}
-      </Text>
-      {badge && (
-        <Badge
-          size="xs"
-          variant="filled"
-          color={badgeColor}
-          className={classes.navBadge}
-        >
-          {badge}
-        </Badge>
-      )}
-    </Box>
-  );
-
-  if (to) {
-    return (
-      <UnstyledButton
-        component={Link}
-        to={to}
-        onClick={onClick}
-        aria-current={isActive ? "page" : undefined}
-      >
-        {content}
-      </UnstyledButton>
-    );
-  }
-
-  return <UnstyledButton onClick={onClick}>{content}</UnstyledButton>;
-}
-
 export function MainAppShell({ children, headerRightSection }: Props) {
-  const [mobileMenuOpened, setMobileMenuOpened] = useState(false);
-  const location = useLocation();
-  const isMapGeneratorActive = location.pathname === "/map-generator";
-
-  const menuItems = [
+  const [opened, setOpened] = useState(false);
+  const { pathname } = useLocation();
+  const links = [
     {
-      to: "/draft/prechoice",
-      label: "New Draft",
-      isActive: ["/draft/prechoice", "/draft/new"].includes(location.pathname),
-    },
-    {
-      to: "/draft/rejoin",
-      label: "Rejoin Draft",
-      isActive: location.pathname === "/draft/rejoin",
+      to: "/",
+      label: "Draft formats",
+      active: pathname === "/" || pathname === "/draft/prechoice",
     },
     {
       to: "/map-generator",
-      label: "Map Generator",
-      isActive: isMapGeneratorActive,
+      label: "Map builder",
+      active: pathname === "/map-generator",
+      icon: IconMap,
+    },
+    {
+      to: "/draft/rejoin",
+      label: "Rejoin a draft",
+      active: pathname === "/draft/rejoin",
+      icon: IconRestore,
     },
   ];
-
-  const renderMenuItems = (mobile = false) => (
-    <>
-      {menuItems.map((item) => (
-        <NavItem
-          key={item.to}
-          to={item.to}
-          label={item.label}
-          isActive={item.isActive}
-          onClick={() => setMobileMenuOpened(false)}
-          mobile={mobile}
-        />
-      ))}
-    </>
-  );
+  const navigation = (mobile = false) =>
+    links.map(({ to, label, active, icon: Icon }) => (
+      <Link
+        key={to}
+        to={to}
+        onClick={() => setOpened(false)}
+        aria-current={active ? "page" : undefined}
+        className={`${classes.navLink} ${mobile ? classes.mobileLink : ""}`}
+      >
+        {Icon && <Icon size={20} aria-hidden="true" />}
+        {label}
+      </Link>
+    ));
 
   return (
-    <AppShell header={{ height: 48 }} px="md">
+    <AppShell header={{ height: 80 }} padding={0}>
+      <a className={classes.skipLink} href="#main-content">
+        Skip to main content
+      </a>
       <AppShell.Header className={classes.header}>
-        <Group align="center" h="100%" px="sm" gap={0}>
-          <Box className={classes.logoContainer}>
-            <Link
-              to="/draft/prechoice"
-              className="logo"
-              style={{ textDecoration: "none" }}
-            >
-              <Logo />
-            </Link>
-          </Box>
-
-          <Box className={classes.navDivider} />
-
-          <Burger
-            opened={mobileMenuOpened}
-            onClick={() => setMobileMenuOpened(!mobileMenuOpened)}
-            size="sm"
-            aria-label="Toggle navigation"
-            aria-expanded={mobileMenuOpened}
-            className={classes.burger}
-          />
-          <nav className={classes.desktopMenu} aria-label="Main navigation">
-            <Group gap={0}>{renderMenuItems()}</Group>
-            <div style={{ flex: 1 }} />
-            <Group gap="xs">{headerRightSection}</Group>
-          </nav>
-        </Group>
-      </AppShell.Header>
-
-      <Drawer
-        opened={mobileMenuOpened}
-        onClose={() => setMobileMenuOpened(false)}
-        size="100%"
-        padding="md"
-        title={
-          <Text
-            size="xs"
-            fw={600}
-            tt="uppercase"
-            c="dimmed"
-            style={{ fontFamily: "Orbitron", letterSpacing: "0.1em" }}
+        <div className={classes.headerInner}>
+          <Link
+            to="/"
+            className={classes.brand}
+            aria-label="TI4 Draft Command home"
           >
-            Navigation
-          </Text>
-        }
-        zIndex={1000}
-        styles={{
-          header: {
-            borderBottom: "1px dashed var(--mantine-color-default-border)",
-          },
-          body: {
-            paddingTop: rem(16),
-          },
-        }}
+            <Logo />
+          </Link>
+          <nav className={classes.desktopMenu} aria-label="Main navigation">
+            {navigation()}
+          </nav>
+          <div className={classes.headerActions}>
+            {headerRightSection}
+            <Button
+              component={Link}
+              to="/#draft-formats"
+              size="sm"
+              rightSection={<IconArrowRight size={18} aria-hidden="true" />}
+            >
+              New draft
+            </Button>
+          </div>
+          <Burger
+            opened={opened}
+            onClick={() => setOpened(!opened)}
+            className={classes.burger}
+            aria-label={opened ? "Close navigation" : "Open navigation"}
+            aria-expanded={opened}
+            aria-controls={opened ? "mobile-navigation" : undefined}
+          />
+        </div>
+      </AppShell.Header>
+      <Drawer
+        opened={opened}
+        onClose={() => setOpened(false)}
+        position="right"
+        size="sm"
+        title="Draft Command"
+        id="mobile-drawer"
       >
-        <Stack gap="xs">{renderMenuItems(true)}</Stack>
-        {headerRightSection && <Box mt="xl">{headerRightSection}</Box>}
+        <Stack gap="lg">
+          <nav id="mobile-navigation" aria-label="Mobile navigation">
+            <Stack gap="xs">{navigation(true)}</Stack>
+          </nav>
+          <Button
+            component={Link}
+            to="/#draft-formats"
+            onClick={() => setOpened(false)}
+            rightSection={<IconArrowRight size={20} />}
+          >
+            New draft
+          </Button>
+          {headerRightSection && <Box pt="md">{headerRightSection}</Box>}
+        </Stack>
       </Drawer>
-
-      <AppShell.Main>{children}</AppShell.Main>
+      <AppShell.Main id="main-content" tabIndex={-1} className={classes.main}>
+        {children}
+      </AppShell.Main>
+      <footer className={classes.footer}>
+        <div className={classes.footerInner}>
+          <div>
+            <span className={classes.footerBrand}>TI4 Draft Command</span>
+            <p>A place to prepare your claim to the galaxy.</p>
+          </div>
+          <Group gap="xl">
+            <Link to="/">Draft formats</Link>
+            <Link to="/map-generator">Map builder</Link>
+            <Link to="/draft/rejoin">Rejoin a draft</Link>
+          </Group>
+        </div>
+        <p className={classes.credit}>
+          An unofficial community tool for Twilight Imperium. Artwork and quoted
+          text © Fantasy Flight Games. Inspired by the Guide to the Imperium
+          and the TI4 rulebooks.
+        </p>
+      </footer>
     </AppShell>
   );
 }

@@ -1,16 +1,14 @@
+import { DraftSetupHeading } from "~/components/DraftSetupHeading";
 import {
   Alert,
   Button,
   Container,
-  Group,
   MultiSelect,
   NumberInput,
   Stack,
-  Text,
-  Title,
 } from "@mantine/core";
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { factions } from "~/data/factionData";
 import { buildMiniMiltySettings } from "~/draft/minimilty/buildMiniMilty";
 import { getFactionPool } from "~/utils/factions";
@@ -60,28 +58,11 @@ export default function MiniMiltySetup() {
   return (
     <Container size="sm" py="xl">
       <Stack gap="lg">
-        <Group justify="space-between">
-          <Title order={1}>Mini-Milty</Title>
-          <Button
-            component={Link}
-            to={`/draft/prechoice?playerCount=${playerCount}`}
-            variant="subtle"
-          >
-            All draft formats
-          </Button>
-        </Group>
-        <Text c="dimmed">
-          A base-game faction and speaker draft for 3–6 players. The map is
-          filled before drafting, with three blue and two red systems per seat.
-          Each player takes a faction and a speaker position in two snake
-          rounds; speaker position also determines their seat.
-        </Text>
-        <Alert color="blue" title="Set up, share, join, then start">
-          Choose your player count and faction pool, then preview the map.
-          Create the shared lobby from the preview and share its link. Everyone
-          enters their own name to join, including you if you are playing. Start
-          once everyone has joined.
-        </Alert>
+        <DraftSetupHeading
+          title="Mini-Milty"
+          description="A complete base-game galaxy, followed by two snake rounds to choose your faction and speaker position. Preview the map before inviting your table."
+          players={playerCount}
+        />
         {error && <Alert color="red">{error}</Alert>}
         <LobbyPlayerCount
           description="Players enter their name to join the shared lobby. The admin starts once everyone has joined."

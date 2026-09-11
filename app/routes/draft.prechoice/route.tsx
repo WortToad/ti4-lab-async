@@ -6,17 +6,15 @@ import {
   Group,
   NumberInput,
   Paper,
-  SimpleGrid,
   Stack,
   Switch,
   Tabs,
   Text,
-  Title,
 } from "@mantine/core";
 import { DiscordData, Draft, DraftSettings } from "~/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DemoMap } from "~/components/DemoMap";
-import { LobbyRecovery } from "~/draft/LobbyRecovery";
+import { DraftSetupHeading } from "~/components/DraftSetupHeading";
 import { SectionTitle } from "~/components/Section";
 import { LobbyPlayerCount } from "~/draft/LobbyPlayerCount";
 import { makeLobbyPlayers, parseLobbyPlayerCount } from "~/draft/lobbySetup";
@@ -38,7 +36,7 @@ import {
   SliceSettingsFormatType,
 } from "~/components/SliceSettingsModal";
 import { useDraftSetup } from "./store";
-import { MAPS, ChoosableDraftType } from "./maps";
+import { MAPS, mapForPlayerCount, ChoosableDraftType } from "./maps";
 import { ReferenceCardPacksConfigurationSection } from "./components/ReferenceCardPacksConfigurationSection";
 import { SlicesConfigurationSection } from "./components/SlicesConfigurationSection";
 import { KingsConfigurationSection } from "./components/KingsConfigurationSection";
@@ -120,6 +118,39 @@ export default function DraftPrechoice() {
     }
     discordDataInitialized.current = true;
   }, [discordData, requestedPlayerCount, setPlayers]);
+
+  // Apply a format selected in the directory once, after the roster is initialized.
+  const requestedFormat = searchParams.get("format");
+  const initializedFormat = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      !requestedFormat ||
+      initializedFormat.current === requestedFormat ||
+      mapSlicesString
+    )
+      return;
+    initializedFormat.current = requestedFormat;
+    const setup = useDraftSetup.getState();
+    const mode =
+      requestedFormat === "twilight"
+        ? "twilightFalls"
+        : requestedFormat === "texas"
+          ? "texasStyle"
+          : "base";
+    setup.setDraftMode(mode);
+    setup.multidraft.setIsMultidraft(requestedFormat === "multidraft");
+    const family =
+      requestedFormat === "nucleus"
+        ? "heisen"
+        : requestedFormat === "miltyeq"
+          ? "miltyeq"
+          : requestedFormat === "small"
+            ? "std4p"
+            : "milty";
+    setup.map.setSelectedMapType(
+      mapForPlayerCount(family, setup.player.players.length),
+    );
+  }, [requestedFormat, mapSlicesString]);
 
   // Initialize from seeded map URL param (one-time on mount)
   const seededMapInitialized = useRef(false);
@@ -412,66 +443,47 @@ export default function DraftPrechoice() {
 
       <div className={classes.grid}>
         <div className={classes.col12}>
-          <Title order={1}>Create a draft lobby</Title>
-          <Text c="dimmed" mt="xs">
-            Prepare the draft, share one link, and start when everyone has
-            joined.
-          </Text>
+          <DraftSetupHeading
+            title={
+              draftMode === "texasStyle"
+                ? "Prepare a Texas draft"
+                : draftMode === "twilightFalls"
+                  ? "Prepare a Twilight’s Fall draft"
+                  : multidraft.isMultidraft
+                    ? "Prepare multiple drafts"
+                    : `Prepare your ${MAPS[map.selectedMapType].title} draft`
+            }
+            description="Set the table, choose your galaxy, and prepare the draft pool. You’ll share a single lobby link when your draft is ready."
+            players={playerCount}
+          />
         </div>
         <div className={classes.col12}>
-          <SimpleGrid cols={{ base: 1, sm: 2 }}>
-            <Paper withBorder radius="md" p="md">
-              <LobbyPlayerCount
-                count={playerCount}
-                onChange={handlePlayerCountChange}
-              />
-            </Paper>
-            <LobbyRecovery />
-          </SimpleGrid>
+          <Paper withBorder p="lg" className={classes.playerPanel}>
+            <div>
+              <Text className="command-eyebrow" mb="xs">
+                01 / Your table
+              </Text>
+              <Text fw={600} size="lg">
+                Gather the great powers
+              </Text>
+              <Text c="dimmed" size="sm" mt="xs">
+                Names are entered when players join the lobby.
+              </Text>
+            </div>
+            <LobbyPlayerCount
+              count={playerCount}
+              onChange={handlePlayerCountChange}
+              description="Choose the number of seats. Available layouts update to match."
+            />
+          </Paper>
         </div>
         {setupError && (
           <div className={classes.col12}>
-            <Alert color="red">{setupError}</Alert>
+            <Alert color="red" title="Check your draft settings" role="alert">
+              {setupError}
+            </Alert>
           </div>
         )}
-        <div className={classes.col12}>
-          <Group justify="space-between" gap="sm" mb="sm">
-            <Text size="sm" c="dimmed">
-              Choose a draft format or build the galaxy using the official setup
-              rules.
-            </Text>
-            <Group gap="xs">
-              <Button
-                component={Link}
-                to={`/draft/raw/new?mode=${draftMode === "twilightFalls" ? "twilightsFall" : "base"}&playerCount=${playerCount}`}
-                variant="light"
-              >
-                Rules as written (RAW)
-              </Button>
-              <Button
-                component={Link}
-                to={`/draft/bag/new?playerCount=${playerCount}`}
-                variant="light"
-              >
-                Bag / Franken / Twilight’s Fall
-              </Button>
-              <Button
-                component={Link}
-                to={`/draft/mantis/new?playerCount=${playerCount}`}
-                variant="light"
-              >
-                Mantis draft
-              </Button>
-              <Button
-                component={Link}
-                to={`/draft/minimilty/new?playerCount=${playerCount}`}
-                variant="light"
-              >
-                Mini-Milty (base game)
-              </Button>
-            </Group>
-          </Group>
-        </div>
         {mapSlicesString && (
           <div className={classes.col12}>
             <SeededMapBanner />
@@ -493,14 +505,10 @@ export default function DraftPrechoice() {
         <div className={classes.colLeft}>
           <Flex align="center" direction="column">
             <Box w="100%">
-              <SectionTitle title="Map layout" />
+              <Text className="command-eyebrow">02 / Your galaxy</Text>
+              <SectionTitle title="Map & layout" />
             </Box>
-            <Flex
-              w="100%"
-              gap="md"
-              align="flex-start"
-              direction={{ base: "column", xs: "row" }}
-            >
+            <Flex w="100%" gap="md" align="flex-start" direction="column">
               <MapStyleSelector
                 playerCount={player.players.length}
                 selectedMapType={map.selectedMapType}
@@ -510,13 +518,7 @@ export default function DraftPrechoice() {
                 onOpenMinorFactionsInfo={openMinorFactions}
               />
               <Box flex={1} w="100%" miw={0} pos="relative" mt="sm">
-                <Box
-                  flex={1}
-                  pos="relative"
-                  mah="1000px"
-                  mb="lg"
-                  visibleFrom="xs"
-                >
+                <Box flex={1} pos="relative" mah="1000px" mb="lg">
                   {mapType && (
                     <DemoMap
                       id="prechoice-map"
@@ -536,27 +538,16 @@ export default function DraftPrechoice() {
           </Flex>
         </div>
 
-        <div className={`${classes.col12} ${classes.hiddenFromXs}`}>
-          <Box flex={1} pos="relative" mah="1000px" mt="lg">
-            {mapType && (
-              <DemoMap
-                id="prechoice-map"
-                map={MAPS[mapType].map}
-                titles={MAPS[mapType].titles}
-                padding={0}
-              />
-            )}
-          </Box>
-        </div>
-
         <div className={classes.colRight}>
           <Stack>
             <Stack>
-              <SectionTitle title="Draft rules" />
+              <Text className="command-eyebrow">03 / Your draft</Text>
+              <SectionTitle title="Draft rules & content" />
               <Tabs
+                aria-label="Draft rules"
                 value={draftMode}
                 onChange={handleDraftModeChange}
-                variant="pills"
+                variant="outline"
               >
                 <Tabs.List mb="md">
                   <Tabs.Tab value="base">Standard</Tabs.Tab>
@@ -581,7 +572,7 @@ export default function DraftPrechoice() {
                     </Button>
                     <Alert
                       color="blue"
-                      title="Simplified Configuration"
+                      title="Draft from reference card packs"
                       variant="light"
                     >
                       <Text size="xs">
@@ -644,27 +635,38 @@ export default function DraftPrechoice() {
               </Tabs>
             </Stack>
 
-            <Button
-              size="lg"
-              onClick={handleContinue}
-              leftSection={<IconPlayerPlay />}
-              className={buttonClasses.primaryCta}
-              loading={navigation.state !== "idle"}
-              disabled={texasErrors.length > 0}
-            >
-              {draftMode === "texasStyle"
-                ? "Create shared lobby"
-                : draftMode === "base" && multidraft.isMultidraft
-                  ? `Create ${multidraft.numDrafts} lobbies`
-                  : "Preview draft"}
-            </Button>
+            <Paper className={classes.continuePanel} withBorder p="lg">
+              <Text fw={600} mb="xs">
+                Ready to prepare the lobby?
+              </Text>
+              <Text size="sm" c="dimmed" mb="md">
+                {draftMode === "texasStyle"
+                  ? "Create the lobby, then invite players. The draft begins when everyone is ready."
+                  : "Review your generated map and draft pool before creating a shared lobby."}
+              </Text>
+              <Button
+                fullWidth
+                size="lg"
+                onClick={handleContinue}
+                leftSection={<IconPlayerPlay />}
+                className={buttonClasses.primaryCta}
+                loading={navigation.state !== "idle"}
+                disabled={texasErrors.length > 0}
+              >
+                {draftMode === "texasStyle"
+                  ? "Create shared lobby"
+                  : draftMode === "base" && multidraft.isMultidraft
+                    ? `Create ${multidraft.numDrafts} lobbies`
+                    : "Preview draft"}
+              </Button>
+            </Paper>
             <Group>
               <Button
                 size="md"
                 flex={1}
                 onClick={openSavedState}
                 variant="outline"
-                color="purple.3"
+                color="blue.3"
                 leftSection={<IconFile />}
               >
                 Use a draft template

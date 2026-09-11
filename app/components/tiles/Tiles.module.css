@@ -42,7 +42,7 @@
     fill: #aed6b6;
   }
   @mixin dark {
-    fill: #5fa16d;
+    fill: #234f48;
   }
 }
 
@@ -149,7 +149,9 @@
   @mixin dark {
     fill: var(--mantine-color-dark-4) !important;
     opacity: 0.6;
-    transition: opacity 0.2s ease, fill 0.2s ease;
+    transition:
+      opacity 0.2s ease,
+      fill 0.2s ease;
   }
 }
 
@@ -186,7 +188,9 @@
   @mixin dark {
     fill: var(--mantine-color-blue-7) !important;
     opacity: 0.9 !important;
-    transition: opacity 0.2s ease, fill 0.2s ease;
+    transition:
+      opacity 0.2s ease,
+      fill 0.2s ease;
   }
 }
 

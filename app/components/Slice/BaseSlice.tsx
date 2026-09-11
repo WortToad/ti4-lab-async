@@ -1,11 +1,4 @@
-import {
-  Box,
-  Group,
-  Paper,
-  Stack,
-  Text,
-  TextInput,
-} from "@mantine/core";
+import { Box, Group, Paper, Stack, Text, TextInput } from "@mantine/core";
 import { SliceMap } from "./SliceMap";
 import { PlanetStatsPill } from "./PlanetStatsPill";
 import { SliceHeader } from "./SliceHeader";
@@ -56,6 +49,7 @@ export function BaseSlice({
           <Group flex={1}>
             {mapModifiable && onNameChange ? (
               <TextInput
+                aria-label="Slice name"
                 className={classes.editableSliceName}
                 value={slice.name}
                 mr="xs"
@@ -75,7 +69,7 @@ export function BaseSlice({
 
         <Group className={classes.stats} justify="space-between">
           <Group gap={6}>
-            <Text size="10px" c="dimmed" fw={600} tt="uppercase">
+            <Text size="xs" c="dimmed" fw={600} tt="uppercase">
               SV
             </Text>
             <Text size="sm" fw={700} c="yellow.5">
@@ -84,7 +78,7 @@ export function BaseSlice({
             <SliceValuePopover slice={slice} />
           </Group>
           <Group gap={6}>
-            <Text size="10px" c="dimmed" fw={600} tt="uppercase">
+            <Text size="xs" c="dimmed" fw={600} tt="uppercase">
               Opt
             </Text>
             <PlanetStatsPill

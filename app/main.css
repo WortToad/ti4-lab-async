@@ -1,12 +1,235 @@
-@keyframes rotate {
-from {
-    transform: rotate(0deg);
+@font-face {
+  font-family: "Cinzel";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./assets/fonts/cinzel-400.ttf") format("truetype");
 }
-to {
-    transform: rotate(360deg);
+@font-face {
+  font-family: "Cinzel";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./assets/fonts/cinzel-500.ttf") format("truetype");
 }
+@font-face {
+  font-family: "Cinzel";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("./assets/fonts/cinzel-600.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Cinzel";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./assets/fonts/cinzel-700.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Source Sans 3";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./assets/fonts/source-sans-3-400.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Source Sans 3";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./assets/fonts/source-sans-3-500.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Source Sans 3";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("./assets/fonts/source-sans-3-600.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Source Sans 3";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./assets/fonts/source-sans-3-700.ttf") format("truetype");
 }
 
-.rotating-image {
-/* animation: rotate 360s linear infinite; */
+:root {
+  --font-display: "Cinzel", Georgia, serif;
+  --command-accent: var(--mantine-color-imperial-4, #e8bc58);
+  --command-focus: var(--mantine-color-imperial-1, #fbedc7);
+  --command-blue: #82c7ed;
+  --command-ink: #071321;
+  --command-paper: #f2e8d3;
+  --command-border: #405a70;
+}
+:root[data-mantine-color-scheme="dark"] {
+  --mantine-color-body: #071321;
+  --mantine-color-text: #f3eee4;
+  --mantine-color-dimmed: #aebfce;
+  --mantine-color-default: #102235;
+  --mantine-color-default-hover: #1a3248;
+  --mantine-color-default-border: #405a70;
+  --mantine-color-anchor: #82c7ed;
+}
+html {
+  scroll-padding-top: 100px;
+}
+body {
+  -webkit-font-smoothing: antialiased;
+}
+::selection {
+  background: var(--command-accent);
+  color: #071321;
+}
+a {
+  text-underline-offset: 4px;
+}
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--command-focus);
+  outline-offset: 4px;
+}
+:where(h1, h2, h3, h4) {
+  text-wrap: balance;
+}
+.mantine-Title-root {
+  letter-spacing: 0.015em;
+}
+.mantine-Button-root {
+  min-height: 44px;
+  height: auto;
+  padding-block: 10px;
+}
+.mantine-ActionIcon-root {
+  min-width: 36px;
+  min-height: 36px;
+}
+.mantine-ActionIcon-root > .mantine-ActionIcon-icon > svg {
+  min-width: 18px;
+  min-height: 18px;
+}
+.mantine-Input-input {
+  border-color: #62798d;
+  font-size: 1rem;
+}
+.mantine-InputWrapper-label {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.mantine-InputWrapper-description {
+  margin-bottom: 8px;
+}
+.mantine-Checkbox-label,
+.mantine-Radio-label,
+.mantine-Switch-label {
+  line-height: 1.5;
+}
+.mantine-Checkbox-body,
+.mantine-Switch-body,
+.mantine-Radio-body {
+  min-height: 36px;
+  align-items: center;
+}
+.mantine-Checkbox-input:not(:checked),
+.mantine-Radio-radio:not(:checked),
+.mantine-Switch-track:not([data-checked]) {
+  border-color: #8196a8;
+}
+.mantine-Modal-title,
+.mantine-Drawer-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.mantine-Modal-header,
+.mantine-Drawer-header {
+  border-bottom: 1px solid var(--command-border);
+  margin-bottom: 16px;
+}
+.mantine-Paper-root {
+  background-color: #0e2032;
+}
+.mantine-Accordion-item {
+  border-color: var(--command-border);
+}
+.mantine-Table-th {
+  color: var(--command-accent);
+  font-size: 1rem;
+}
+.mantine-Alert-message {
+  color: var(--mantine-color-text);
+  font-size: 1rem;
+}
+.mantine-Alert-title {
+  font-size: 1.0625rem;
+}
+.mantine-Tabs-list {
+  gap: 6px;
+}
+.mantine-Tabs-tab[data-active] {
+  font-weight: 700;
+}
+.mantine-SegmentedControl-root {
+  border: 1px solid var(--command-border);
+}
+.mantine-SegmentedControl-label {
+  color: #bdcbd7;
+}
+.mantine-SegmentedControl-label[data-active] {
+  color: #fffaf0;
+}
+.mantine-SegmentedControl-indicator {
+  background: #28445d;
+  box-shadow: inset 0 -2px var(--command-accent);
+}
+.mantine-SegmentedControl-input:focus-visible
+  + .mantine-SegmentedControl-label {
+  outline: 3px solid var(--command-focus);
+  outline-offset: -3px;
+}
+.mantine-Button-root:disabled,
+.mantine-ActionIcon-root:disabled {
+  color: #a5b2be;
+}
+.command-eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--command-accent);
+}
+.command-setup-header {
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--command-border);
+}
+.command-setup-header h1 {
+  margin-top: 12px;
+}
+@media (max-width: 36em) {
+  .mantine-Modal-body {
+    padding-inline: 16px;
+  }
+  .mantine-Button-root {
+    max-width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+.command-config-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.command-lobby {
+  margin-block: 28px;
+  padding: clamp(16px, 2vw, 28px);
+  border-top: 2px solid var(--command-accent);
 }

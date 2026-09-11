@@ -11,7 +11,13 @@ import styles from "./DraftFormatDescription.module.css";
 import clsx from "clsx";
 
 type Feature = {
-  icon: "slices" | "equidistant" | "balanced" | "wormholes" | "nucleus" | "compact";
+  icon:
+    | "slices"
+    | "equidistant"
+    | "balanced"
+    | "wormholes"
+    | "nucleus"
+    | "compact";
   label: string;
 };
 
@@ -59,7 +65,7 @@ export function DraftFormatDescription({ mapType, data, title }: Props) {
             const Icon = ICONS[feature.icon];
             return (
               <div key={idx} className={styles.featureItem}>
-                <Icon size={12} className={styles.featureIcon} />
+                <Icon size={18} className={styles.featureIcon} />
                 <span>{feature.label}</span>
               </div>
             );

@@ -38,6 +38,7 @@ export function SliceCard({
           <Group gap={2} flex={1}>
             {editable && onNameChange ? (
               <TextInput
+                aria-label={`Name for slice ${name}`}
                 className={classes.editableSliceName}
                 value={name}
                 mr="xs"

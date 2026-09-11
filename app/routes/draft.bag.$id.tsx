@@ -70,17 +70,21 @@ export function headers() {
 
 export function meta() {
   return [
-    { title: "Bag draft · TI4Toad" },
+    { title: "Bag draft · TI4 Draft Command" },
     { name: "robots", content: "noindex, nofollow" },
     { name: "referrer", content: "no-referrer" },
   ];
 }
 
-const loadClientDraft = createOrderedLoader<
-  Exclude<Awaited<ReturnType<typeof loader>>, Response>["data"]
->();
+const loadClientDraft =
+  createOrderedLoader<
+    Exclude<Awaited<ReturnType<typeof loader>>, Response>["data"]
+  >();
 
-export function clientLoader({ request, serverLoader }: ClientLoaderFunctionArgs) {
+export function clientLoader({
+  request,
+  serverLoader,
+}: ClientLoaderFunctionArgs) {
   return loadClientDraft(new URL(request.url).pathname, () =>
     serverLoader<typeof loader>(),
   );

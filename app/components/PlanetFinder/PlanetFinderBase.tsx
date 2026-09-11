@@ -168,6 +168,7 @@ export function PlanetFinderBase({
                 if (!itemRefs.current || !el) return;
                 itemRefs.current[0] = el;
               }}
+              aria-label="Search systems by ID or planet name"
               placeholder="Search by ID, planet name, resources, influence..."
               value={searchString}
               onChange={(e) => {

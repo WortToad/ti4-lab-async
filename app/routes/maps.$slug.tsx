@@ -161,7 +161,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!typed) return [];
 
   const { preset } = typed;
-  const title = `${preset.name} - TI4Toad`;
+  const title = `${preset.name} - TI4 Draft Command`;
   const description = preset.description
     ? `${preset.description} — by ${preset.author}`
     : `Map by ${preset.author}`;
@@ -222,9 +222,12 @@ export default function MapDetail() {
     [decoded],
   );
   const handleLike = async () => {
-    const response = await fetch(appPath(`/api/preset-maps/${preset.id}/like`), {
-      method: "POST",
-    });
+    const response = await fetch(
+      appPath(`/api/preset-maps/${preset.id}/like`),
+      {
+        method: "POST",
+      },
+    );
     const result = await response.json().catch(() => null);
     if (!result?.success) return;
 
@@ -411,9 +414,11 @@ export default function MapDetail() {
 
                 <Button
                   component="a"
-                  href={appPath(`/map-generator?map=${encodeURIComponent(
-                    preset.mapString,
-                  )}`)}
+                  href={appPath(
+                    `/map-generator?map=${encodeURIComponent(
+                      preset.mapString,
+                    )}`,
+                  )}
                   variant="light"
                   color="blue"
                   size="sm"

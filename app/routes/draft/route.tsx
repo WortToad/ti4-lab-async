@@ -1,5 +1,4 @@
-import { MetaFunction } from "react-router";
-import { Outlet } from "react-router";
+import { MetaFunction, Outlet } from "react-router";
 import { useState } from "react";
 import { MainAppShell } from "~/components/MainAppShell";
 import { HeaderControls } from "~/components/HeaderControls";
@@ -48,7 +47,10 @@ export default function Draft() {
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "TI4Toad Draft" },
-    { name: "description", content: "TI4Toad, for drafting and map creation." },
+    { title: "TI4 Draft Command Draft" },
+    {
+      name: "description",
+      content: "TI4 Draft Command, for drafting and map creation.",
+    },
   ];
 };

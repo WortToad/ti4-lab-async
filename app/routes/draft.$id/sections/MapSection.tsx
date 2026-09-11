@@ -53,7 +53,7 @@ export function MapSection({ titleChildren }: Props) {
   };
 
   return (
-    <div style={{ position: "sticky", width: "auto", top: 60 }}>
+    <div style={{ position: "sticky", width: "auto", top: 88 }}>
       <SectionTitle title="Full Map">{titleChildren}</SectionTitle>
       <Modal
         opened={pendingSeat !== null}
@@ -85,7 +85,8 @@ export function MapSection({ titleChildren }: Props) {
         ref={ref}
         style={{
           height,
-          width: "100%",
+          width: "calc(100% - 8px)",
+          marginInline: 4,
           position: "relative",
         }}
         mt="md"

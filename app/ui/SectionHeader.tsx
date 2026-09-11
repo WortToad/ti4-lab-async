@@ -11,12 +11,17 @@ export interface SectionHeaderProps {
 export function SectionHeader({ title, sticky, actions }: SectionHeaderProps) {
   const Wrapper = sticky ? "div" : "div";
   const wrapperProps = sticky
-    ? { style: { position: "sticky" as const, top: 60, zIndex: 11 } }
+    ? { style: { position: "sticky" as const, top: 92, zIndex: 11 } }
     : {};
 
   return (
     <Wrapper {...wrapperProps}>
-      <Group className={classes.section} justify="space-between" px="sm" py="sm">
+      <Group
+        className={classes.section}
+        justify="space-between"
+        px="sm"
+        py="sm"
+      >
         <Title order={3}>{title}</Title>
         {actions}
       </Group>

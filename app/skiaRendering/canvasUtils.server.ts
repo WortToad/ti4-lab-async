@@ -1,13 +1,7 @@
 import { Canvas } from "skia-canvas";
 import { Map, HydratedPlayer } from "~/types";
-import {
-  calculateConcentricCircles,
-  calcHexHeight,
-} from "~/utils/positioning";
-import {
-  getBackgroundTileCache,
-  getLogoCache,
-} from "./cache.server";
+import { calculateConcentricCircles, calcHexHeight } from "~/utils/positioning";
+import { getBackgroundTileCache, getLogoCache } from "./cache.server";
 import { TILE_COLORS } from "./constants";
 import { drawHexTile } from "./renderers/hexRenderer.server";
 
@@ -139,16 +133,20 @@ export function drawBranding(
     const logoY = logoYOption;
     ctx.drawImage(logoCache, logoX, logoY, logoSize, logoSize);
 
-    ctx.font = "bold 42px Orbitron, sans-serif";
-    ctx.fillStyle = "#BEABF0";
+    ctx.font = "bold 32px serif";
+    ctx.fillStyle = "#E8BC58";
     ctx.textBaseline = "middle";
     ctx.textAlign = "left";
-    ctx.fillText("TI4Toad", logoX + logoSize + 12, logoY + logoSize / 2);
+    ctx.fillText(
+      "TI4 Draft Command",
+      logoX + logoSize + 12,
+      logoY + logoSize / 2,
+    );
 
     // Draw URL inline with logo (for slices view)
     if (urlText && urlPosition === "inline") {
       // Draw vertical separator
-      const separatorX = logoX + logoSize + 220;
+      const separatorX = logoX + logoSize + 345;
       ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -202,7 +200,10 @@ export function drawMap(
 /**
  * Create a canvas and context with initialization
  */
-export function createCanvas(width: number, height: number): {
+export function createCanvas(
+  width: number,
+  height: number,
+): {
   canvas: Canvas;
   ctx: CanvasRenderingContext2D;
 } {

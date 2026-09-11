@@ -1,6 +1,6 @@
+import { DraftSetupHeading } from "~/components/DraftSetupHeading";
 import {
   Alert,
-  Anchor,
   Button,
   Checkbox,
   Container,
@@ -16,7 +16,6 @@ import { useState } from "react";
 import {
   data,
   Form,
-  Link,
   redirect,
   useActionData,
   useNavigation,
@@ -104,7 +103,9 @@ export default function MantisNew() {
   if (discordant)
     gameSets.push("discordant", "discordantexp", "unchartedstars");
   const enabledFactions = getFactionPool(gameSets);
-  const availableFactions = enabledFactions.filter((id) => !banned.includes(id));
+  const availableFactions = enabledFactions.filter(
+    (id) => !banned.includes(id),
+  );
   const options = Object.values(allFactions)
     .filter((f) => f.set !== "twilightsFall")
     .map((f) => ({
@@ -132,20 +133,11 @@ export default function MantisNew() {
     <Container size="sm" py="xl">
       <Form method="post">
         <Stack gap="lg">
-          <Anchor
-            component={Link}
-            to={`/draft/prechoice?playerCount=${playerCount}`}
-            size="sm"
-          >
-            ← All draft formats
-          </Anchor>
-          <Title order={2}>Mantis draft</Title>
-          <Text>
-            Take turns drafting a faction, a speaker position and individual map
-            tiles from a shared pool. Each player keeps exactly 3 blue and 2 red
-            tiles. In the next phase, those same five tiles fill that player’s
-            section of the shared map.
-          </Text>
+          <DraftSetupHeading
+            title="Mantis draft"
+            description="Draft individual systems, factions, and speaker positions. Keep three blue and two red tiles, then build your corner of the galaxy."
+            players={playerCount}
+          />
           {result?.error && <Alert color="red">{result.error}</Alert>}
           <Alert color="blue" title="Create a shared lobby">
             Choose your settings and create the lobby, then share its link.

@@ -7,7 +7,7 @@
 }
 
 .hoverCard:hover {
-  transform: translateY(-2px);
+  background: #142b40;
   border-color: var(--mantine-color-gray-4);
 }
 
@@ -16,7 +16,7 @@
 }
 
 .cardDescription {
-  opacity: 0.7;
+  opacity: 1;
   transition: opacity 0.2s ease;
 }
 

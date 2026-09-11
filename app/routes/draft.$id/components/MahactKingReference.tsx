@@ -45,7 +45,7 @@ export function MahactKingReference({ faction, reference }: Props) {
               <Text
                 fz={{ base: "lg", sm: "xl" }}
                 fw={700}
-                ff="Orbitron"
+                ff="var(--font-display)"
                 lh={1.2}
               >
                 {faction.name}

@@ -21,17 +21,23 @@ import {
 initEnv();
 startEventLoopLagMonitor();
 
+const app = express();
+const basePath = normalizeBasePath(process.env.TI4_BASE_PATH);
+const httpServer = createServer(app);
+
 const viteDevServer =
   process.env.NODE_ENV === "production"
     ? null
     : await import("vite").then((vite) =>
         vite.createServer({
-          server: { middlewareMode: true },
+          server: {
+            middlewareMode: true,
+            // Keep live updates on this app's server. Vite's shared default
+            // port can connect previews to another instance and cause reloads.
+            hmr: { server: httpServer },
+          },
         }),
       );
-
-const app = express();
-const basePath = normalizeBasePath(process.env.TI4_BASE_PATH);
 
 // Health check endpoint - must be before other middleware
 app.get("/health", (_req, res) => {
@@ -93,7 +99,6 @@ if (basePath) {
 app.all("/{*splat}", createRequestHandler({ build }));
 
 // Connect socket.io
-const httpServer = createServer(app);
 // Attach the socket.io server to the HTTP server
 const io = new Server(httpServer, {
   path: appPath("/socket.io"),

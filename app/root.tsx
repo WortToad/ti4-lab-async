@@ -23,7 +23,6 @@ import {
   Stack,
   Text,
   Title,
-  createTheme,
   mantineHtmlProps,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
@@ -32,113 +31,16 @@ import { SocketProvider } from "./socketContext";
 import { Notifications } from "@mantine/notifications";
 import { MainAppShell } from "./components/MainAppShell";
 
-const mantineTheme = createTheme({
-  colors: {
-    // override dark colors here to change them for all components
-    dark: [
-      "#d5d7e0",
-      "#acaebf",
-      "#8c8fa3",
-      "#666980",
-      "#4d4f66",
-      "#34354a",
-      "#2b2c3d",
-      "#1d1e30",
-      "#0c0d21",
-      "#01010a",
-    ],
-    // used by dark theme
-    palePurple: [
-      "#f3f2f7",
-      "#e2e2e8",
-      "#c3c2d2",
-      "#a2a0bc",
-      "#8583aa",
-      "#73719e",
-      "#6a679a",
-      "#595787",
-      "#4f4c79",
-      "#44426c",
-    ],
-    purple: [
-      "#f3edff",
-      "#e0d7fa",
-      "#beabf0",
-      "#9a7ce6",
-      "#7c56de",
-      "#683dd9",
-      "#5f2fd8",
-      "#4f23c0",
-      "#451eac",
-      "#3a1899",
-    ],
-    spaceBlue: [
-      "#eef3ff",
-      "#dee4f3",
-      "#bcc6df",
-      "#98a7cc",
-      "#798cbb",
-      "#657cb2",
-      "#5a73ae",
-      "#4a6299",
-      "#40578a",
-      "#324b7c",
-    ],
-    discordBlue: [
-      "#ecf1ff",
-      "#d7e0fa",
-      "#afbded",
-      "#8499e0",
-      "#5f79d5",
-      "#4866cf",
-      "#3b5ccd",
-      "#2c4cb6",
-      "#2444a4",
-      "#173992",
-    ],
-    magenta: [
-      "#ffe9f6",
-      "#ffd1e6",
-      "#faa1c9",
-      "#f66eab",
-      "#f24391",
-      "#f02881",
-      "#f01879",
-      "#d60867",
-      "#c0005c",
-      "#a9004f",
-    ],
-  },
-  breakpoints: {
-    xs: "36em",
-    sm: "48em",
-    md: "62em",
-    lg: "75em",
-    xl: "88em",
-    xxl: "120em",
-  },
-  primaryColor: "purple",
-  fontFamily: '"Quantico", sans-serif',
-  headings: {
-    fontFamily: "Orbitron",
-  },
-  components: {
-    Button: Button.extend({
-      defaultProps: {
-        variant: "gradient",
-        gradient: { from: "purple", to: "indigo.9", deg: 90 },
-      },
-    }),
-  },
-});
+import { commandTheme } from "./theme";
 
 export const meta = () => [
-  { title: "TI4Toad" },
+  { title: "TI4 Draft Command" },
   {
     name: "description",
-    content: "TI4Toad — Twilight Imperium 4 drafting and map building.",
+    content:
+      "TI4 Draft Command — Twilight Imperium 4 drafting and map building.",
   },
-  { property: "og:title", content: "TI4Toad" },
+  { property: "og:title", content: "TI4 Draft Command" },
   {
     property: "og:description",
     content: "Twilight Imperium 4 drafting and map building.",
@@ -184,58 +86,40 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="application-name" content="TI4Toad" />
+        <meta name="application-name" content="TI4 Draft Command" />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="any"
+          href={appPath("/brand/ti4-draft-command.png")}
+        />
         <link
           rel="apple-touch-icon"
-          sizes="180x180"
-          href={appPath("/apple-touch-icon.png?v=3")}
+          href={appPath("/brand/ti4-draft-command.png")}
         />
-        <link
-          rel="icon"
-          type="image/x-icon"
-          href={appPath("/favicon.ico?v=3")}
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="32x32"
-          href={appPath("/favicon-32x32.png?v=3")}
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="16x16"
-          href={appPath("/favicon-16x16.png?v=3")}
-        />
-        <link rel="manifest" href={appPath("/site.webmanifest?v=3")} />
-        <meta name="theme-color" content="#1d1e30" />
-        <meta name="msapplication-TileColor" content="#1d1e30" />
+        <link rel="manifest" href={appPath("/site.webmanifest?v=4")} />
+        <meta name="theme-color" content="#071321" />
+        <meta name="msapplication-TileColor" content="#071321" />
+        <meta property="og:site_name" content="TI4 Draft Command" />
         <meta
-          name="msapplication-TileImage"
-          content={appPath("/mstile-150x150.png?v=3")}
+          property="og:image"
+          content={appUrl("/brand/ti4-draft-command.png")}
         />
-        <meta
-          name="msapplication-config"
-          content={appPath("/browserconfig.xml?v=3")}
-        />
-        <meta property="og:site_name" content="TI4Toad" />
-        <meta property="og:image" content={appUrl("/ti4toad.png?v=3")} />
         <meta property="og:image:type" content="image/png" />
-        <meta property="og:image:width" content="1241" />
-        <meta property="og:image:height" content="1241" />
-        <meta property="og:image:alt" content="TI4Toad logo" />
-        <meta name="twitter:card" content="summary" />
-        <meta name="twitter:image" content={appUrl("/ti4toad.png?v=3")} />
-        <meta name="twitter:image:alt" content="TI4Toad logo" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
+        <meta property="og:image:width" content="1920" />
+        <meta property="og:image:height" content="1920" />
+        <meta
+          property="og:image:alt"
+          content="TI4 Draft Command pixel-art crest"
         />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap&display=swap"
-          rel="stylesheet"
+        <meta name="twitter:card" content="summary" />
+        <meta
+          name="twitter:image"
+          content={appUrl("/brand/ti4-draft-command.png")}
+        />
+        <meta
+          name="twitter:image:alt"
+          content="TI4 Draft Command pixel-art crest"
         />
         <Meta />
         <Links />
@@ -243,7 +127,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <MantineProvider
-          theme={mantineTheme}
+          theme={commandTheme}
           defaultColorScheme="dark"
           forceColorScheme="dark"
         >

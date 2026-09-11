@@ -1,6 +1,6 @@
-# TI4Toad
+# TI4 Draft Command
 
-TI4Toad is a Twilight Imperium 4 drafting and map building tool. It supports multiple draft formats, shared lobbies, and browser notifications.
+TI4 Draft Command is a Twilight Imperium 4 drafting and map building tool. It supports multiple draft formats, shared lobbies, and browser notifications.
 
 For low-cost hosting at **obsecsolutions.com/ti4**, see the [Railway setup and cost guide](docs/railway.md). It uses one app service and a persistent SQLite volume, with an estimated initial budget of **US$5–10/month** for light use.
 

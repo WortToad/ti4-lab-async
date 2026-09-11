@@ -1,19 +1,13 @@
-import { Box, Collapse, Group, Text, ThemeIcon, UnstyledButton } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
-import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
+import { Accordion, Box, Group, Paper, ThemeIcon, Title } from "@mantine/core";
 import { ReactNode } from "react";
 
 type Props = {
   title: string;
   icon: ReactNode;
   children: ReactNode;
-  /** If true, section starts collapsed and can be toggled */
   collapsible?: boolean;
-  /** Initial collapsed state (only applies if collapsible is true) */
   defaultCollapsed?: boolean;
-  /** Color variant for the icon */
   color?: string;
-  /** Optional badge/count to show in header */
   badge?: ReactNode;
 };
 
@@ -23,70 +17,52 @@ export function ConfigSection({
   children,
   collapsible = false,
   defaultCollapsed = true,
-  color = "purple",
+  color = "blue",
   badge,
 }: Props) {
-  const [opened, { toggle }] = useDisclosure(!defaultCollapsed);
-
-  const header = (
-    <Group
-      gap="xs"
-      pb={collapsible && !opened ? 0 : 6}
-      mb={collapsible && !opened ? 0 : "xs"}
-      style={{
-        borderBottom:
-          collapsible && !opened
-            ? "none"
-            : "1px solid var(--mantine-color-default-border)",
-      }}
-    >
-      <ThemeIcon size="sm" variant="light" color={color} radius="sm">
+  const heading = (
+    <Group gap="sm" wrap="nowrap">
+      <ThemeIcon
+        className="command-config-icon"
+        size={32}
+        variant="light"
+        color={color}
+      >
         {icon}
       </ThemeIcon>
-      <Text
-        size="xs"
-        fw={600}
-        tt="uppercase"
-        style={{
-          letterSpacing: "0.08em",
-          fontFamily: "Orbitron",
-          flex: 1,
-        }}
-        c="dimmed"
-      >
-        {title}
-      </Text>
+      <span style={{ flex: 1 }}>{title}</span>
       {badge}
-      {collapsible && (
-        opened ? <IconChevronDown size={14} color="var(--mantine-color-dimmed)" /> : <IconChevronRight size={14} color="var(--mantine-color-dimmed)" />
-      )}
     </Group>
   );
-
+  if (collapsible) {
+    return (
+      <Accordion
+        defaultValue={defaultCollapsed ? null : "settings"}
+        variant="separated"
+        order={3}
+      >
+        <Accordion.Item value="settings">
+          <Accordion.Control>{heading}</Accordion.Control>
+          <Accordion.Panel>{children}</Accordion.Panel>
+        </Accordion.Item>
+      </Accordion>
+    );
+  }
   return (
-    <Box
-      p="xs"
-      style={{
-        borderRadius: 4,
-        background: "var(--mantine-color-default)",
-        border: "1px solid var(--mantine-color-default-border)",
-      }}
-    >
-      {collapsible ? (
-        <>
-          <UnstyledButton onClick={toggle} w="100%">
-            {header}
-          </UnstyledButton>
-          <Collapse in={opened}>
-            <Box>{children}</Box>
-          </Collapse>
-        </>
-      ) : (
-        <>
-          {header}
-          <Box>{children}</Box>
-        </>
-      )}
-    </Box>
+    <Paper withBorder p="md">
+      <Title
+        order={3}
+        size="1.0625rem"
+        ff="var(--mantine-font-family)"
+        mb="md"
+        pb="sm"
+        style={{
+          borderBottom: "1px solid var(--mantine-color-default-border)",
+        }}
+      >
+        {heading}
+      </Title>
+      <Box>{children}</Box>
+    </Paper>
   );
 }

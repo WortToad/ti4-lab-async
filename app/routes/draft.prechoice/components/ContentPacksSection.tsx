@@ -1,5 +1,6 @@
-import { Box, Checkbox, Group, Stack, Text, ThemeIcon } from "@mantine/core";
-import { IconBox, IconHexagons, IconAlien } from "@tabler/icons-react";
+import { ConfigSection } from "~/components/ConfigSection";
+import { Checkbox, Group, Stack, Text } from "@mantine/core";
+import { IconBox } from "@tabler/icons-react";
 import { useDraftSetup } from "../store";
 
 type ContentRowProps = {
@@ -19,62 +20,32 @@ function ContentRow({
   onFactionsChange,
 }: ContentRowProps) {
   return (
-    <Group
-      gap="xs"
-      py={6}
-      px="xs"
-      wrap="nowrap"
+    <div
       style={{
-        borderBottom: "1px dashed var(--mantine-color-default-border)",
+        paddingBlock: 14,
+        borderBottom: "1px solid var(--mantine-color-default-border)",
       }}
     >
-      <Text
-        size="xs"
-        fw={500}
-        style={{
-          flex: 1,
-          minWidth: 0,
-        }}
-      >
+      <Text fw={600} size="sm" mb="xs">
         {label}
       </Text>
-      <Group gap="md" wrap="nowrap">
+      <Group gap="xl">
         <Checkbox
-          size="xs"
-          label={
-            <Group gap={4}>
-              <IconHexagons size={12} />
-              <Text size="xs" c="dimmed">
-                Tiles
-              </Text>
-            </Group>
-          }
+          size="md"
+          label="System tiles"
+          aria-label={`${label} system tiles`}
           checked={tilesChecked}
-          onChange={(e) => onTilesChange(e.currentTarget.checked)}
-          styles={{
-            label: { paddingLeft: 6, cursor: "pointer" },
-            input: { cursor: "pointer" },
-          }}
+          onChange={(event) => onTilesChange(event.currentTarget.checked)}
         />
         <Checkbox
-          size="xs"
-          label={
-            <Group gap={4}>
-              <IconAlien size={12} />
-              <Text size="xs" c="dimmed">
-                Factions
-              </Text>
-            </Group>
-          }
+          size="md"
+          label="Factions"
+          aria-label={`${label} factions`}
           checked={factionsChecked}
-          onChange={(e) => onFactionsChange(e.currentTarget.checked)}
-          styles={{
-            label: { paddingLeft: 6, cursor: "pointer" },
-            input: { cursor: "pointer" },
-          }}
+          onChange={(event) => onFactionsChange(event.currentTarget.checked)}
         />
       </Group>
-    </Group>
+    </div>
   );
 }
 
@@ -92,41 +63,10 @@ export function ContentPacksSection() {
   } = content.flags;
 
   return (
-    <Box
-      p="xs"
-      style={{
-        borderRadius: 4,
-        background: "var(--mantine-color-default)",
-        border: "1px solid var(--mantine-color-default-border)",
-      }}
-    >
-      {/* Header */}
-      <Group
-        gap="xs"
-        pb={6}
-        mb="xs"
-        style={{
-          borderBottom: "1px solid var(--mantine-color-default-border)",
-        }}
-      >
-        <ThemeIcon size="sm" variant="light" color="cyan" radius="sm">
-          <IconBox size={12} />
-        </ThemeIcon>
-        <Text
-          size="xs"
-          fw={600}
-          tt="uppercase"
-          c="dimmed"
-          style={{
-            letterSpacing: "0.08em",
-            fontFamily: "Orbitron",
-            flex: 1,
-          }}
-        >
-          Content Packs
-        </Text>
-      </Group>
-
+    <ConfigSection title="Game content" icon={<IconBox size={20} />}>
+      <Text c="dimmed" size="sm">
+        Include the systems and factions your table owns.
+      </Text>
       {/* Content rows */}
       <Stack gap={0}>
         <ContentRow
@@ -158,6 +98,6 @@ export function ContentPacksSection() {
           onFactionsChange={content.setWithDiscordantFactions}
         />
       </Stack>
-    </Box>
+    </ConfigSection>
   );
 }

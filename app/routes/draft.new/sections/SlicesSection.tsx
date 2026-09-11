@@ -80,7 +80,7 @@ export function SlicesSection() {
   const cols = { base: 1, xs: 2, sm: 2, md: 3, lg: 3, xl: 4, xxl: xxlCols };
   return (
     <Section>
-      <div style={{ position: "sticky", top: 60, zIndex: 11 }}>
+      <div style={{ position: "sticky", top: 88, zIndex: 11 }}>
         <SectionTitle title="Slices">
           <Group gap={4}>
             <Button

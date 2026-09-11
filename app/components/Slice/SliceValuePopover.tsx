@@ -1,7 +1,10 @@
-import { Box, Group, HoverCard, Stack, Text } from "@mantine/core";
+import { ActionIcon, Box, Group, Popover, Stack, Text } from "@mantine/core";
 import { IconInfoCircleFilled } from "@tabler/icons-react";
 import { Slice } from "~/types";
-import { SliceValueBreakdown, useSliceValueBreakdown } from "~/hooks/useSliceValueBreakdown";
+import {
+  SliceValueBreakdown,
+  useSliceValueBreakdown,
+} from "~/hooks/useSliceValueBreakdown";
 
 type Props = {
   slice?: Slice;
@@ -18,7 +21,12 @@ function formatValue(value: number, showSign = false): string {
   return formatted;
 }
 
-export function SliceValuePopover({ slice, breakdown: providedBreakdown, title = "Slice Value", variant = "light" }: Props) {
+export function SliceValuePopover({
+  slice,
+  breakdown: providedBreakdown,
+  title = "Slice Value",
+  variant = "light",
+}: Props) {
   const computedBreakdown = useSliceValueBreakdown(slice);
   const breakdown = providedBreakdown ?? computedBreakdown;
 
@@ -33,42 +41,22 @@ export function SliceValuePopover({ slice, breakdown: providedBreakdown, title =
   const hasEquidistant = breakdown.equidistantPenalty !== null;
   const hasAnyPenalty = hasPenalties || hasEquidistant;
 
-  // Icon colors based on variant - dark variant for light backgrounds (like green home tiles)
-  const iconColor = variant === "dark"
-    ? "rgba(0, 0, 0, 0.55)"
-    : "rgba(255, 255, 255, 0.7)";
-
   return (
-    <HoverCard
-      width={260}
-      position="top"
-      withArrow
-      shadow="md"
-      openDelay={100}
-      closeDelay={50}
-    >
-      <HoverCard.Target>
-        <Box
-          component="span"
-          style={{
-            cursor: "help",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "opacity 0.15s ease",
+    <Popover width={260} position="top" withArrow shadow="md">
+      <Popover.Target>
+        <ActionIcon
+          variant="subtle"
+          aria-label={`Explain ${title.toLowerCase()}`}
+          color={variant === "dark" ? "dark.9" : "gray.1"}
+          styles={{
+            root: { minWidth: 24, minHeight: 24, width: 24, height: 24 },
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.85")}
         >
-          <IconInfoCircleFilled
-            size={14}
-            color={iconColor}
-            style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.2))" }}
-          />
-        </Box>
-      </HoverCard.Target>
+          <IconInfoCircleFilled size={20} />
+        </ActionIcon>
+      </Popover.Target>
 
-      <HoverCard.Dropdown
+      <Popover.Dropdown
         style={{
           background: "var(--mantine-color-body)",
           border: "1px solid var(--mantine-color-default-border)",
@@ -89,7 +77,10 @@ export function SliceValuePopover({ slice, breakdown: providedBreakdown, title =
               fw={600}
               tt="uppercase"
               c="dimmed"
-              style={{ fontFamily: "Orbitron", letterSpacing: "0.05em" }}
+              style={{
+                fontFamily: "var(--font-display)",
+                letterSpacing: "0.05em",
+              }}
             >
               {title}
             </Text>
@@ -101,11 +92,12 @@ export function SliceValuePopover({ slice, breakdown: providedBreakdown, title =
           {/* Base Optimal */}
           <Box
             pb="xs"
-            mb={(hasBonuses || hasAnyPenalty) ? "xs" : 0}
+            mb={hasBonuses || hasAnyPenalty ? "xs" : 0}
             style={{
-              borderBottom: (hasBonuses || hasAnyPenalty)
-                ? "1px dashed var(--mantine-color-default-border)"
-                : "none",
+              borderBottom:
+                hasBonuses || hasAnyPenalty
+                  ? "1px dashed var(--mantine-color-default-border)"
+                  : "none",
             }}
           >
             <Text size="xs" c="dimmed" fw={500} mb={4}>
@@ -113,13 +105,24 @@ export function SliceValuePopover({ slice, breakdown: providedBreakdown, title =
             </Text>
             <Group justify="space-between" gap="xs">
               <Text size="xs">
-                <Text component="span" c="orange.5">R</Text>
-                <Text component="span" c="dimmed">+</Text>
-                <Text component="span" c="blue.5">I</Text>
-                <Text component="span" c="dimmed">+</Text>
-                <Text component="span" c="violet.5">F</Text>
+                <Text component="span" c="orange.5">
+                  R
+                </Text>
+                <Text component="span" c="dimmed">
+                  +
+                </Text>
+                <Text component="span" c="blue.5">
+                  I
+                </Text>
+                <Text component="span" c="dimmed">
+                  +
+                </Text>
+                <Text component="span" c="violet.5">
+                  F
+                </Text>
                 <Text component="span" c="dimmed" size="xs" ml={4}>
-                  ({breakdown.optimal.resources}+{breakdown.optimal.influence}+{breakdown.optimal.flex})
+                  ({breakdown.optimal.resources}+{breakdown.optimal.influence}+
+                  {breakdown.optimal.flex})
                 </Text>
               </Text>
               <Text size="xs" fw={600} ff="monospace">
@@ -149,7 +152,8 @@ export function SliceValuePopover({ slice, breakdown: providedBreakdown, title =
                       {mod.label}
                       {mod.count !== undefined && (
                         <Text component="span" c="dimmed" size="xs">
-                          {" "}({mod.count})
+                          {" "}
+                          ({mod.count})
                         </Text>
                       )}
                     </Text>
@@ -171,9 +175,7 @@ export function SliceValuePopover({ slice, breakdown: providedBreakdown, title =
               <Stack gap={2}>
                 {penalties.map((mod, idx) => (
                   <Group key={idx} justify="space-between" gap="xs">
-                    <Text size="xs">
-                      {mod.label}
-                    </Text>
+                    <Text size="xs">{mod.label}</Text>
                     <Text size="xs" fw={600} ff="monospace" c="red.4">
                       {formatValue(mod.value, true)}
                     </Text>
@@ -196,7 +198,7 @@ export function SliceValuePopover({ slice, breakdown: providedBreakdown, title =
             </Box>
           )}
         </Stack>
-      </HoverCard.Dropdown>
-    </HoverCard>
+      </Popover.Dropdown>
+    </Popover>
   );
 }

@@ -1,4 +1,4 @@
-import { Group, Stack, Text } from "@mantine/core";
+import { Group, Stack, Title } from "@mantine/core";
 import { ReactNode } from "react";
 import classes from "./Section.module.css";
 
@@ -9,7 +9,6 @@ export function Section({ children }: { children: ReactNode }) {
     </Stack>
   );
 }
-
 export function SectionTitle({
   title,
   children,
@@ -18,15 +17,10 @@ export function SectionTitle({
   children?: ReactNode;
 }) {
   return (
-    <Group className={classes.section} justify="space-between" px="sm" py="sm">
-      <Text
-        size="sm"
-        fw={600}
-        tt="uppercase"
-        style={{ letterSpacing: "0.05em", fontFamily: "Orbitron" }}
-      >
+    <Group className={classes.section} justify="space-between">
+      <Title order={2} size="h3">
         {title}
-      </Text>
+      </Title>
       {children}
     </Group>
   );

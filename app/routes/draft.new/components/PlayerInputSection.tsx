@@ -1,11 +1,4 @@
-import {
-  Box,
-  Button,
-  Group,
-  Stack,
-  Text,
-  TextInput,
-} from "@mantine/core";
+import { Box, Button, Group, Stack, Text, TextInput } from "@mantine/core";
 import { playerColors } from "~/data/factionData";
 import { DiscordData, Player } from "~/types";
 
@@ -38,7 +31,7 @@ export function PlayerInputSection({
           size="sm"
           fw={600}
           tt="uppercase"
-          style={{ letterSpacing: "0.05em", fontFamily: "Orbitron" }}
+          style={{ letterSpacing: "0.05em", fontFamily: "var(--font-display)" }}
         >
           Players
         </Text>

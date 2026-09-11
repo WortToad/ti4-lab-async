@@ -26,7 +26,7 @@ export function headers() {
 }
 export function meta() {
   return [
-    { title: "Rejoin a lobby · TI4Toad" },
+    { title: "Rejoin a lobby · TI4 Draft Command" },
     { name: "robots", content: "noindex, nofollow" },
   ];
 }
@@ -85,8 +85,8 @@ export default function RejoinLobby() {
           </Alert>
         )}
         <LobbyRecovery defaultOpened defaultRecoveryCode={result?.uuid} />
-        <Button component={Link} to="/draft/prechoice" variant="subtle">
-          Back to draft setup
+        <Button component={Link} to="/" variant="subtle">
+          Choose a draft format
         </Button>
       </Stack>
     </Container>

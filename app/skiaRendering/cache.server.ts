@@ -1,6 +1,6 @@
 import { loadImage, FontLibrary } from "skia-canvas";
 import path from "path";
-import { TechSpecialty, Anomaly, FactionId } from "~/types";
+import { TechSpecialty, Anomaly } from "~/types";
 import {
   TECH_ICON_PATHS,
   ANOMALY_IMAGE_PATHS,
@@ -120,7 +120,12 @@ export async function loadAllAssets(): Promise<void> {
 
   // Load logo if not cached
   if (!logoCache) {
-    const logoPath = path.join(process.cwd(), "public", "ti4toad.png");
+    const logoPath = path.join(
+      process.cwd(),
+      "public",
+      "brand",
+      "ti4-draft-command.png",
+    );
     try {
       logoCache = await loadImage(logoPath);
     } catch (error) {
