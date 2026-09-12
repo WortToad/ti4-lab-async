@@ -1,0 +1,38 @@
+.setting {
+  padding-block: 12px;
+  border-bottom: 1px solid var(--command-border-subtle);
+  container-type: inline-size;
+}
+.setting:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+.label {
+  display: block;
+  cursor: pointer;
+}
+.label[data-disabled] {
+  cursor: default;
+  color: var(--command-text-muted);
+}
+.controls {
+  flex-shrink: 0;
+}
+.value {
+  font-variant-numeric: tabular-nums;
+}
+@container (max-width: 360px) {
+  .row[data-with-stepper] {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .row[data-with-stepper] > .controls {
+    justify-content: flex-end;
+  }
+}

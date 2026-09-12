@@ -1,26 +1,50 @@
 .hoverCard {
-  transition: all 0.2s ease;
+  position: relative;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease;
   height: 100%;
   display: flex;
   flex-direction: column;
-  cursor: pointer;
+  background: var(--command-surface);
 }
 
-.hoverCard:hover {
-  background: #142b40;
-  border-color: var(--mantine-color-gray-4);
+.hoverCard:hover,
+.hoverCard:focus-within {
+  background: var(--command-surface-raised);
+  border-color: var(--command-blue);
 }
 
-.hoverCard:hover .cardDescription {
-  opacity: 1;
+.selectButton {
+  position: static;
+  width: 100%;
+  flex: 1;
+}
+.selectButton::after {
+  position: absolute;
+  content: "";
+  inset: 0;
+  border-radius: var(--mantine-radius-sm);
+}
+.selectButton:focus-visible {
+  outline: none;
+}
+.selectButton:focus-visible::after {
+  outline: 3px solid var(--command-focus);
+  outline-offset: 3px;
+}
+/* Additional controls stay above the selection button's expanded hit area. */
+.selectButton + div {
+  position: relative;
 }
 
 .cardDescription {
-  opacity: 1;
-  transition: opacity 0.2s ease;
+  color: var(--command-text-muted);
+  text-align: center;
 }
 
-.activeCard {
-  background-color: var(--mantine-color-blue-light);
-  border-color: var(--mantine-color-blue-filled);
+.activeCard,
+.activeCard:where(:hover, :focus-within) {
+  background: #e8bc5810;
+  border-color: var(--command-accent);
 }

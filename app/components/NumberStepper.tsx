@@ -2,6 +2,7 @@ import { ActionIcon, Group, Text } from "@mantine/core";
 import { IconMinus, IconPlus } from "@tabler/icons-react";
 
 type Props = {
+  label?: string;
   value?: number;
   decrease: (e: React.MouseEvent<HTMLButtonElement>) => void;
   increase: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export function NumberStepper({
+  label = "count",
   value,
   decrease,
   increase,
@@ -17,13 +19,13 @@ export function NumberStepper({
   increaseDisabled,
 }: Props) {
   return (
-    <Group gap={4}>
+    <Group gap={4} wrap="nowrap">
       <ActionIcon
         size="sm"
         variant="subtle"
         color="gray"
         disabled={decreaseDisabled}
-        aria-label="Decrease count"
+        aria-label={`Decrease ${label}`}
         onMouseDown={(event) => event.stopPropagation()}
         onClick={(event) => {
           event.stopPropagation();
@@ -33,7 +35,14 @@ export function NumberStepper({
         <IconMinus size={14} />
       </ActionIcon>
       {value !== undefined && (
-        <Text size="sm" fw={600} miw={20} ta="center" c="purple.3">
+        <Text
+          size="sm"
+          fw={600}
+          miw={20}
+          ta="center"
+          c="imperial.3"
+          style={{ fontVariantNumeric: "tabular-nums" }}
+        >
           {value}
         </Text>
       )}
@@ -42,7 +51,7 @@ export function NumberStepper({
         variant="subtle"
         color="gray"
         disabled={increaseDisabled}
-        aria-label="Increase count"
+        aria-label={`Increase ${label}`}
         onMouseDown={(event) => event.stopPropagation()}
         onClick={(event) => {
           event.stopPropagation();

@@ -7,9 +7,12 @@ import {
   Checkbox,
   Drawer,
   createTheme,
+  defaultVariantColorsResolver,
   Input,
+  InputBase,
   Modal,
   Paper,
+  parseThemeColor,
   Radio,
   SegmentedControl,
   Switch,
@@ -26,8 +29,24 @@ export const commandTheme = createTheme({
   black: "#071321",
   white: "#f4f7fb",
   defaultRadius: "sm",
+  radius: { xs: "4px", sm: "8px", md: "12px", lg: "16px", xl: "24px" },
   cursorType: "pointer",
   respectReducedMotion: true,
+  variantColorResolver: (input) => {
+    const resolved = defaultVariantColorsResolver(input);
+    // Mantine's dark light-variant uses shade 0 with our primary shade of 4.
+    // Use a readable tint that retains the action's semantic color instead.
+    if (["light", "subtle", "transparent"].includes(input.variant)) {
+      const parsed = parseThemeColor({
+        color: input.color ?? input.theme.primaryColor,
+        theme: input.theme,
+      });
+      if (parsed.isThemeColor && parsed.shade === undefined) {
+        return { ...resolved, color: `var(--mantine-color-${parsed.color}-3)` };
+      }
+    }
+    return resolved;
+  },
   fontFamily: '"Source Sans 3", system-ui, sans-serif',
   fontSizes: {
     xs: "0.875rem",
@@ -189,7 +208,8 @@ export const commandTheme = createTheme({
       defaultProps: { size: "lg", variant: "light" },
     }),
     Input: Input.extend({ defaultProps: { size: "md" } }),
-    Checkbox: Checkbox.extend({ defaultProps: { size: "md" } }),
+    InputBase: InputBase.extend({ defaultProps: { size: "md" } }),
+    Checkbox: Checkbox.extend({ defaultProps: { size: "md", radius: "xs" } }),
     Radio: Radio.extend({ defaultProps: { size: "md" } }),
     Switch: Switch.extend({ defaultProps: { size: "md" } }),
     Badge: Badge.extend({
@@ -220,7 +240,10 @@ export const commandTheme = createTheme({
     }),
     Tabs: Tabs.extend({
       defaultProps: { variant: "outline", keepMounted: false },
-      styles: { tab: { minHeight: 44, fontSize: "1rem" } },
+      styles: {
+        tab: { minHeight: 44, fontSize: "1rem", whiteSpace: "normal" },
+        tabLabel: { lineHeight: 1.4 },
+      },
     }),
     SegmentedControl: SegmentedControl.extend({
       defaultProps: { size: "md" },

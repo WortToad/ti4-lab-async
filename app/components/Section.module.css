@@ -1,7 +1,7 @@
 .section {
   padding: 16px 0;
   margin-bottom: 4px;
-  border-bottom: 1px solid #405a70;
+  border-bottom: 1px solid var(--command-border-subtle);
   position: relative;
 }
 .section::after {

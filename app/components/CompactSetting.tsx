@@ -1,5 +1,6 @@
 import { Box, Group, Text, ActionIcon } from "@mantine/core";
 import { IconMinus, IconPlus } from "@tabler/icons-react";
+import classes from "./SettingsControls.module.css";
 
 export interface CompactSettingProps<T extends string> {
   label: string;
@@ -56,23 +57,20 @@ export function CompactSetting<T extends string>({
       justify="space-between"
       wrap="nowrap"
       gap="xs"
-      py={4}
-      style={{
-        borderBottom: "1px dashed var(--mantine-color-default-border)",
-      }}
+      className={classes.setting}
     >
       <Box style={{ flex: 1, minWidth: 0 }}>
         <Text size="sm" fw={500} lh={1.3}>
           {label}
         </Text>
         {description && (
-          <Text size="xs" c="dimmed" lh={1.3} mt={2}>
+          <Text size="xs" c="dimmed" lh={1.5} mt={4}>
             {description}
           </Text>
         )}
       </Box>
 
-      <Group gap={2} wrap="nowrap">
+      <Group gap={2} wrap="nowrap" className={classes.controls}>
         <ActionIcon
           size="sm"
           variant="subtle"
@@ -89,7 +87,8 @@ export function CompactSetting<T extends string>({
           fw={600}
           ta="center"
           miw={28}
-          c={value !== undefined ? "purple.3" : "dimmed"}
+          c={value !== undefined ? "imperial.3" : "dimmed"}
+          className={classes.value}
           fs={value === undefined ? "italic" : undefined}
         >
           {value !== undefined ? value : "off"}

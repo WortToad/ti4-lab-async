@@ -1,4 +1,14 @@
-import { Alert, Button, Container, Stack, Title } from "@mantine/core";
+import {
+  Alert,
+  Button,
+  Container,
+  Paper,
+  Stack,
+  Text,
+  ThemeIcon,
+  Title,
+} from "@mantine/core";
+import { IconArrowLeft, IconKey, IconShieldLock } from "@tabler/icons-react";
 import {
   data,
   Link,
@@ -76,19 +86,45 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function RejoinLobby() {
   const result = useActionData<typeof action>();
   return (
-    <Container size="sm" py="xl">
-      <Stack>
-        <Title order={1}>Return to your draft</Title>
-        {result?.error && (
-          <Alert color="red" role="alert">
-            {result.error}
-          </Alert>
-        )}
-        <LobbyRecovery defaultOpened defaultRecoveryCode={result?.uuid} />
-        <Button component={Link} to="/" variant="subtle">
-          Choose a draft format
-        </Button>
-      </Stack>
+    <Container size="sm" className="command-rejoin-page">
+      <Paper withBorder className="command-rejoin-card">
+        <Stack gap="lg">
+          <ThemeIcon size={52} radius="md" variant="light" color="imperial">
+            <IconKey size={28} stroke={1.5} aria-hidden="true" />
+          </ThemeIcon>
+          <div>
+            <Text className="command-eyebrow" mb="sm">
+              Your seat is waiting
+            </Text>
+            <Title order={1} size="h2">
+              Return to your draft
+            </Title>
+          </div>
+          {result?.error && (
+            <Alert color="red" role="alert">
+              {result.error}
+            </Alert>
+          )}
+          <LobbyRecovery standalone defaultRecoveryCode={result?.uuid} />
+          <div className="command-recovery-note">
+            <IconShieldLock size={20} aria-hidden="true" />
+            <Text size="sm" c="dimmed">
+              Your code restores your player or admin access. If you’ve lost it,
+              ask your lobby admin for help.
+            </Text>
+          </div>
+        </Stack>
+      </Paper>
+      <Button
+        component={Link}
+        to="/"
+        variant="subtle"
+        color="gray"
+        mt="lg"
+        leftSection={<IconArrowLeft size={18} aria-hidden="true" />}
+      >
+        Choose a draft format
+      </Button>
     </Container>
   );
 }

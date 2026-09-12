@@ -30,7 +30,11 @@ export function HoverRadioCard({
       withBorder
       className={`${classes.hoverCard} ${checked ? classes.activeCard : ""}`}
     >
-      <UnstyledButton onClick={onSelect} aria-pressed={checked} w="100%">
+      <UnstyledButton
+        onClick={onSelect}
+        aria-pressed={checked}
+        className={classes.selectButton}
+      >
         <Stack align="center" gap={compact ? 4 : "xs"}>
           {icon}
           {!icon && (
@@ -40,8 +44,11 @@ export function HoverRadioCard({
               h={compact ? 16 : 20}
               style={{
                 borderRadius: "50%",
-                border: "2px solid var(--mantine-color-blue-5)",
-                background: checked ? "var(--mantine-color-blue-5)" : undefined,
+                border: "2px solid var(--command-accent)",
+                background: checked ? "var(--command-accent)" : undefined,
+                boxShadow: checked
+                  ? "inset 0 0 0 3px var(--command-surface)"
+                  : undefined,
               }}
             />
           )}
@@ -53,7 +60,7 @@ export function HoverRadioCard({
           size="xs"
           className={classes.cardDescription}
           mt={compact ? 4 : "xs"}
-          lh={compact ? 1.2 : undefined}
+          lh={1.5}
         >
           {description}
         </Text>

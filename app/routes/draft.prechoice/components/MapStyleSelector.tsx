@@ -46,17 +46,15 @@ export function MapStyleSelector({
                       flex: 1,
                       minWidth: 0,
                       background:
-                        selectedMapType === type
-                          ? "var(--mantine-color-blue-light)"
-                          : undefined,
+                        selectedMapType === type ? "#e8bc5810" : undefined,
                       borderColor:
                         selectedMapType === type
-                          ? "#82c7ed"
+                          ? "var(--command-accent)"
                           : "var(--mantine-color-default-border)",
                     }}
                   >
                     <Group wrap="nowrap" gap="sm">
-                      <Radio.Indicator color="blue" />
+                      <Radio.Indicator color="imperial" />
                       <Text fw={600}>{map.title}</Text>
                     </Group>
                   </Radio.Card>

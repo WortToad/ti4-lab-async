@@ -1,6 +1,8 @@
 .header {
-  background: #071321;
-  border-bottom: 1px solid #405a70;
+  background: #071321f5;
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--command-border-subtle);
+  box-shadow: 0 4px 24px #020a1426;
 }
 .headerInner {
   height: 100%;
@@ -9,7 +11,7 @@
   margin: auto;
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 24px;
 }
 .brand {
   text-decoration: none;
@@ -20,7 +22,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 8px;
   flex: 1;
 }
 .navLink {
@@ -32,21 +34,27 @@
   font-size: 1rem;
   font-weight: 500;
   text-decoration: none;
-  border-bottom: 2px solid transparent;
-  padding: 8px 0;
+  border-radius: var(--mantine-radius-sm);
+  padding: 10px 14px;
+  white-space: nowrap;
+  transition:
+    color 140ms ease,
+    background-color 140ms ease;
 }
 .navLink:hover {
   color: var(--command-text-strong);
-  border-color: #8196a8;
+  background: var(--command-surface);
 }
 .navLink[aria-current] {
   color: var(--command-accent);
-  border-color: var(--command-accent);
+  background: #e8bc5810;
+  box-shadow: inset 0 -2px var(--command-accent);
 }
 .headerActions {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
+  flex-shrink: 0;
 }
 .headerActions :global(.mantine-Switch-label) {
   font-size: 0.875rem;
@@ -58,7 +66,11 @@
 .mobileLink {
   padding: 14px;
   width: 100%;
-  border: 1px solid #405a70;
+  border: 1px solid var(--command-border);
+}
+.mobileSettings {
+  padding-top: 20px;
+  border-top: 1px solid var(--command-border);
 }
 .main {
   padding-inline: clamp(16px, 3vw, 48px);
@@ -87,7 +99,7 @@
   top: 16px;
 }
 .footer {
-  border-top: 1px solid #405a70;
+  border-top: 1px solid var(--command-border-subtle);
   padding: 32px clamp(16px, 3vw, 48px);
   background: #050f1a;
 }
@@ -113,6 +125,11 @@
   color: #c4cfd9;
   font-size: 1rem;
   padding-block: 10px;
+  text-decoration: none;
+}
+.footer a:hover {
+  color: var(--command-accent);
+  text-decoration: underline;
 }
 .footer .credit {
   max-width: 1360px;
@@ -122,16 +139,13 @@
 }
 @media (max-width: 74em) {
   .desktopMenu {
-    gap: 16px;
-  }
-  .headerActions > :not(:last-child) {
-    display: none;
+    gap: 0;
   }
   .headerInner {
-    gap: 20px;
+    gap: 16px;
   }
 }
-@media (max-width: 62em) {
+@media (max-width: 68em) {
   .desktopMenu,
   .headerActions {
     display: none;

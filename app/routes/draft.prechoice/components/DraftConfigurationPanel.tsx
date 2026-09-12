@@ -98,40 +98,23 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
               <Group justify="space-between" wrap="nowrap" gap="xs">
                 <Box style={{ flex: 1 }}>
                   <Text size="sm" fw={500}>
-                    In Pool
+                    In pool
                   </Text>
                 </Box>
-                <Group gap={2}>
-                  <Button
-                    size="compact-xs"
-                    variant="subtle"
-                    color="gray"
-                    disabled={
-                      !!faction.preassignedFactions ||
-                      faction.numFactions <= factionConstraints.minNumFactions
-                    }
-                    onClick={faction.decrementNumFactions}
-                    aria-label="Decrease factions in pool"
-                  >
-                    -
-                  </Button>
-                  <Text size="sm" fw={600} miw={24} ta="center" c="purple.3">
-                    {faction.numFactions}
-                  </Text>
-                  <Button
-                    size="compact-xs"
-                    variant="subtle"
-                    color="gray"
-                    disabled={
-                      !!faction.preassignedFactions ||
-                      faction.numFactions >= factionConstraints.maxNumFactions
-                    }
-                    onClick={faction.incrementNumFactions}
-                    aria-label="Increase factions in pool"
-                  >
-                    +
-                  </Button>
-                </Group>
+                <NumberStepper
+                  label="factions in pool"
+                  value={faction.numFactions}
+                  decreaseDisabled={
+                    !!faction.preassignedFactions ||
+                    faction.numFactions <= factionConstraints.minNumFactions
+                  }
+                  decrease={faction.decrementNumFactions}
+                  increaseDisabled={
+                    !!faction.preassignedFactions ||
+                    faction.numFactions >= factionConstraints.maxNumFactions
+                  }
+                  increase={faction.incrementNumFactions}
+                />
               </Group>
             </Box>
             <Box pt="xs">
@@ -142,7 +125,7 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
                 fullWidth
                 onClick={openFactionSettings}
               >
-                Configure Pool
+                Configure pool
               </Button>
             </Box>
           </ConfigSection>
@@ -152,37 +135,20 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
               <Group justify="space-between" wrap="nowrap" gap="xs">
                 <Box style={{ flex: 1 }}>
                   <Text size="sm" fw={500}>
-                    In Pool
+                    In pool
                   </Text>
                   <Text size="xs" c="dimmed">
                     Up to {maxSlices} with current tiles
                   </Text>
                 </Box>
-                <Group gap={2}>
-                  <Button
-                    size="compact-xs"
-                    variant="subtle"
-                    color="gray"
-                    disabled={slices.numSlices <= playerCount}
-                    onClick={() => slices.setNumSlices(slices.numSlices - 1)}
-                    aria-label="Decrease slices in pool"
-                  >
-                    -
-                  </Button>
-                  <Text size="sm" fw={600} miw={24} ta="center" c="purple.3">
-                    {slices.numSlices}
-                  </Text>
-                  <Button
-                    size="compact-xs"
-                    variant="subtle"
-                    color="gray"
-                    disabled={slices.numSlices >= maxSlices}
-                    onClick={() => slices.setNumSlices(slices.numSlices + 1)}
-                    aria-label="Increase slices in pool"
-                  >
-                    +
-                  </Button>
-                </Group>
+                <NumberStepper
+                  label="slices in pool"
+                  value={slices.numSlices}
+                  decreaseDisabled={slices.numSlices <= playerCount}
+                  decrease={() => slices.setNumSlices(slices.numSlices - 1)}
+                  increaseDisabled={slices.numSlices >= maxSlices}
+                  increase={() => slices.setNumSlices(slices.numSlices + 1)}
+                />
               </Group>
             </Box>
           </ConfigSection>
@@ -208,7 +174,7 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
                   <Text size="xs" c="dimmed" mb="xs">
                     Mode:
                   </Text>
-                  <SimpleGrid cols={3} spacing="xs">
+                  <SimpleGrid cols={{ base: 1, xs: 3 }} spacing="xs">
                     <HoverRadioCard
                       title="Random"
                       icon={<IconDice size={18} />}

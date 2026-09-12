@@ -1,6 +1,7 @@
 import { Box, Group, Switch, Text, ActionIcon } from "@mantine/core";
 import { IconMinus, IconPlus } from "@tabler/icons-react";
-import { ReactNode } from "react";
+import { ReactNode, useId } from "react";
+import classes from "./SettingsControls.module.css";
 
 type Props = {
   label: string;
@@ -31,29 +32,42 @@ export function CompactSwitch({
   decreaseDisabled,
   children,
 }: Props) {
+  const inputId = useId();
   const showStepper =
     checked && numericValue !== undefined && onIncrease && onDecrease;
 
   return (
-    <Box
-      py={6}
-      style={{
-        borderBottom: "1px dashed var(--mantine-color-default-border)",
-      }}
-    >
-      <Group justify="space-between" wrap="nowrap" gap="xs">
+    <Box className={classes.setting}>
+      <div
+        className={classes.row}
+        data-with-stepper={showStepper ? true : undefined}
+      >
         <Box style={{ flex: 1, minWidth: 0 }}>
-          <Text size="sm" fw={500} lh={1.3}>
+          <Text
+            component="label"
+            htmlFor={inputId}
+            className={classes.label}
+            data-disabled={disabled || undefined}
+            size="sm"
+            fw={600}
+            lh={1.4}
+          >
             {label}
           </Text>
           {description && (
-            <Text size="xs" c="dimmed" lh={1.3} mt={2}>
+            <Text
+              id={`${inputId}-description`}
+              size="xs"
+              c="dimmed"
+              lh={1.5}
+              mt={4}
+            >
               {description}
             </Text>
           )}
         </Box>
 
-        <Group gap="xs" wrap="nowrap">
+        <Group gap="xs" wrap="nowrap" className={classes.controls}>
           {showStepper && (
             <Group gap={2} wrap="nowrap">
               <ActionIcon
@@ -70,7 +84,14 @@ export function CompactSwitch({
                 <IconMinus size={14} />
               </ActionIcon>
 
-              <Text size="sm" fw={600} ta="center" miw={24} c="purple.3">
+              <Text
+                size="sm"
+                fw={600}
+                ta="center"
+                miw={24}
+                c="imperial.3"
+                className={classes.value}
+              >
                 {numericValue}
               </Text>
 
@@ -91,14 +112,17 @@ export function CompactSwitch({
           )}
 
           <Switch
-            aria-label={label}
+            id={inputId}
+            aria-describedby={
+              description ? `${inputId}-description` : undefined
+            }
             size="sm"
             checked={checked}
             onChange={(e) => onChange(e.currentTarget.checked)}
             disabled={disabled}
           />
         </Group>
-      </Group>
+      </div>
 
       {checked && children && <Box mt="xs">{children}</Box>}
     </Box>

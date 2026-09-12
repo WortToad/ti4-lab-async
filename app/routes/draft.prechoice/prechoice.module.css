@@ -14,10 +14,12 @@
   min-width: 0;
 }
 .colLeft {
-  border: 1px solid #405a70;
+  border: 1px solid var(--command-border);
+  border-radius: var(--command-radius);
   padding: 24px;
   align-self: start;
-  background: #0b1b2c;
+  background: var(--command-surface);
+  box-shadow: var(--command-shadow);
 }
 .colRight {
   padding: 0;
@@ -27,6 +29,8 @@
   grid-template-columns: 1fr 1fr;
   align-items: center;
   gap: 36px;
+  border-color: var(--command-border);
+  background: linear-gradient(110deg, #142b40, var(--command-surface));
 }
 .twoColGrid {
   display: grid;
@@ -37,8 +41,17 @@
   display: none;
 }
 .continuePanel {
-  border-top: 2px solid var(--command-accent);
-  background: #132b3e;
+  border-color: #e8bc5860;
+  background: linear-gradient(110deg, #e8bc5809, var(--command-surface));
+  box-shadow: var(--command-shadow);
+}
+.draftTabs :global(.mantine-Tabs-list) {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+.draftTabs :global(.mantine-Tabs-tab) {
+  padding-inline: 8px;
 }
 @media (max-width: 74em) {
   .twoColGrid {
@@ -59,6 +72,9 @@
   }
 }
 @media (max-width: 36em) {
+  .draftTabs :global(.mantine-Tabs-tab) {
+    min-height: 58px;
+  }
   .colLeft {
     padding: 16px;
   }

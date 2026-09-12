@@ -8,6 +8,7 @@
   margin: 28px 0 0;
   overflow: hidden;
   border: 1px solid #385777;
+  border-radius: var(--command-radius) var(--command-radius) 0 0;
   background: #050f1d;
 }
 .hero::after {
@@ -16,6 +17,7 @@
   pointer-events: none;
   inset: 10px;
   border: 1px solid #86b3d329;
+  border-radius: 6px;
 }
 .heroArt {
   position: absolute;
@@ -99,8 +101,9 @@
   align-items: center;
   gap: 32px;
   padding: 26px 32px;
-  border: 1px solid #405a70;
+  border: 1px solid var(--command-border);
   border-top: none;
+  border-radius: 0 0 var(--command-radius) var(--command-radius);
   background: #102235;
 }
 .briefingLabel {
@@ -134,7 +137,7 @@
 }
 .catalog {
   padding-top: 60px;
-  scroll-margin-top: 100px;
+  scroll-margin-top: 20px;
 }
 .catalogHeading {
   display: flex;
@@ -145,12 +148,44 @@
 .playerSelect {
   flex-shrink: 0;
 }
+.catalogToolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px;
+  align-items: end;
+  gap: 20px;
+  padding: 22px;
+  margin-top: 28px;
+  background: var(--command-surface);
+  border: 1px solid var(--command-border);
+  border-radius: var(--command-radius);
+}
+.searchResults {
+  padding-top: 20px;
+}
+.searchSummary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.emptySearch {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 48px 24px;
+  border: 1px dashed var(--command-border-control);
+  border-radius: var(--command-radius);
+  color: var(--command-blue);
+}
 .catalogNav {
   display: flex;
   flex-wrap: wrap;
   gap: 32px;
-  border-block: 1px solid #405a70;
-  margin-top: 28px;
+  border-bottom: 1px solid var(--command-border);
+  margin-top: 16px;
   padding: 4px 0;
 }
 .catalogNav a {
@@ -179,7 +214,7 @@
 }
 .modeSection {
   margin-top: 42px;
-  scroll-margin-top: 110px;
+  scroll-margin-top: 20px;
 }
 .sectionHeading {
   display: flex;
@@ -224,27 +259,19 @@
   flex-direction: column;
   padding: 24px;
   background: #0d2033;
-  border: 1px solid #405a70;
-  border-top: 2px solid #548cb2;
+  border: 1px solid var(--command-border);
+  border-radius: var(--command-radius);
+  box-shadow: 0 2px 8px #020a141a;
   transition:
     border-color 150ms,
-    background-color 150ms;
-}
-.modeCard::after {
-  content: "";
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 18px;
-  height: 18px;
-  border-top: 1px solid #7ca6c3;
-  border-right: 1px solid #7ca6c3;
-  pointer-events: none;
+    background-color 150ms,
+    box-shadow 150ms;
 }
 .modeCard:hover,
 .modeCard:focus-within {
   background: #142b40;
-  border-color: #91b3cc;
+  border-color: #7b9bb6;
+  box-shadow: var(--command-shadow);
 }
 .cardTop {
   display: flex;
@@ -253,6 +280,13 @@
   gap: 10px;
   margin-bottom: 22px;
   color: #8bc6e7;
+}
+.cardTop > svg {
+  box-sizing: content-box;
+  padding: 10px;
+  background: #82c7ed0d;
+  border: 1px solid #82c7ed26;
+  border-radius: 10px;
 }
 .playerRange {
   display: inline-flex;
@@ -288,7 +322,7 @@
   padding-top: 14px;
   color: var(--command-accent);
   text-decoration: none;
-  border-top: 1px solid #405a70;
+  border-top: 1px solid var(--command-border-subtle);
   font-weight: 600;
   font-size: 1.0625rem;
 }
@@ -298,6 +332,7 @@
   position: absolute;
   inset: 0;
   z-index: 1;
+  border-radius: inherit;
 }
 .cardLink:focus-visible {
   outline: none;
@@ -305,6 +340,7 @@
 .cardLink:focus-visible::after {
   outline: 3px solid var(--command-focus);
   outline-offset: -5px;
+  border-radius: var(--command-radius);
 }
 .cardLink svg {
   flex-shrink: 0;
@@ -317,17 +353,17 @@
   background-color: var(--command-paper);
   background-image: linear-gradient(120deg, #fff8e47a, transparent 65%);
   border-color: var(--command-accent);
-  border-top-width: 3px;
 }
 .modeCard[data-recommended]:hover,
 .modeCard[data-recommended]:focus-within {
   background-color: #f8efdf;
 }
-.modeCard[data-recommended]::after {
-  border-color: var(--mantine-color-imperial-7);
-}
 .modeCard[data-recommended] .cardTop {
   color: #235373;
+}
+.modeCard[data-recommended] .cardTop > svg {
+  border-color: #23537326;
+  background: #23537308;
 }
 .modeCard[data-recommended] h3 {
   color: var(--command-paper-ink);
@@ -346,6 +382,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  border-radius: 4px;
 }
 .modeCard[data-recommended] .cardLink {
   color: var(--command-paper-ink);
@@ -383,11 +420,19 @@
   color: var(--mantine-color-magenta-2);
 }
 .modeCard[data-twilight] {
-  border-top-color: #b780c2;
+  border-color: #655377;
   background: #171e32;
+}
+.modeCard[data-twilight]:where(:hover, :focus-within) {
+  border-color: #c797cf;
+  background: #24283f;
 }
 .modeCard[data-twilight] .cardTop {
   color: #eab7e2;
+}
+.modeCard[data-twilight] .cardTop > svg {
+  background: #eab7e20a;
+  border-color: #eab7e226;
 }
 .modeCard[data-twilight] .cardLink {
   color: #eab7e2;
@@ -430,7 +475,8 @@
   display: flex;
   align-items: center;
   gap: 24px;
-  border: 1px solid #405a70;
+  border: 1px solid var(--command-border);
+  border-radius: var(--command-radius);
   padding: 28px 32px;
   margin-top: 20px;
   background: #102235;
@@ -493,7 +539,12 @@
     padding-top: 40px;
   }
   .playerSelect {
-    width: 100% !important;
+    width: 100%;
+  }
+  .catalogToolbar {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 18px;
+    gap: 16px;
   }
   .catalogNav {
     gap: 0 20px;

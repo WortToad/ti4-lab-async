@@ -1,13 +1,20 @@
 import {
   AppShell,
+  ActionIcon,
   Box,
   Burger,
   Button,
   Drawer,
   Group,
+  Popover,
   Stack,
 } from "@mantine/core";
-import { IconArrowRight, IconMap, IconRestore } from "@tabler/icons-react";
+import {
+  IconAdjustments,
+  IconArrowRight,
+  IconMap,
+  IconRestore,
+} from "@tabler/icons-react";
 import { Link, useLocation } from "react-router";
 import { useState } from "react";
 import { Logo } from "~/components/Logo";
@@ -25,7 +32,10 @@ export function MainAppShell({ children, headerRightSection }: Props) {
     {
       to: "/",
       label: "Draft formats",
-      active: pathname === "/" || pathname === "/draft/prechoice",
+      active:
+        pathname === "/" ||
+        pathname === "/draft/prechoice" ||
+        /^\/draft\/(?:[^/]+\/)?new$/.test(pathname),
     },
     {
       to: "/map-generator",
@@ -72,7 +82,20 @@ export function MainAppShell({ children, headerRightSection }: Props) {
             {navigation()}
           </nav>
           <div className={classes.headerActions}>
-            {headerRightSection}
+            {headerRightSection && (
+              <Popover position="bottom-end" width={300} withArrow trapFocus>
+                <Popover.Target>
+                  <ActionIcon
+                    variant="default"
+                    size={44}
+                    aria-label="Display settings"
+                  >
+                    <IconAdjustments size={21} aria-hidden="true" />
+                  </ActionIcon>
+                </Popover.Target>
+                <Popover.Dropdown p="md">{headerRightSection}</Popover.Dropdown>
+              </Popover>
+            )}
             <Button
               component={Link}
               to="/#draft-formats"
@@ -112,7 +135,9 @@ export function MainAppShell({ children, headerRightSection }: Props) {
           >
             New draft
           </Button>
-          {headerRightSection && <Box pt="md">{headerRightSection}</Box>}
+          {headerRightSection && (
+            <Box className={classes.mobileSettings}>{headerRightSection}</Box>
+          )}
         </Stack>
       </Drawer>
       <AppShell.Main id="main-content" tabIndex={-1} className={classes.main}>

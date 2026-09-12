@@ -1,10 +1,12 @@
 import {
+  ActionIcon,
   Badge,
   Button,
   Group,
   Select,
   SimpleGrid,
   Text,
+  TextInput,
   Title,
 } from "@mantine/core";
 import {
@@ -18,8 +20,11 @@ import {
   IconMap,
   IconPlanet,
   IconRestore,
+  IconSearch,
   IconUsers,
+  IconX,
 } from "@tabler/icons-react";
+import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { MainAppShell } from "~/components/MainAppShell";
 import {
@@ -103,6 +108,20 @@ function ModeCard({
 }
 
 export default function Home() {
+  const [query, setQuery] = useState("");
+  const searchTerms = query
+    .trim()
+    .toLowerCase()
+    .replace(/[’']/g, "")
+    .split(/\s+/)
+    .filter(Boolean);
+  const matchingModes = DRAFT_MODES.filter((mode) => {
+    const searchable =
+      `${mode.id} ${mode.title} ${mode.description} ${mode.detail}`
+        .toLowerCase()
+        .replace(/[’']/g, "");
+    return searchTerms.every((term) => searchable.includes(term));
+  });
   const [params, setParams] = useSearchParams();
   const players = parseLobbyPlayerCount(params.get("playerCount"), 2, 8);
   const changePlayers = (value: string | null) => {
@@ -198,6 +217,32 @@ export default function Home() {
                 and create a lobby.
               </Text>
             </div>
+          </div>
+          <div className={classes.catalogToolbar}>
+            <TextInput
+              label="Find a draft format"
+              placeholder="Search Milty, Franken, Twilight’s Fall…"
+              value={query}
+              onChange={(event) => setQuery(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") setQuery("");
+              }}
+              leftSection={<IconSearch size={20} aria-hidden="true" />}
+              rightSection={
+                query ? (
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="sm"
+                    aria-label="Clear format search"
+                    onClick={() => setQuery("")}
+                  >
+                    <IconX size={18} aria-hidden="true" />
+                  </ActionIcon>
+                ) : undefined
+              }
+              aria-controls="draft-results"
+            />
             <Select
               label="Players at your table"
               aria-label="Players at your table"
@@ -209,94 +254,161 @@ export default function Home() {
                 value: String(n),
                 label: `${n} players`,
               }))}
-              w={190}
               className={classes.playerSelect}
             />
           </div>
-          <nav className={classes.catalogNav} aria-label="Draft categories">
-            <a href="#classic-drafts">
-              Galaxy drafts <span>09</span>
-            </a>
-            <a href="#custom-drafts">
-              Bag &amp; Franken <span>08</span>
-            </a>
-            <a href="#twilight-drafts">
-              Twilight’s Fall <span>04</span>
-            </a>
-          </nav>
-          <section
-            id="classic-drafts"
-            className={classes.modeSection}
-            aria-labelledby="classic-title"
-          >
-            <div className={classes.sectionHeading}>
-              <div>
-                <span className={classes.sectionNumber}>I</span>
-                <Title order={2} id="classic-title">
-                  A galaxy to claim
-                </Title>
-              </div>
-              <Text>Factions, systems, and your place at the table.</Text>
-            </div>
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
-              {DRAFT_MODES.filter((m) => m.group === "classic").map((mode) => (
-                <ModeCard key={mode.id} mode={mode} players={players} />
-              ))}
-            </SimpleGrid>
-          </section>
-          <section
-            id="custom-drafts"
-            className={classes.modeSection}
-            aria-labelledby="custom-title"
-          >
-            <div className={classes.sectionHeading}>
-              <div>
-                <span className={classes.sectionNumber}>II</span>
-                <Title order={2} id="custom-title">
-                  An empire of your own
-                </Title>
-              </div>
-              <Text>
-                Pass the bags. Keep your picks. Assemble something formidable.
-              </Text>
-            </div>
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
-              {DRAFT_MODES.filter((m) => m.group === "custom").map((mode) => (
-                <ModeCard key={mode.id} mode={mode} players={players} />
-              ))}
-            </SimpleGrid>
-          </section>
-          <section
-            id="twilight-drafts"
-            className={`${classes.modeSection} ${classes.twilightSection}`}
-            aria-labelledby="twilight-title"
-          >
-            <div className={classes.twilightIntro}>
-              <div>
-                <Text className="command-eyebrow" c="magenta.2" mb={10}>
-                  Pax mortuus bellum aeternus
-                </Text>
-                <Title order={2} id="twilight-title">
-                  Twilight’s Fall
-                </Title>
-                <Text mt="sm" c="dimmed">
-                  The Mahact kings return. Rebuild your faction from the
-                  remnants of a fallen galaxy.
-                </Text>
-              </div>
-              <Badge color="magenta" variant="outline" size="lg">
-                Requires Twilight’s Fall
-              </Badge>
-            </div>
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
-              {DRAFT_MODES.filter((m) => m.group === "twilight").map((mode) => (
-                <ModeCard key={mode.id} mode={mode} players={players} />
-              ))}
-            </SimpleGrid>
-            <Text size="xs" c="dimmed" mt="md">
-              “Pax mortuus bellum aeternus” · Twilight’s Fall rulebook, cover.
-            </Text>
-          </section>
+          <div id="draft-results">
+            {searchTerms.length > 0 ? (
+              <section
+                className={classes.searchResults}
+                aria-label="Matching draft formats"
+              >
+                <div className={classes.searchSummary}>
+                  <Text c="dimmed" role="status">
+                    {matchingModes.length}{" "}
+                    {matchingModes.length === 1 ? "format" : "formats"} matching
+                    “{query.trim()}”
+                  </Text>
+                  <Button
+                    variant="subtle"
+                    size="sm"
+                    onClick={() => setQuery("")}
+                  >
+                    Show all formats
+                  </Button>
+                </div>
+                {matchingModes.length > 0 ? (
+                  <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+                    {matchingModes.map((mode) => (
+                      <ModeCard key={mode.id} mode={mode} players={players} />
+                    ))}
+                  </SimpleGrid>
+                ) : (
+                  <div className={classes.emptySearch}>
+                    <IconSearch size={32} stroke={1.5} aria-hidden="true" />
+                    <Title order={3}>No formats found</Title>
+                    <Text c="dimmed">
+                      Try a format name or a keyword like “factions” or “bags”.
+                    </Text>
+                  </div>
+                )}
+              </section>
+            ) : (
+              <>
+                <nav
+                  className={classes.catalogNav}
+                  aria-label="Draft categories"
+                >
+                  <a href="#classic-drafts">
+                    Galaxy drafts{" "}
+                    <span>
+                      {String(
+                        DRAFT_MODES.filter((m) => m.group === "classic").length,
+                      ).padStart(2, "0")}
+                    </span>
+                  </a>
+                  <a href="#custom-drafts">
+                    Bag &amp; Franken{" "}
+                    <span>
+                      {String(
+                        DRAFT_MODES.filter((m) => m.group === "custom").length,
+                      ).padStart(2, "0")}
+                    </span>
+                  </a>
+                  <a href="#twilight-drafts">
+                    Twilight’s Fall{" "}
+                    <span>
+                      {String(
+                        DRAFT_MODES.filter((m) => m.group === "twilight")
+                          .length,
+                      ).padStart(2, "0")}
+                    </span>
+                  </a>
+                </nav>
+                <section
+                  id="classic-drafts"
+                  className={classes.modeSection}
+                  aria-labelledby="classic-title"
+                >
+                  <div className={classes.sectionHeading}>
+                    <div>
+                      <span className={classes.sectionNumber}>I</span>
+                      <Title order={2} id="classic-title">
+                        A galaxy to claim
+                      </Title>
+                    </div>
+                    <Text>Factions, systems, and your place at the table.</Text>
+                  </div>
+                  <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+                    {DRAFT_MODES.filter((m) => m.group === "classic").map(
+                      (mode) => (
+                        <ModeCard key={mode.id} mode={mode} players={players} />
+                      ),
+                    )}
+                  </SimpleGrid>
+                </section>
+                <section
+                  id="custom-drafts"
+                  className={classes.modeSection}
+                  aria-labelledby="custom-title"
+                >
+                  <div className={classes.sectionHeading}>
+                    <div>
+                      <span className={classes.sectionNumber}>II</span>
+                      <Title order={2} id="custom-title">
+                        An empire of your own
+                      </Title>
+                    </div>
+                    <Text>
+                      Pass the bags. Keep your picks. Assemble something
+                      formidable.
+                    </Text>
+                  </div>
+                  <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+                    {DRAFT_MODES.filter((m) => m.group === "custom").map(
+                      (mode) => (
+                        <ModeCard key={mode.id} mode={mode} players={players} />
+                      ),
+                    )}
+                  </SimpleGrid>
+                </section>
+                <section
+                  id="twilight-drafts"
+                  className={`${classes.modeSection} ${classes.twilightSection}`}
+                  aria-labelledby="twilight-title"
+                >
+                  <div className={classes.twilightIntro}>
+                    <div>
+                      <Text className="command-eyebrow" c="magenta.2" mb={10}>
+                        Pax mortuus bellum aeternus
+                      </Text>
+                      <Title order={2} id="twilight-title">
+                        Twilight’s Fall
+                      </Title>
+                      <Text mt="sm" c="dimmed">
+                        The Mahact kings return. Rebuild your faction from the
+                        remnants of a fallen galaxy.
+                      </Text>
+                    </div>
+                    <Badge color="magenta" variant="outline" size="lg">
+                      Requires Twilight’s Fall
+                    </Badge>
+                  </div>
+                  <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+                    {DRAFT_MODES.filter((m) => m.group === "twilight").map(
+                      (mode) => (
+                        <ModeCard key={mode.id} mode={mode} players={players} />
+                      ),
+                    )}
+                  </SimpleGrid>
+                  <Text size="xs" c="dimmed" mt="md">
+                    “Pax mortuus bellum aeternus” · Twilight’s Fall rulebook,
+                    cover.
+                  </Text>
+                </section>
+              </>
+            )}
+          </div>
         </section>
 
         <section className={classes.nextSteps} aria-labelledby="next-title">

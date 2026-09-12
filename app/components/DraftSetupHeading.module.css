@@ -1,0 +1,48 @@
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  color: var(--command-text-muted);
+  font-size: var(--command-font-label);
+}
+.steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.steps li[aria-current] {
+  color: var(--command-accent);
+  font-weight: 600;
+}
+.number {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: 1px solid var(--command-border);
+  border-radius: 50%;
+  font-variant-numeric: tabular-nums;
+}
+[aria-current] > .number {
+  border-color: #e8bc5870;
+  background: #e8bc5810;
+}
+.separator {
+  color: var(--command-text-muted);
+  margin-left: 4px;
+}
+@media (max-width: 36em) {
+  .steps {
+    gap: 12px;
+  }
+  .steps li {
+    gap: 6px;
+  }
+  .separator {
+    display: none;
+  }
+}

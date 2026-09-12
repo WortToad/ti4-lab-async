@@ -545,6 +545,7 @@ export default function DraftPrechoice() {
               <SectionTitle title="Draft rules & content" />
               <Tabs
                 aria-label="Draft rules"
+                className={classes.draftTabs}
                 value={draftMode}
                 onChange={handleDraftModeChange}
                 variant="outline"
