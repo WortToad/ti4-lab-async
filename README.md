@@ -35,6 +35,8 @@ Open `http://localhost:3000/` in your browser and you're good to go.
 
 Use the same Node version for dependency installation, development and tests. If you switch Node versions after installing, reinstall dependencies to rebuild the native SQLite and image-rendering modules.
 
+Run `yarn test:run` for unit and database integration tests. For desktop and mobile browser flows, install Chromium with `yarn playwright install --with-deps chromium`, then run `yarn test:e2e`. Browser tests build the app at `/ti4`, start their own server and temporary database, and disable Discord, R2 and analytics. See [the testing guide and flow coverage](docs/testing.md) for details.
+
 The map generator saves edits in the current browser tab, including changes to shared maps. Undo and redo cover tile edits, layout/content changes, resizing, imports, generation and resets; history is kept while the editor is open. Share a link or export a map string to keep a copy beyond that tab. Failed generation preserves the existing map, and publishing failures retain both the map and form for retry.
 
 ## Shared lobbies and recovery

@@ -70,11 +70,10 @@ export function createDraftOrder({
       ...playerIds,
     ];
 
-    // For nucleus mode, add speaker order round if draftSpeaker is enabled
-    if (isNucleus && settings.draftSpeaker) {
+    // Nucleus also drafts a seat; an optional speaker pick adds one more round.
+    if (isNucleus) {
       pickOrder.push(...reversedPlayerIds);
-      pickOrder.push(...playerIds);
-      pickOrder.push(...reversedPlayerIds);
+      if (settings.draftSpeaker) pickOrder.push(...playerIds);
     }
 
     pickOrder.push({ kind: "simultaneous", phase: "priorityValue" });
