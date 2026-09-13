@@ -37,7 +37,7 @@ import { appPath } from "~/utils/appUrl";
 import classes from "~/components/Home.module.css";
 
 export const meta = () => [
-  { title: "TI4 Draft Command · Your claim begins here" },
+  { title: "TI4 Draft Command · Mecatol Rex awaits" },
   {
     name: "description",
     content:
@@ -147,14 +147,15 @@ export default function Home() {
               Twilight Imperium · Drafting &amp; galaxy building
             </div>
             <h1 id="hero-title">
-              Your claim
+              Mecatol Rex
               <br />
-              begins <em>here.</em>
+              <em>awaits.</em>
             </h1>
             <p className={classes.heroDescription}>
-              Before the first command token is placed, an empire takes shape.
-              Choose your draft, gather your table, and carve out your corner of
-              the galaxy.
+              The Lazax empire has fallen. Its throne endures. Across the
+              galaxy, the Great Races muster fleets and bargain for allies.
+              Choose your draft, gather your rivals, and decide who will lay
+              claim to Mecatol Rex.
             </p>
             <Group gap="md" mt={28}>
               <Button
@@ -187,15 +188,19 @@ export default function Home() {
           <div className={classes.briefingLabel}>
             <IconCrown size={27} stroke={1.4} aria-hidden="true" />
             <span>
-              The throne
+              Echoes of
               <br />
-              stands empty
+              the Imperium
             </span>
           </div>
-          <blockquote>
-            “But who among the races of the galaxy could fill the void left by
-            the Lazax?”
-            <cite>Guide to the Imperium · The Galaxy Awakens, p. 52</cite>
+          <blockquote cite="https://www.fantasyflightgames.com/en/news/2017/8/15/the-age-of-twilight/">
+            “The day will soon come when a new Empire will rise.”
+            <cite>
+              Mahthom Iq Seerva ·{" "}
+              <a href="https://www.fantasyflightgames.com/en/news/2017/8/15/the-age-of-twilight/">
+                The Age of Twilight
+              </a>
+            </cite>
           </blockquote>
         </div>
 
@@ -207,10 +212,10 @@ export default function Home() {
           <div className={classes.catalogHeading}>
             <div>
               <Text className="command-eyebrow" mb={10}>
-                01 / Assemble your table
+                01 / The Great Races gather
               </Text>
               <Title order={2} id="formats-title">
-                Choose how your empire begins
+                The contest for the throne
               </Title>
               <Text c="dimmed" mt={8}>
                 Every format, at a glance. Choose one to configure your draft
@@ -334,10 +339,12 @@ export default function Home() {
                     <div>
                       <span className={classes.sectionNumber}>I</span>
                       <Title order={2} id="classic-title">
-                        A galaxy to claim
+                        Heirs to the Lazax
                       </Title>
                     </div>
-                    <Text>Factions, systems, and your place at the table.</Text>
+                    <Text>
+                      Ancient rivalries. Fragile alliances. One imperial throne.
+                    </Text>
                   </div>
                   <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
                     {DRAFT_MODES.filter((m) => m.group === "classic").map(
@@ -356,12 +363,12 @@ export default function Home() {
                     <div>
                       <span className={classes.sectionNumber}>II</span>
                       <Title order={2} id="custom-title">
-                        An empire of your own
+                        Powers yet unknown
                       </Title>
                     </div>
                     <Text>
-                      Pass the bags. Keep your picks. Assemble something
-                      formidable.
+                      Bind the strengths of rival civilizations into a faction
+                      the Galactic Council has never faced.
                     </Text>
                   </div>
                   <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
@@ -386,8 +393,9 @@ export default function Home() {
                         Twilight’s Fall
                       </Title>
                       <Text mt="sm" c="dimmed">
-                        The Mahact kings return. Rebuild your faction from the
-                        remnants of a fallen galaxy.
+                        In this dark future, the Great Races have fallen. The
+                        Mahact kings claim their stolen strengths and turn them
+                        against one another.
                       </Text>
                     </div>
                     <Badge color="magenta" variant="outline" size="lg">
@@ -414,10 +422,10 @@ export default function Home() {
         <section className={classes.nextSteps} aria-labelledby="next-title">
           <div>
             <Text className="command-eyebrow" mb={10}>
-              02 / From draft to first turn
+              02 / Before the first fleet sails
             </Text>
             <Title order={2} id="next-title">
-              Gather the great powers
+              Convene the rival powers
             </Title>
           </div>
           <ol className={classes.steps}>
@@ -444,10 +452,10 @@ export default function Home() {
             <li>
               <span>03</span>
               <div>
-                <h3>Make your claim</h3>
+                <h3>Begin the struggle</h3>
                 <p>
-                  Start when everyone is ready. Follow the draft, then take your
-                  galaxy to the table.
+                  Start when everyone is ready. Complete the draft, then bring
+                  the struggle for the throne to your table.
                 </p>
               </div>
             </li>
@@ -457,10 +465,11 @@ export default function Home() {
           <IconMap size={42} stroke={1.3} aria-hidden="true" />
           <div>
             <Title order={2} id="map-title" size="h3">
-              Prefer to chart your own galaxy?
+              Chart the road to Mecatol Rex
             </Title>
             <Text c="dimmed" mt={6}>
-              Generate, edit, and share a map before choosing your draft.
+              Place the worlds your fleets will defend and your rivals will
+              covet. Generate, edit, and share a map before choosing your draft.
             </Text>
           </div>
           <Button

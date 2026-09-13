@@ -93,7 +93,7 @@ export default function DraftNew() {
         <DraftSetupHeading
           preview
           title="Review your draft"
-          description="Inspect the galaxy and faction pool below. When everything is ready, create the shared lobby and invite your players."
+          description="Study the worlds at stake and the powers that will contest them. Review the map and faction pool, then create a lobby and summon your rivals."
           players={draft.players.length}
         />
         <ConnectedFactionSettingsModal />
@@ -121,7 +121,7 @@ export default function DraftNew() {
       <DraftSetupHeading
         preview
         title="Review your draft"
-        description="Inspect the galaxy and faction pool below. When everything is ready, create the shared lobby and invite your players."
+        description="Study the worlds at stake and the powers that will contest them. Review the map and faction pool, then create a lobby and summon your rivals."
         players={draft.players.length}
       />
       <ConnectedFactionSettingsModal />

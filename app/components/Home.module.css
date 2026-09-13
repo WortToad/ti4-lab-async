@@ -135,6 +135,12 @@
   font-size: 0.875rem;
   font-style: normal;
 }
+.briefing cite a {
+  color: inherit;
+}
+.briefing cite a:hover {
+  color: var(--command-accent);
+}
 .catalog {
   padding-top: 60px;
   scroll-margin-top: 20px;

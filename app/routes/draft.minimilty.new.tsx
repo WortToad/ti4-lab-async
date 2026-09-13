@@ -60,7 +60,7 @@ export default function MiniMiltySetup() {
       <Stack gap="lg">
         <DraftSetupHeading
           title="Mini-Milty"
-          description="A complete base-game galaxy, followed by two snake rounds to choose your faction and speaker position. Preview the map before inviting your table."
+          description="The galaxy is laid out. Its next ruler is not. Preview a complete base-game map, then draft your faction and speaker position in two snake rounds."
           players={playerCount}
         />
         {error && <Alert color="red">{error}</Alert>}

@@ -135,7 +135,7 @@ export default function MantisNew() {
         <Stack gap="lg">
           <DraftSetupHeading
             title="Mantis draft"
-            description="Draft individual systems, factions, and speaker positions. Keep three blue and two red tiles, then build your corner of the galaxy."
+            description="Draft individual systems, factions, and speaker positions. Keep three blue and two red tiles, then build your approach to Mecatol Rex."
             players={playerCount}
           />
           {result?.error && <Alert color="red">{result.error}</Alert>}

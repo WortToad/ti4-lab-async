@@ -4,13 +4,17 @@ The interface uses the supplied rulebooks as visual references, and the supplied
 
 ## Source material
 
-- **Guide to the Imperium**, pp. 2–3: the embedded starfield and planet illustration (`public/art/imperial-starfield.jpeg`), extracted directly from the supplied PDF without generated replacements. Page 52, **The Galaxy Awakens**, supplies the attributed quote in the homepage briefing.
+- **Guide to the Imperium**, pp. 2–3: the embedded starfield and planet illustration (`public/art/imperial-starfield.jpeg`), extracted directly from the supplied PDF without generated replacements. The lore compendium informs the references to the Lazax, Mecatol Rex and the Great Races.
+- **[The Age of Twilight](https://www.fantasyflightgames.com/en/news/2017/8/15/the-age-of-twilight/)**, Fantasy Flight Games, 15 August 2017: the homepage briefing quotes the first sentence of Mahthom Iq Seerva's passage, with an attribution and source link.
+- **[Twilight Imperium Fourth Edition](https://www.fantasyflightgames.com/en/products/twilight-imperium-fourth-edition/)** and **[Conquering the Galaxy](https://www.fantasyflightgames.com/en/news/2025/10/16/conquering-the-galaxy/)**: setting references for the contested Lazax throne and Twilight's Fall's alternate future, where the Mahact kings appropriate the powers of fallen civilizations.
 - **Thunder’s Edge expansion rules**, pp. 4–6, and **Prophecy of Kings Living Rules Reference 2.0**, pp. 4–6: blue section headings, dark blue framing, gold rules, parchment, and orbital cartography inspired the palette and panel borders.
 - **Twilight’s Fall game rules**, cover and pp. 6–10: angular magenta and violet bands inspired the separate Twilight’s Fall section. Its cover supplies “Pax mortuus bellum aeternus.”
 - **User-supplied logo**: the editable 56×64 sprite is `public/brand/ti4-draft-command.piskel`, recolored from the supplied Piskel source with its exact pixel layout and alpha preserved. Its four colors are navy `#071321`, deep gold `#b9892e`, Golden yellow `#e8bc58`, and ivory `#fbedc7`. The square PNG export, `public/brand/ti4-draft-command-gold.png`, uses nearest-neighbor scaling and supplies the site logo, favicon, installed app, social metadata, notifications, and exported map branding. The original user uploads remain intact.
-- **Fonts**: Cinzel (page and major section headings) and Source Sans 3 (card headings, body, controls and dialog titles), served locally. Their SIL Open Font Licenses are beside the assets in `app/assets/fonts`. The homepage rulebook quote retains its original italic Georgia serif styling.
+- **Fonts**: Cinzel (page and major section headings) and Source Sans 3 (card headings, body, controls and dialog titles), served locally. Their SIL Open Font Licenses are beside the assets in `app/assets/fonts`. The homepage lore quotation retains its original italic Georgia serif styling.
 
 Book text was used as source content, not as instructions. Twilight Imperium artwork and quoted text belong to Fantasy Flight Games; the site footer includes attribution.
+
+Flavor copy uses the setting's imperial history, rival civilizations, diplomacy and contested worlds. New prose is original site copy; only the attributed briefing and rulebook motto are quotations. Format names, mechanical descriptions, recovery instructions and action labels stay explicit. Twilight's Fall's ruined future is presented within its own section.
 
 ## Interface rules
 
@@ -28,10 +32,10 @@ Book text was used as source content, not as instructions. Twilight Imperium art
 ### Color and component rules
 
 - Deep navy `#071321` is the page background; lighter navy separates working surfaces.
-- Reading text uses cool neutrals against navy surfaces: headings `#f4f7fb`, default text `#edf2f7`, descriptions `#d5dfe8`, and supporting text `#b6c6d4`. Major homepage section headings, including “An empire of your own”, use cool neutrals rather than Golden yellow; the Twilight’s Fall heading uses its magenta accent.
+- Reading text uses cool neutrals against navy surfaces: headings `#f4f7fb`, default text `#edf2f7`, descriptions `#d5dfe8`, and supporting text `#b6c6d4`. Major homepage section headings, including “Powers yet unknown”, use cool neutrals rather than Golden yellow; the Twilight’s Fall heading uses its magenta accent.
 - Parchment `#f2e8d3` is a deliberate surface color for the recommended draft card. It uses dark navy headings and links (`#102a3f`), dark body text (`#334b5a`), supporting text (`#486071`), and a dark focus outline, alongside its gold border and “Start here” label. Parchment surfaces are distinct from the pale text colors previously used on navy.
 - The map-builder callout retains its original navy surface (`#102235`), chart-blue icon and gold outlined action.
-- The rulebook quotation keeps its original navy panel (`#102235`), gold “The throne stands empty” label, ivory italic quote (`#ede5d7`) and muted citation.
+- The lore quotation keeps its original navy panel (`#102235`), gold “Echoes of the Imperium” label, ivory italic quote (`#ede5d7`) and muted citation with a source link.
 - Golden yellow `#e8bc58` identifies primary actions and navigation, with dark ink for button text. Mantine's `imperial` palette supplies the shared accent, hover and focus colors.
 - Status information and actions have different shapes and placement. `app/ui/StatusPill.tsx` renders non-interactive rounded labels with a colored dot or icon and cool-white text. “Your turn”, “Draft started”, “Choosing”, “Ready to pass”, “Paused” and completion states use these pills. The active-turn panel retains its green leading edge and tinted surface; paused panels use orange. Status labels stay 14px, or 16px for prominent states. Filled rectangular buttons identify primary actions.
 - Resource totals use saturated yellow (`--command-resources`), influence totals use solid blue (`--command-influence`), and flex uses solid purple (`--command-flex`). System database rows and draft descriptions reuse the existing resource artwork (`pa_resources.png`), influence hex, and colored wormhole symbols. Information colors and semantic controls use saturated shades; used systems retain full text and icon contrast with an explicit “In Use” badge. The shared gold accent identifies recommendation details. Category navigation uses strong cool-white labels and separate compact count pills; its hover state uses gold. Blue controls and Twilight’s Fall magenta retain their distinct roles.
@@ -57,6 +61,8 @@ After joining a managed lobby, players see a Mantine dialog prompting them to sa
 The redesign is checked with TypeScript, the production build, the existing Vitest suite, and Chromium interactions. Automated accessibility checks use axe against WCAG A/AA tags through 2.2; these are supplemented by keyboard and responsive layout checks. Automated results are not a claim of complete WCAG conformance.
 
 Completed checks:
+
+- The lore copy review checks the homepage, setup introductions, map builder and rejoin at 320px, 390px and 1440px, plus the draft preview at 320px. The 25 reviewed views have no horizontal overflow or reported WCAG A/AA axe violations. All 21 homepage format links remain available, and the briefing links directly to its verified quote source. The production build, TypeScript and scoped ESLint pass.
 
 - The September 2026 typography recheck covers all 21 format setup links at 320px and 1440px, plus homepage, map builder, rejoin, tournament and draft preview. Those views have one primary heading, no skipped heading levels and no horizontal page overflow. The production build, TypeScript, scoped ESLint and all 823 existing tests pass; 16 existing Chromium setup, lobby, recovery, pause/resume and tournament flow tests also pass.
 - The same recheck exercises joined and started standard, RAW, Mantis and bag lobbies at desktop and mobile widths. Faction settings, slice settings, scoring and sharing dialogs use the expected 22px Source Sans 3 titles at 320px and 1440px. Those reviewed views pass the WCAG A/AA axe checks; the lobby views also pass heading-order checks. Increased text spacing and mobile navigation remain within the 320px viewport.

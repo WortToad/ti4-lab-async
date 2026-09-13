@@ -656,12 +656,13 @@ function MapGeneratorContent() {
         <div className={mapClasses.heading}>
           <div>
             <Text className="command-eyebrow" mb="xs">
-              Imperial cartography
+              Star charts of the Imperium
             </Text>
-            <Title order={1}>Chart your galaxy</Title>
+            <Title order={1}>Chart a galaxy at war</Title>
             <Text c="dimmed" mt="xs">
-              Generate a map, refine the systems, and choose where your empires
-              will rise.
+              Beyond the home systems lie ancient worlds, uneasy borders, and
+              the road to Mecatol Rex. Generate, edit, and share the galaxy your
+              factions will contest.
             </Text>
           </div>
           <Group>

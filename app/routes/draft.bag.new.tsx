@@ -200,7 +200,7 @@ export default function NewBagDraft() {
     <Stack className="ph-no-capture" maw={1100} mx="auto" py="xl" gap="lg">
       <DraftSetupHeading
         title={activeVariant?.name ?? "Bag & Franken drafts"}
-        description="Pass the bags and assemble your empire. Choose your components and content, then create one shared lobby for your table."
+        description="Assemble the foundations of a new power: systems, fleets, and the gifts of rival civilizations. Choose your components and content, then create a shared lobby."
         players={playerCount}
       />
       <Form method="post">

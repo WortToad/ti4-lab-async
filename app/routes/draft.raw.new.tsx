@@ -92,7 +92,7 @@ export default function RawNew() {
           title={
             twilight ? "Twilight’s Fall · Official setup" : "Rules as written"
           }
-          description="Build the galaxy as the rulebooks intended. Choose your game, prepare the systems, and invite the great powers to the table."
+          description="Beyond the home systems, a contested galaxy takes shape. Choose your game and build it using the official setup rules, one system at a time."
           players={count}
         />
         <Form method="post">

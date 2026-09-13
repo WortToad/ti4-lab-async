@@ -454,7 +454,7 @@ export default function DraftPrechoice() {
                     ? "Prepare multiple drafts"
                     : `Prepare your ${MAPS[map.selectedMapType].title} draft`
             }
-            description="Set the table, choose your galaxy, and prepare the draft pool. You’ll share a single lobby link when your draft is ready."
+            description="The next struggle for Mecatol Rex begins at your table. Choose a galaxy and draft pool, then invite the rival powers to your lobby."
             players={playerCount}
           />
         </div>
@@ -465,7 +465,7 @@ export default function DraftPrechoice() {
                 01 / Your table
               </Text>
               <Title order={2} size="h3">
-                Gather the great powers
+                Summon the rival powers
               </Title>
               <Text c="dimmed" size="sm" mt="xs">
                 Names are entered when players join the lobby.

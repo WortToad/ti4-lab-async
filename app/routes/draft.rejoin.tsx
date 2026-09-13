@@ -94,7 +94,7 @@ export default function RejoinLobby() {
           </ThemeIcon>
           <div>
             <Text className="command-eyebrow" mb="sm">
-              Your seat is waiting
+              Your rivals await
             </Text>
             <Title order={1} size="h2">
               Return to your draft

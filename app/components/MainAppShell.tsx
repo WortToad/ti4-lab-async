@@ -147,7 +147,7 @@ export function MainAppShell({ children, headerRightSection }: Props) {
         <div className={classes.footerInner}>
           <div>
             <span className={classes.footerBrand}>TI4 Draft Command</span>
-            <p>A place to prepare your claim to the galaxy.</p>
+            <p>Fleets gather. Treaties falter. Mecatol Rex waits.</p>
           </div>
           <Group gap="xl">
             <Link to="/">Draft formats</Link>
