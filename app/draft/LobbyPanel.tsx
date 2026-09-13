@@ -29,7 +29,7 @@ import {
   IconShield,
   IconUserMinus,
 } from "@tabler/icons-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { LobbyView } from "./lobby";
 import { LobbyPlayerKeyPrompt } from "./LobbyPlayerKeyPrompt";
 import { appUrl } from "~/utils/appUrl";
@@ -55,6 +55,7 @@ export type LobbyPanelProps = {
   busy?: boolean;
   error?: string | null;
   exportState?: string | null;
+  playerOverview?: ReactNode;
   onOperation: (operation: LobbyOperation) => void;
 };
 
@@ -130,6 +131,7 @@ export function LobbyPanel({
   busy = false,
   error,
   exportState,
+  playerOverview,
   onOperation,
 }: LobbyPanelProps) {
   const [name, setName] = useState("");
@@ -330,74 +332,79 @@ export function LobbyPanel({
               : "This browser could not restore saved access automatically. If you already joined, paste your recovery code below."}
           </Alert>
         )}
-        <section className={classes.players} aria-labelledby={playersHeadingId}>
-          <Group justify="space-between" gap="sm">
-            <Title
-              id={playersHeadingId}
-              order={mode === "bag" ? 3 : 2}
-              size="h3"
-              className={classes.playersHeading}
-            >
-              Players
-            </Title>
-            <span
-              className={classes.joined}
-              data-complete={allJoined || undefined}
-              aria-live="polite"
-              aria-atomic="true"
-            >
-              <span>
-                <strong>{joined}</strong> / {lobby.slots.length}
-              </span>
-              joined
-            </span>
-          </Group>
-          <div className={classes.playerCapacity} aria-hidden="true">
-            {lobby.slots.map((slot, index) => (
+        {playerOverview ?? (
+          <section
+            className={classes.players}
+            aria-labelledby={playersHeadingId}
+          >
+            <Group justify="space-between" gap="sm">
+              <Title
+                id={playersHeadingId}
+                order={mode === "bag" ? 3 : 2}
+                size="h3"
+                className={classes.playersHeading}
+              >
+                Players
+              </Title>
               <span
-                key={slot.id}
-                data-filled={index < joined || undefined}
+                className={classes.joined}
                 data-complete={allJoined || undefined}
-              />
-            ))}
-          </div>
-          {joined > 0 ? (
-            <ul className={classes.playerList}>
-              {lobby.slots
-                .filter((player) => player.claimed)
-                .map((player) => (
-                  <li
-                    key={player.id}
-                    className={classes.playerCard}
-                    data-own={player.id === ownPlayerId || undefined}
-                  >
-                    <div className={classes.playerIdentity}>
-                      <span className={classes.playerName}>
-                        {player.name}
-                        {isAdmin && player.id === ownPlayerId && (
-                          <span
-                            className={classes.adminIcon}
-                            role="img"
-                            aria-label="Admin"
-                            title="Admin"
-                          >
-                            <IconShield size={18} aria-hidden="true" />
-                          </span>
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                <span>
+                  <strong>{joined}</strong> / {lobby.slots.length}
+                </span>
+                joined
+              </span>
+            </Group>
+            <div className={classes.playerCapacity} aria-hidden="true">
+              {lobby.slots.map((slot, index) => (
+                <span
+                  key={slot.id}
+                  data-filled={index < joined || undefined}
+                  data-complete={allJoined || undefined}
+                />
+              ))}
+            </div>
+            {joined > 0 ? (
+              <ul className={classes.playerList}>
+                {lobby.slots
+                  .filter((player) => player.claimed)
+                  .map((player) => (
+                    <li
+                      key={player.id}
+                      className={classes.playerCard}
+                      data-own={player.id === ownPlayerId || undefined}
+                    >
+                      <div className={classes.playerIdentity}>
+                        <span className={classes.playerName}>
+                          {player.name}
+                          {isAdmin && player.id === ownPlayerId && (
+                            <span
+                              className={classes.adminIcon}
+                              role="img"
+                              aria-label="Admin"
+                              title="Admin"
+                            >
+                              <IconShield size={18} aria-hidden="true" />
+                            </span>
+                          )}
+                        </span>
+                        {player.id === ownPlayerId && (
+                          <span className={classes.you}>You</span>
                         )}
-                      </span>
-                      {player.id === ownPlayerId && (
-                        <span className={classes.you}>You</span>
-                      )}
-                    </div>
-                  </li>
-                ))}
-            </ul>
-          ) : (
-            <Text size="sm" c="dimmed" className={classes.emptyPlayers}>
-              No players have joined yet.
-            </Text>
-          )}
-        </section>
+                      </div>
+                    </li>
+                  ))}
+              </ul>
+            ) : (
+              <Text size="sm" c="dimmed" className={classes.emptyPlayers}>
+                No players have joined yet.
+              </Text>
+            )}
+          </section>
+        )}
         <Collapse in={showDetails} id={detailsId}>
           <Stack gap="md">
             {ownPlayerId === undefined && !allJoined && (

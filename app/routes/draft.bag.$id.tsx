@@ -257,8 +257,7 @@ function DraftPicking({
 }) {
   const [confirmSelection, setConfirmSelection] = useState(false);
   const seatIndex = view.players.findIndex((player) => player.id === seat.id);
-  // Each seat receives the next seat's bag and passes to the previous seat.
-  const receivingFrom = view.players[(seatIndex + 1) % view.players.length];
+  // Each seat passes its bag to the previous seat in draft order.
   const passingTo =
     view.players[(seatIndex - 1 + view.players.length) % view.players.length];
   const selectedCategories = new Set(
@@ -272,7 +271,7 @@ function DraftPicking({
   );
   return (
     <Stack gap="lg">
-      <BagDraftProgress view={view}>
+      <Paper withBorder p="lg" radius="md">
         <Stack gap="sm">
           <Group justify="space-between">
             <Title order={3} size="h4">
@@ -282,9 +281,6 @@ function DraftPicking({
               {seat.bag.length} components in your bag
             </Badge>
           </Group>
-          <Text size="sm" c="dimmed" style={{ overflowWrap: "anywhere" }}>
-            Receiving from {receivingFrom.name} · Passing to {passingTo.name}
-          </Text>
           {seat.ready ? (
             <>
               <Text>
@@ -346,7 +342,7 @@ function DraftPicking({
             any tiles for the map.
           </Text>
         </Stack>
-      </BagDraftProgress>
+      </Paper>
       {!seat.ready && (
         <BagSelectionActions
           status={`Selected ${selectedIds.length} of ${seat.picksRequired} picks for this bag`}
@@ -903,6 +899,7 @@ export default function BagDraftPage() {
         busy={busy}
         error={fetcher.data?.error ?? view.accessError}
         exportState={fetcher.data?.backup}
+        playerOverview={<BagDraftProgress view={view} />}
         onOperation={lobbyOperation}
       />
       {view.phase !== "lobby" && view.viewer.playerId !== undefined && (
@@ -930,7 +927,7 @@ export default function BagDraftPage() {
       </BagDraftGuide>
       {view.phase !== "lobby" && (
         <>
-          {seat && view.phase === "drafting" ? (
+          {seat && view.phase === "drafting" && (
             <DraftPicking
               key={`${view.id}:${seat.id}:${view.round}:${seat.ready}:${seat.hand.map((item) => item.id).join(",")}:${seat.bag.map((item) => item.id).join(",")}`}
               view={view}
@@ -940,8 +937,6 @@ export default function BagDraftPage() {
               selectedIds={selectedIds}
               setSelectedIds={setSelectedIds}
             />
-          ) : (
-            <BagDraftProgress view={view} />
           )}
           {view.viewer.isAdmin && view.canUndoRound && (
             <Button
