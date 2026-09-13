@@ -32,6 +32,7 @@ import { Notifications } from "@mantine/notifications";
 import { MainAppShell } from "./components/MainAppShell";
 
 import { commandTheme } from "./theme";
+import { SEARCH_ROBOTS } from "./utils/searchIndexing";
 
 export const meta = () => [
   { title: "TI4 Draft Command" },
@@ -86,6 +87,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* Keep this outside route metadata so child routes cannot replace it. */}
+        <meta name="robots" content={SEARCH_ROBOTS} />
         <meta name="application-name" content="TI4 Draft Command" />
         <link
           rel="icon"

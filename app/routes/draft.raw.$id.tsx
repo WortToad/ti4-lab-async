@@ -26,6 +26,8 @@ import {
 import { Map as DraftMap, MAP_INTERACTIONS } from "~/components/Map";
 import { SystemTileCard } from "~/components/SystemTileCard";
 import { StartingUnitsTable } from "~/components/StartingUnitsTable";
+import { GameTerm } from "~/components/GameTerm";
+import { mahactKingReferences } from "~/data/mahactKingReferences";
 import { factions, twilightsFallFactionIds } from "~/data/factionData";
 import { BagItemCard, bagCategoryLabel } from "~/draft/bag/BagComponents";
 import {
@@ -723,7 +725,8 @@ function RawGame({
                     </Text>
                     {!!draft.tradeGoods[id] && (
                       <Text size="sm">
-                        Starting trade goods: {draft.tradeGoods[id]}
+                        Starting:{" "}
+                        <GameTerm term="tradeGoods">{`${draft.tradeGoods[id]} ${draft.tradeGoods[id] === 1 ? "trade good" : "trade goods"}`}</GameTerm>
                       </Text>
                     )}
                     {draft.settings.mode === "base" &&
@@ -754,6 +757,9 @@ function RawGame({
                           draft.settings.pok,
                         ).fleetComposition && (
                           <StartingUnitsTable
+                            color={
+                              mahactKingReferences[draft.kings[id]]?.unitColor
+                            }
                             fleetComposition={
                               rawReferenceFaction(
                                 draft.fleets[id],
@@ -767,6 +773,9 @@ function RawGame({
                           const item = spliceById.get(itemId);
                           return item ? (
                             <BagItemCard
+                              unitColor={
+                                mahactKingReferences[draft.kings[id]]?.unitColor
+                              }
                               key={itemId}
                               item={item}
                               note={bagCategoryLabel(

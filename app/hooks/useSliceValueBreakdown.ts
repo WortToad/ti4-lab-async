@@ -80,7 +80,7 @@ function calculateBreakdown(
       // Legendary planets
       if (planet.legendary) {
         let legendaryValue = cfg.otherLegendaryValue;
-        let legendaryLabel = planet.name;
+        const legendaryLabel = planet.name;
 
         if (planet.name === "Hope's End") {
           legendaryValue = cfg.hopesEndValue;
@@ -100,7 +100,7 @@ function calculateBreakdown(
       // Trade stations
       if (planet.tradeStation) {
         modifiers.push({
-          label: "Trade Station",
+          label: "Space station",
           value: cfg.tradeStationValue,
         });
         systemModifiersValue += cfg.tradeStationValue;

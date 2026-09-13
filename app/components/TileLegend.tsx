@@ -12,14 +12,14 @@ import { IconListDetails } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 import { ResourceIcon } from "~/components/Planet/ResourceIcon";
 import { SmallNumberHex } from "~/components/Hex/SmallNumberHex";
-import { PlanetTraitDot } from "~/components/Planet/PlanetTraitDot";
+import { PlanetTraitIcons } from "~/components/Planet/PlanetTraitIcons";
 import { PlanetStatsPill } from "~/components/Slice/PlanetStatsPill";
 import { TechIcon, techLabels } from "~/components/icons/TechIcon";
 import { LegendaryIcon } from "~/components/icons/LegendaryIcon";
-import { TradeStationIcon } from "~/components/icons/TradeStationIcon";
+import { SpaceStationIcon } from "~/components/icons/SpaceStationIcon";
 import { Wormhole } from "~/components/features/Wormhole";
-import { AnomalyImage } from "~/components/features/AnomalyImage";
-import { GravityRift } from "~/components/features/GravityRift";
+import { AnomalyIcon } from "~/components/icons/AnomalyIcon";
+import { anomalyDetails } from "~/data/anomalies";
 import type {
   Anomaly,
   PlanetTrait,
@@ -61,13 +61,7 @@ const wormholes: WormholeType[] = [
   "DELTA",
   "EPSILON",
 ];
-const anomalies: [Anomaly, string][] = [
-  ["ASTEROID_FIELD", "Asteroid field"],
-  ["NEBULA", "Nebula"],
-  ["SUPERNOVA", "Supernova"],
-  ["GRAVITY_RIFT", "Gravity rift"],
-  ["ENTROPIC_SCAR", "Entropic scar"],
-];
+const anomalies = Object.keys(anomalyDetails) as Anomaly[];
 
 export function TileLegend() {
   const [opened, { open, close }] = useDisclosure();
@@ -105,23 +99,25 @@ export function TileLegend() {
               {traits.map((trait) => (
                 <Entry
                   key={trait}
-                  symbol={<PlanetTraitDot traits={[trait]} showHelp={false} />}
+                  symbol={
+                    <PlanetTraitIcons traits={[trait]} showHelp={false} />
+                  }
                 >
                   {trait[0] + trait.slice(1).toLowerCase()} planet
                 </Entry>
               ))}
-              <Entry symbol={<PlanetTraitDot showHelp={false} />}>
-                No planet trait (gray)
+              <Entry symbol={<PlanetTraitIcons showHelp={false} />}>
+                No planet trait
               </Entry>
               <Entry
                 symbol={
-                  <PlanetTraitDot
+                  <PlanetTraitIcons
                     traits={["INDUSTRIAL", "CULTURAL"]}
                     showHelp={false}
                   />
                 }
               >
-                Multiple traits (split colors)
+                Hybrid planet (both traits)
               </Entry>
             </SimpleGrid>
           </Stack>
@@ -156,33 +152,25 @@ export function TileLegend() {
               <Entry symbol={<LegendaryIcon size={26} showHelp={false} />}>
                 Legendary planet
               </Entry>
-              <Entry symbol={<TradeStationIcon size={26} showHelp={false} />}>
-                Trade station
+              <Entry symbol={<SpaceStationIcon size={26} showHelp={false} />}>
+                Space station
               </Entry>
-              {anomalies.map(([anomaly, label]) => (
-                <Entry
-                  key={anomaly}
-                  symbol={
-                    anomaly === "GRAVITY_RIFT" ? (
-                      <Box style={{ transform: "scale(0.65)" }}>
-                        <GravityRift />
-                      </Box>
-                    ) : (
-                      <svg
-                        width={40}
-                        height={40}
-                        viewBox="-20 -20 40 40"
-                        aria-hidden
-                      >
-                        <AnomalyImage anomaly={anomaly} radius={20} />
-                      </svg>
-                    )
-                  }
-                >
-                  {label}
-                </Entry>
-              ))}
             </SimpleGrid>
+          </Stack>
+          <Stack gap="xs">
+            <Text fw={700}>Anomalies</Text>
+            {anomalies.map((anomaly) => (
+              <Entry
+                key={anomaly}
+                symbol={
+                  <AnomalyIcon anomaly={anomaly} size={40} showHelp={false} />
+                }
+              >
+                <b>{anomalyDetails[anomaly].label}</b>
+                {" — "}
+                {anomalyDetails[anomaly].description}
+              </Entry>
+            ))}
           </Stack>
           <Stack gap="xs">
             <Text fw={700}>Tile statistics</Text>

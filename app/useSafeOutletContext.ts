@@ -24,11 +24,9 @@ export function useSafeOutletContext(): DraftOrderContext {
     adminMode: false,
     pickForAnyone: false,
     originalArt: true,
-    accessibleColors: false,
     setOriginalArt: () => {},
     setAdminMode: () => {},
     setPickForAnyone: () => {},
-    setAccessibleColors: () => {},
     ...tileArt,
   };
 }

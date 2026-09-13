@@ -1,0 +1,37 @@
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+}
+
+.zoomControls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.zoomControls button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.viewport {
+  overflow: auto;
+  max-width: 100%;
+  max-height: min(75dvh, 950px);
+  scroll-padding: 16px;
+}
+
+.canvas {
+  position: relative;
+  padding: 16px;
+}
+
+@media (max-width: 36em) {
+  .canvas {
+    padding: 8px;
+  }
+}

@@ -2,7 +2,7 @@ import { Badge, Box, Group, SimpleGrid, Stack, Text } from "@mantine/core";
 import { IconRocket } from "@tabler/icons-react";
 import { appPath } from "~/utils/appUrl";
 import type { BagDraftItem } from "./definitions";
-import { unitIconPath, unitLabel, type KingUnitColor } from "./visuals";
+import { unitIconPath, unitLabel, type UnitColor } from "./visuals";
 import { BagItemDescription } from "./BagItemDescription";
 import classes from "./BagComponents.module.css";
 
@@ -13,7 +13,7 @@ export function UnitSymbol({
 }: {
   unit: string;
   size?: number;
-  color?: KingUnitColor;
+  color?: UnitColor;
 }) {
   const path = unitIconPath(unit, color);
   return path ? (
@@ -40,7 +40,7 @@ export function UnitDetails({
   unit: NonNullable<BagDraftItem["unit"]>;
   name?: string;
   showText?: boolean;
-  color?: KingUnitColor;
+  color?: UnitColor;
 }) {
   return (
     <Stack

@@ -18,6 +18,7 @@ import {
 } from "~/data/systemData";
 import { PlanetSummary } from "~/components/Planet/PlanetSummary";
 import { Wormhole } from "~/components/features/Wormhole";
+import { AnomalyDescription } from "~/components/features/AnomalyDescription";
 import { FactionId, System, SystemId } from "~/types";
 import { useArrowFocus } from "~/hooks/useArrowFocus";
 import { factions } from "~/data/factionData";
@@ -349,14 +350,7 @@ export function PlanetFinderBase({
                     ))}
 
                     {system.anomalies.map((anomaly) => (
-                      <Badge
-                        key={anomaly}
-                        size="xs"
-                        color="orange"
-                        variant="light"
-                      >
-                        {anomaly.replace(/_/g, " ")}
-                      </Badge>
+                      <AnomalyDescription key={anomaly} anomaly={anomaly} />
                     ))}
 
                     {system.planets.length === 0 && (

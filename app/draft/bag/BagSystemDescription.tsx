@@ -1,6 +1,8 @@
 import { Badge, Group, Stack, Text } from "@mantine/core";
 import { PlanetSummary } from "~/components/Planet/PlanetSummary";
 import { Wormhole } from "~/components/features/Wormhole";
+import { AnomalyDescription } from "~/components/features/AnomalyDescription";
+import { anomalyFromLabel } from "~/data/anomalies";
 import { systemData } from "~/data/systemData";
 import type {
   Planet,
@@ -9,13 +11,13 @@ import type {
   Wormhole as WormholeType,
 } from "~/types";
 import { BagItemDescription } from "./BagItemDescription";
+import { GameTerms } from "~/components/GameTerm";
 import classes from "./BagComponents.module.css";
 
 const planetLine = /^(.+?) \((\d+)\/(\d+)\)(?:\s+—\s+(.*))?$/;
 const planetMetadata =
   /^(Cultural|Hazardous|Industrial|Faction|(?:Biotic|Cybernetic|Propulsion|Warfare) technology specialty)(?:;\s*|$)/i;
 const wormholeLine = /^(alpha|beta|gamma|delta|epsilon) wormhole$/i;
-const anomalyLine = /^(Asteroid field|Nebula|Supernova|Gravity rift|Scar)$/i;
 const normalizeName = (name: string) =>
   name.toLowerCase().replace(/[^a-z0-9]/g, "");
 const databasePlanets = Object.values(systemData).flatMap(
@@ -86,7 +88,7 @@ export function BagSystemDescription({
     if (planet) planets.push(planet);
     else if (
       wormholeLine.test(line) ||
-      anomalyLine.test(line) ||
+      anomalyFromLabel(line) ||
       line === "Empty system"
     )
       features.push(line);
@@ -113,7 +115,7 @@ export function BagSystemDescription({
               {explanation && (
                 <span className={classes.planetExplanation}>
                   {" "}
-                  — {explanation}
+                  — <GameTerms>{explanation}</GameTerms>
                 </span>
               )}
             </Text>
@@ -129,6 +131,7 @@ export function BagSystemDescription({
         >
           {features.map((feature) => {
             const wormhole = feature.match(wormholeLine);
+            const anomaly = anomalyFromLabel(feature);
             return wormhole ? (
               <Group key={feature} gap={6} wrap="nowrap">
                 <Wormhole
@@ -137,10 +140,12 @@ export function BagSystemDescription({
                 />
                 <Text size="sm">{feature}</Text>
               </Group>
+            ) : anomaly ? (
+              <AnomalyDescription key={feature} anomaly={anomaly} />
             ) : (
               <Badge
                 key={feature}
-                color={anomalyLine.test(feature) ? "orange" : "gray"}
+                color="gray"
                 variant="light"
                 className={classes.trait}
               >

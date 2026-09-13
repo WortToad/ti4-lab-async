@@ -43,6 +43,8 @@ import { PlanetFinder } from "./PlanetFinder";
 import { useSafeOutletContext } from "~/useSafeOutletContext";
 import { LabArtToggleButton } from "~/components/LabArtToggleButton";
 import { StartingUnitsTable } from "~/components/StartingUnitsTable";
+import { playerUnitColor } from "~/draft/bag/visuals";
+import { mahactKingReferences } from "~/data/mahactKingReferences";
 import { FactionIcon } from "~/components/icons/FactionIcon";
 import { PlayerChip } from "./PlayerChip";
 import { factions as allFactions } from "~/data/factionData";
@@ -285,6 +287,13 @@ export function FinalizedDraft() {
                         <Table.Td>
                           <StartingUnitsTable
                             fleetComposition={fleetComposition}
+                            color={
+                              playerUnitColor(player.factionColor) ??
+                              (player.faction
+                                ? mahactKingReferences[player.faction]
+                                    ?.unitColor
+                                : undefined)
+                            }
                             showTitle={false}
                           />
                         </Table.Td>

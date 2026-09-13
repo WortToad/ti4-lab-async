@@ -3,6 +3,7 @@ import { Text } from "@mantine/core";
 import { PlanetValueIcons } from "~/components/Planet/PlanetValueIcons";
 import { Wormhole } from "~/components/features/Wormhole";
 import { TechIcon } from "~/components/icons/TechIcon";
+import { GameTerms } from "~/components/GameTerm";
 import type { TechSpecialty, Wormhole as WormholeType } from "~/types";
 import classes from "./BagComponents.module.css";
 
@@ -46,7 +47,7 @@ export function BagItemDescription({
 
         return (
           <Fragment key={match.index}>
-            {preceding}
+            <GameTerms>{preceding}</GameTerms>
             {prerequisites ? (
               <>
                 {prerequisiteLabel}
@@ -90,7 +91,7 @@ export function BagItemDescription({
           </Fragment>
         );
       })}
-      {description.slice(previousEnd)}
+      <GameTerms>{description.slice(previousEnd)}</GameTerms>
     </Text>
   );
 }

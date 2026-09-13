@@ -22,6 +22,7 @@ import { FactionIcon } from "~/components/icons/FactionIcon";
 import { TechIcon } from "~/components/icons/TechIcon";
 import { SystemTileCard } from "~/components/SystemTileCard";
 import { TileLegend } from "~/components/TileLegend";
+import { GameTerm, GameTerms } from "~/components/GameTerm";
 import { factions } from "~/data/factionData";
 import { mahactKingReferences } from "~/data/mahactKingReferences";
 import {
@@ -38,7 +39,7 @@ import {
   type BagItemCategory,
 } from "./definitions";
 import type { BagVariant } from "./types";
-import { getBagFaction, unitLabel } from "./visuals";
+import { getBagFaction, unitLabel, type UnitColor } from "./visuals";
 import { BagItemDescription } from "./BagItemDescription";
 import { BagSystemDescription } from "./BagSystemDescription";
 import { UnitDetails, UnitSymbol } from "./UnitDetails";
@@ -108,12 +109,18 @@ function ComponentIcon({ item }: { item: BagDraftItem }) {
   return <Icon size={30} stroke={1.5} aria-hidden />;
 }
 
-function Fleet({ fleet }: { fleet: NonNullable<BagDraftItem["fleet"]> }) {
+function Fleet({
+  fleet,
+  color,
+}: {
+  fleet: NonNullable<BagDraftItem["fleet"]>;
+  color?: UnitColor;
+}) {
   return (
     <SimpleGrid type="container" cols={{ base: 2, "30rem": 3 }} spacing="xs">
       {fleet.map(({ unit, count }) => (
         <Group key={unit} gap="xs" wrap="nowrap" className={classes.fleetUnit}>
-          <UnitSymbol unit={unit} />
+          <UnitSymbol unit={unit} color={color} />
           <div>
             <Text fw={700} size="lg" lh={1.1}>
               {count}
@@ -135,6 +142,7 @@ export function BagItemCard({
   disabled,
   onSelect,
   note,
+  unitColor,
 }: {
   item: BagDraftItem;
   variant?: BagVariant;
@@ -142,6 +150,7 @@ export function BagItemCard({
   disabled?: boolean;
   onSelect?: (selected: boolean) => void;
   note?: string;
+  unitColor?: UnitColor;
 }) {
   const [opened, { open, close }] = useDisclosure();
   const { originalArt } = useSafeOutletContext();
@@ -175,7 +184,7 @@ export function BagItemCard({
         </Box>
         <Group gap={6} className={classes.category}>
           <Text size="xs" c="dimmed" tt="uppercase" fw={600} lts="0.04em">
-            {bagCategoryLabel(item.category, variant)}
+            <GameTerms>{bagCategoryLabel(item.category, variant)}</GameTerms>
           </Text>
           {item.technologyTypes?.map((type) =>
             techTypes[type.toLowerCase()] ? (
@@ -193,7 +202,7 @@ export function BagItemCard({
             checked={selected ?? false}
             disabled={disabled}
             onChange={(event) => onSelect(event.currentTarget.checked)}
-            label={item.name}
+            label={<GameTerms showHelp={false}>{item.name}</GameTerms>}
             classNames={{ label: classes.name }}
             styles={{
               body: { alignItems: "center" },
@@ -203,7 +212,7 @@ export function BagItemCard({
           />
         ) : (
           <Text className={`${classes.name} ${classes.selection}`}>
-            {item.name}
+            <GameTerms>{item.name}</GameTerms>
           </Text>
         )}
         {item.factionName && item.factionName !== item.name && (
@@ -241,11 +250,13 @@ export function BagItemCard({
             {order.padStart(2, "0")}
           </Text>
         )}
-        {item.fleet && <Fleet fleet={item.fleet} />}
+        {item.fleet && (
+          <Fleet fleet={item.fleet} color={king?.unitColor ?? unitColor} />
+        )}
         {king ? (
           <Stack gap="sm">
             <Text size="sm" fw={600}>
-              {king.commodities} commodities
+              <GameTerm term="commodities">{`${king.commodities} commodities`}</GameTerm>
             </Text>
             <MahactKingUnits reference={king} />
           </Stack>
@@ -256,7 +267,11 @@ export function BagItemCard({
           />
         ) : item.unit && !item.originalDescription ? (
           <>
-            <UnitDetails unit={item.unit} showText={item.category !== "TECH"} />
+            <UnitDetails
+              unit={item.unit}
+              showText={item.category !== "TECH"}
+              color={unitColor}
+            />
             {item.category === "TECH" && (
               <BagItemDescription description={item.description} />
             )}
@@ -266,7 +281,7 @@ export function BagItemCard({
         ) : null}
         {note && (
           <Text size="sm" className={classes.note}>
-            {note}
+            <GameTerms>{note}</GameTerms>
           </Text>
         )}
       </Stack>

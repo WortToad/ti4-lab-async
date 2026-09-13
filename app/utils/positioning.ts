@@ -126,6 +126,7 @@ export function getBoundedMapHeight(
 }
 
 export const calculateConcentricCircles = (length: number) => {
-  if (length > 37) return 4;
-  return 3;
+  // A complete hex grid has 1 + 3n(n + 1) tiles. Include every ring,
+  // including the editor's two- and five-ring layouts.
+  return Math.ceil((Math.sqrt(12 * Math.max(1, length) - 3) - 3) / 6);
 };

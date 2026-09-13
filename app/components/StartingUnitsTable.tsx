@@ -1,16 +1,20 @@
 import { List, SimpleGrid, Stack, Text } from "@mantine/core";
 import { FleetComposition } from "~/types";
+import { UnitSymbol } from "~/draft/bag/UnitDetails";
+import type { UnitColor } from "~/draft/bag/visuals";
 
 type Props = {
   fleetComposition: FleetComposition;
   title?: string;
   showTitle?: boolean;
+  color?: UnitColor;
 };
 
 export function StartingUnitsTable({
   fleetComposition,
   title = "Starting Units",
   showTitle = true,
+  color,
 }: Props) {
   const unitOrder = [
     { key: "flagship", name: "Flagship" },
@@ -38,9 +42,9 @@ export function StartingUnitsTable({
       } else {
         pluralized = count > 1 ? `${name}s` : name;
       }
-      return `${count} ${pluralized}`;
+      return { key, label: `${count} ${pluralized}` };
     })
-    .filter((unit): unit is string => unit !== null);
+    .filter((unit) => unit !== null);
 
   const leftColumn = units.filter((_, idx) => idx % 2 === 0);
   const rightColumn = units.filter((_, idx) => idx % 2 === 1);
@@ -54,13 +58,23 @@ export function StartingUnitsTable({
       )}
       <SimpleGrid cols={2} spacing={4}>
         <List size="xs" spacing={2}>
-          {leftColumn.map((unit, idx) => (
-            <List.Item key={idx}>{unit}</List.Item>
+          {leftColumn.map((unit) => (
+            <List.Item
+              key={unit.key}
+              icon={<UnitSymbol unit={unit.key} size={24} color={color} />}
+            >
+              {unit.label}
+            </List.Item>
           ))}
         </List>
         <List size="xs" spacing={2}>
-          {rightColumn.map((unit, idx) => (
-            <List.Item key={idx}>{unit}</List.Item>
+          {rightColumn.map((unit) => (
+            <List.Item
+              key={unit.key}
+              icon={<UnitSymbol unit={unit.key} size={24} color={color} />}
+            >
+              {unit.label}
+            </List.Item>
           ))}
         </List>
       </SimpleGrid>

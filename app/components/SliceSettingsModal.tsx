@@ -315,8 +315,8 @@ export function SliceSettingsModal({
                   step={0.25}
                 />
                 <InlineDecimal
-                  label="Trade Station"
-                  tooltip="Bonus value added for trade station planets"
+                  label="Space station"
+                  tooltip="Bonus value added for space stations"
                   value={localSettings.tradeStationValue}
                   onChange={(v) => handleSettingChange("tradeStationValue", v)}
                 />

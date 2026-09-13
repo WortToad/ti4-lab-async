@@ -1,0 +1,1186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>TI4 cloned asset audit</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, sans-serif;
+        background: #071321;
+        color: #eaf2fa;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      main {
+        max-width: 1160px;
+        margin: auto;
+        padding: 40px 22px 70px;
+      }
+      h1 {
+        font-size: clamp(28px, 4vw, 42px);
+        letter-spacing: -0.04em;
+        margin: 8px 0 18px;
+      }
+      h2 {
+        font-size: 23px;
+        margin: 0;
+      }
+      h3 {
+        font-size: 18px;
+      }
+      p {
+        color: #b8cbdc;
+        max-width: 90ch;
+        line-height: 1.65;
+      }
+      a {
+        color: #70cbff;
+        text-underline-offset: 3px;
+      }
+      a:focus-visible,
+      summary:focus-visible {
+        outline: 3px solid #f0c43f;
+        outline-offset: 4px;
+      }
+      .eyebrow {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: #70cbff;
+      }
+      .intro {
+        border-bottom: 1px solid #2a4154;
+        padding-bottom: 24px;
+      }
+      .metrics {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin: 24px 0;
+      }
+      .metric {
+        background: #112638;
+        padding: 18px 22px;
+        border-radius: 10px;
+        min-width: 160px;
+      }
+      .metric strong {
+        display: block;
+        font-size: 30px;
+      }
+      .metric span {
+        font-size: 13px;
+        color: #b8cbdc;
+      }
+      section {
+        padding-top: 36px;
+      }
+      .section-heading {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .tag {
+        border: 1px solid #345a72;
+        border-radius: 100px;
+        color: #9ad7ee;
+        font-size: 12px;
+        padding: 4px 9px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 14px;
+      }
+      figure {
+        margin: 0;
+        background: #102335;
+        border: 1px solid #2a4154;
+        border-radius: 9px;
+        overflow: hidden;
+        min-width: 0;
+      }
+      .art {
+        height: 150px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0b1b29;
+      }
+      .art img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+      figcaption {
+        padding: 13px;
+        font-size: 14px;
+      }
+      small {
+        display: block;
+        color: #8faac0;
+        margin-top: 7px;
+      }
+      details {
+        font-size: 12px;
+        margin-top: 13px;
+        color: #a8c4d9;
+      }
+      details a {
+        display: block;
+        overflow-wrap: anywhere;
+        margin-top: 10px;
+        line-height: 1.5;
+      }
+      summary {
+        cursor: pointer;
+      }
+      table {
+        border-collapse: collapse;
+        width: min(100%, 560px);
+        margin: 18px 0;
+      }
+      th,
+      td {
+        text-align: left;
+        border-bottom: 1px solid #2a4154;
+        padding: 10px;
+      }
+      th {
+        color: #a8c4d9;
+      }
+      li {
+        line-height: 1.7;
+        margin: 8px 0;
+      }
+      .note {
+        border-left: 3px solid #f0c43f;
+        padding-left: 16px;
+      }
+      footer {
+        border-top: 1px solid #2a4154;
+        padding-top: 20px;
+        margin-top: 35px;
+        color: #8faac0;
+        font-size: 13px;
+      }
+      @media (max-width: 440px) {
+        main {
+          padding: 25px 16px;
+        }
+        .grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .art {
+          height: 115px;
+          padding: 12px;
+        }
+        .metric {
+          min-width: 0;
+          flex: 1;
+          padding: 14px;
+        }
+        .metric strong {
+          font-size: 25px;
+        }
+        .metric span {
+          font-size: 12px;
+        }
+        figcaption {
+          font-size: 13px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="intro">
+        <div class="eyebrow">Local repository review · 13 September 2026</div>
+        <h1>Useful assets we already have access to</h1>
+        <p>
+          Compared the TI4 bot and web clones with our current public assets,
+          draft catalog and display components. This is a shortlist for choosing
+          the next changes; production assets and application code are unchanged
+          by this audit.
+        </p>
+        <div class="metrics">
+          <div class="metric">
+            <strong>359</strong><span>additional original card fronts</span>
+          </div>
+          <div class="metric">
+            <strong>92</strong><span>matching leader portraits</span>
+          </div>
+          <div class="metric">
+            <strong>8 × 11</strong><span>colored unit combinations</span>
+          </div>
+        </div>
+        <p>
+          Start with shaped planet traits, Twilight’s Fall category glyphs, and
+          speaker/commodity symbols. The next larger improvement is expanding
+          Original card popups.
+        </p>
+      </header>
+      <section>
+        <div class="section-heading">
+          <h2>Planet traits</h2>
+          <span class="tag">Strong candidate</span>
+        </div>
+        <p>
+          Distinct shapes would make cultural, industrial and hazardous planets
+          recognizable without relying only on dot color. Retain the mixed-trait
+          display and hover/tap labels. The bot has larger emoji versions; the
+          web clone has compact versions.
+        </p>
+        <div class="grid">
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/emojis/explore/Cultural.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/emojis/explore/Cultural.png"
+                alt="Cultural"
+            /></a>
+            <figcaption>
+              <strong>Cultural</strong><small>16.5 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/emojis/explore/Cultural.png"
+                  >TI4_map_generator_bot/src/main/resources/emojis/explore/Cultural.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/emojis/explore/Industrial.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/emojis/explore/Industrial.png"
+                alt="Industrial"
+            /></a>
+            <figcaption>
+              <strong>Industrial</strong><small>20.1 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/emojis/explore/Industrial.png"
+                  >TI4_map_generator_bot/src/main/resources/emojis/explore/Industrial.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/emojis/explore/Hazardous.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/emojis/explore/Hazardous.png"
+                alt="Hazardous"
+            /></a>
+            <figcaption>
+              <strong>Hazardous</strong><small>14.6 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/emojis/explore/Hazardous.png"
+                  >TI4_map_generator_bot/src/main/resources/emojis/explore/Hazardous.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../ti4_web_new/public/planet_attributes/pc_attribute_industrial.png"
+              ><img
+                loading="lazy"
+                src="../ti4_web_new/public/planet_attributes/pc_attribute_industrial.png"
+                alt="Compact industrial"
+            /></a>
+            <figcaption>
+              <strong>Compact industrial</strong><small>2.4 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../ti4_web_new/public/planet_attributes/pc_attribute_industrial.png"
+                  >ti4_web_new/public/planet_attributes/pc_attribute_industrial.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <div class="section-heading">
+          <h2>Twilight’s Fall categories</h2>
+          <span class="tag">Strong candidate</span>
+        </div>
+        <p>
+          Dedicated ability and genome glyphs plus the TI unit-upgrade symbol.
+          These could accompany the category labels on bag cards while keeping
+          the faction icon as the main identity. Our fallback currently uses
+          generic sparkles, DNA and rocket icons.
+        </p>
+        <div class="grid">
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/emojis/twilight_fall/tf_ability.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/emojis/twilight_fall/tf_ability.png"
+                alt="Ability"
+            /></a>
+            <figcaption>
+              <strong>Ability</strong><small>12.7 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/emojis/twilight_fall/tf_ability.png"
+                  >TI4_map_generator_bot/src/main/resources/emojis/twilight_fall/tf_ability.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/emojis/twilight_fall/tf_genome.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/emojis/twilight_fall/tf_genome.png"
+                alt="Genome"
+            /></a>
+            <figcaption>
+              <strong>Genome</strong><small>5.1 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/emojis/twilight_fall/tf_genome.png"
+                  >TI4_map_generator_bot/src/main/resources/emojis/twilight_fall/tf_genome.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/emojis/tech/UnitUpgradeTech.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/emojis/tech/UnitUpgradeTech.png"
+                alt="Unit upgrade"
+            /></a>
+            <figcaption>
+              <strong>Unit upgrade</strong><small>4.8 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/emojis/tech/UnitUpgradeTech.png"
+                  >TI4_map_generator_bot/src/main/resources/emojis/tech/UnitUpgradeTech.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <div class="section-heading">
+          <h2>Speaker and economy</h2>
+          <span class="tag">Strong candidate</span>
+        </div>
+        <p>
+          The speaker token fits the speaker/first-seat choice. Commodity and
+          trade-good icons would clarify commodity counts on king and faction
+          cards; they are separate assets and should retain distinct labels.
+        </p>
+        <div class="grid">
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/emojis/components/SpeakerToken.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/emojis/components/SpeakerToken.png"
+                alt="Speaker"
+            /></a>
+            <figcaption>
+              <strong>Speaker</strong><small>8.1 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/emojis/components/SpeakerToken.png"
+                  >TI4_map_generator_bot/src/main/resources/emojis/components/SpeakerToken.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a class="art" href="../ti4_web_new/public/comms.png"
+              ><img
+                loading="lazy"
+                src="../ti4_web_new/public/comms.png"
+                alt="Commodities"
+            /></a>
+            <figcaption>
+              <strong>Commodities</strong><small>3.0 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a href="../ti4_web_new/public/comms.png"
+                  >ti4_web_new/public/comms.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a class="art" href="../ti4_web_new/public/tg.png"
+              ><img
+                loading="lazy"
+                src="../ti4_web_new/public/tg.png"
+                alt="Trade goods"
+            /></a>
+            <figcaption>
+              <strong>Trade goods</strong><small>3.2 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a href="../ti4_web_new/public/tg.png"
+                  >ti4_web_new/public/tg.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a class="art" href="../ti4_web_new/public/pnicon.png"
+              ><img
+                loading="lazy"
+                src="../ti4_web_new/public/pnicon.png"
+                alt="Promissory note"
+            /></a>
+            <figcaption>
+              <strong>Promissory note</strong><small>0.6 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a href="../ti4_web_new/public/pnicon.png"
+                  >ti4_web_new/public/pnicon.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <div class="section-heading">
+          <h2>Wormholes</h2>
+          <span class="tag">Compare before replacing</span>
+        </div>
+        <p>
+          The bot has complete alpha, beta, gamma, delta and epsilon tokens,
+          including the surrounding swirl. Our small icons are simplified
+          letter-and-ring drawings. Its epsilon token is yellow; our current
+          epsilon is red. Keep the compact option where the original raster
+          token would become hard to read.
+        </p>
+        <div class="grid">
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/tokens/token_whalpha.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/tokens/token_whalpha.png"
+                alt="Alpha"
+            /></a>
+            <figcaption>
+              <strong>Alpha</strong><small>10.1 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/tokens/token_whalpha.png"
+                  >TI4_map_generator_bot/src/main/resources/tokens/token_whalpha.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/tokens/token_whbeta.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/tokens/token_whbeta.png"
+                alt="Beta"
+            /></a>
+            <figcaption>
+              <strong>Beta</strong><small>9.1 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/tokens/token_whbeta.png"
+                  >TI4_map_generator_bot/src/main/resources/tokens/token_whbeta.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/tokens/token_whgamma.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/tokens/token_whgamma.png"
+                alt="Gamma"
+            /></a>
+            <figcaption>
+              <strong>Gamma</strong><small>10.3 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/tokens/token_whgamma.png"
+                  >TI4_map_generator_bot/src/main/resources/tokens/token_whgamma.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/tokens/token_whdelta.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/tokens/token_whdelta.png"
+                alt="Delta"
+            /></a>
+            <figcaption>
+              <strong>Delta</strong><small>10.2 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/tokens/token_whdelta.png"
+                  >TI4_map_generator_bot/src/main/resources/tokens/token_whdelta.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/tokens/token_whepsilon.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/tokens/token_whepsilon.png"
+                alt="Epsilon"
+            /></a>
+            <figcaption>
+              <strong>Epsilon</strong><small>10.3 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/tokens/token_whepsilon.png"
+                  >TI4_map_generator_bot/src/main/resources/tokens/token_whepsilon.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <div class="section-heading">
+          <h2>Leader portraits and roles</h2>
+          <span class="tag">Strong candidate</span>
+        </div>
+        <p>
+          The web clone contains 99 portrait files totaling 843 KiB; 92 directly
+          match our catalog IDs: 32 agents, 30 commanders and 30 heroes.
+          Portraits can supplement faction identity in leader cards. The bot
+          also has generic I / II / III role symbols. Keep Twilight’s Fall
+          genome art for genome cards.
+        </p>
+        <div class="grid">
+          <figure>
+            <a
+              class="art"
+              href="../ti4_web_new/public/leaders/arborecagent.webp"
+              ><img
+                loading="lazy"
+                src="../ti4_web_new/public/leaders/arborecagent.webp"
+                alt="Letani Ospha portrait"
+            /></a>
+            <figcaption>
+              <strong>Letani Ospha portrait</strong><small>9.7 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a href="../ti4_web_new/public/leaders/arborecagent.webp"
+                  >ti4_web_new/public/leaders/arborecagent.webp</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../ti4_web_new/public/leaders/arboreccommander.webp"
+              ><img
+                loading="lazy"
+                src="../ti4_web_new/public/leaders/arboreccommander.webp"
+                alt="Dirzuga Rophal portrait"
+            /></a>
+            <figcaption>
+              <strong>Dirzuga Rophal portrait</strong><small>9.6 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a href="../ti4_web_new/public/leaders/arboreccommander.webp"
+                  >ti4_web_new/public/leaders/arboreccommander.webp</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a class="art" href="../ti4_web_new/public/leaders/arborechero.webp"
+              ><img
+                loading="lazy"
+                src="../ti4_web_new/public/leaders/arborechero.webp"
+                alt="Letani Miasmiala portrait"
+            /></a>
+            <figcaption>
+              <strong>Letani Miasmiala portrait</strong><small>7.6 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a href="../ti4_web_new/public/leaders/arborechero.webp"
+                  >ti4_web_new/public/leaders/arborechero.webp</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/emojis/leaders/Agent.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/emojis/leaders/Agent.png"
+                alt="Agent role"
+            /></a>
+            <figcaption>
+              <strong>Agent role</strong><small>1.5 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/emojis/leaders/Agent.png"
+                  >TI4_map_generator_bot/src/main/resources/emojis/leaders/Agent.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/emojis/leaders/Commander.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/emojis/leaders/Commander.png"
+                alt="Commander role"
+            /></a>
+            <figcaption>
+              <strong>Commander role</strong><small>1.5 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/emojis/leaders/Commander.png"
+                  >TI4_map_generator_bot/src/main/resources/emojis/leaders/Commander.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/emojis/leaders/Hero.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/emojis/leaders/Hero.png"
+                alt="Hero role"
+            /></a>
+            <figcaption>
+              <strong>Hero role</strong><small>1.5 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/emojis/leaders/Hero.png"
+                  >TI4_map_generator_bot/src/main/resources/emojis/leaders/Hero.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <div class="section-heading">
+          <h2>Other colored units</h2>
+          <span class="tag">Useful for fleet displays</span>
+        </div>
+        <p>
+          All 11 standard unit types exist in each of the eight king colors. We
+          already imported the flagship and mech pairs; carriers, cruisers,
+          dreadnoughts, destroyers, fighters, infantry, PDS, space docks and war
+          suns can use the same approach. Apply a color only when the player or
+          king color is known.
+        </p>
+        <div class="grid">
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/units/blu_cv.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/units/blu_cv.png"
+                alt="Blue carrier"
+            /></a>
+            <figcaption>
+              <strong>Blue carrier</strong><small>10.4 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/units/blu_cv.png"
+                  >TI4_map_generator_bot/src/main/resources/units/blu_cv.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/units/red_dn.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/units/red_dn.png"
+                alt="Red dreadnought"
+            /></a>
+            <figcaption>
+              <strong>Red dreadnought</strong><small>11.7 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/units/red_dn.png"
+                  >TI4_map_generator_bot/src/main/resources/units/red_dn.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/units/grn_gf.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/units/grn_gf.png"
+                alt="Green infantry"
+            /></a>
+            <figcaption>
+              <strong>Green infantry</strong><small>5.7 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/units/grn_gf.png"
+                  >TI4_map_generator_bot/src/main/resources/units/grn_gf.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/units/ppl_ws.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/units/ppl_ws.png"
+                alt="Purple war sun"
+            /></a>
+            <figcaption>
+              <strong>Purple war sun</strong><small>9.1 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/units/ppl_ws.png"
+                  >TI4_map_generator_bot/src/main/resources/units/ppl_ws.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <div class="section-heading">
+          <h2>Original card art</h2>
+          <span class="tag">Largest content gap</span>
+        </div>
+        <p>
+          These are existing imageURL references in bot JSON, resolved to files
+          in the clone and matched to our catalog IDs. Our importer currently
+          limits ordinary image imports mostly to unit upgrades, plus Twilight’s
+          Fall cards. Extending it could provide Original card popups for many
+          more entries. Preserve catalog text and errata as the active rules.
+        </p>
+        <div class="grid">
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/hover_images/leaders/pok/agents/arborecagent.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/hover_images/leaders/pok/agents/arborecagent.png"
+                alt="Letani Ospha — original agent"
+            /></a>
+            <figcaption>
+              <strong>Letani Ospha — original agent</strong
+              ><small>532.2 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/hover_images/leaders/pok/agents/arborecagent.png"
+                  >TI4_map_generator_bot/src/main/resources/hover_images/leaders/pok/agents/arborecagent.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/hover_images/techs/faction/aerie_hololattice.jpg"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/hover_images/techs/faction/aerie_hololattice.jpg"
+                alt="Aerie Hololattice — technology"
+            /></a>
+            <figcaption>
+              <strong>Aerie Hololattice — technology</strong
+              ><small>171.9 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/hover_images/techs/faction/aerie_hololattice.jpg"
+                  >TI4_map_generator_bot/src/main/resources/hover_images/techs/faction/aerie_hololattice.jpg</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/hover_images/breakthrough/arborecbt.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/hover_images/breakthrough/arborecbt.png"
+                alt="Psychospore — breakthrough"
+            /></a>
+            <figcaption>
+              <strong>Psychospore — breakthrough</strong
+              ><small>283.3 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/hover_images/breakthrough/arborecbt.png"
+                  >TI4_map_generator_bot/src/main/resources/hover_images/breakthrough/arborecbt.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/hover_images/units/pok/mechs/letani_behemoth.jpg"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/hover_images/units/pok/mechs/letani_behemoth.jpg"
+                alt="Letani Behemoth — mech"
+            /></a>
+            <figcaption>
+              <strong>Letani Behemoth — mech</strong><small>145.5 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/hover_images/units/pok/mechs/letani_behemoth.jpg"
+                  >TI4_map_generator_bot/src/main/resources/hover_images/units/pok/mechs/letani_behemoth.jpg</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <div class="section-heading">
+          <h2>Card backs and source badges</h2>
+          <span class="tag">Optional polish</span>
+        </div>
+        <p>
+          Twilight’s Fall card backs are available for any future concealed-card
+          or deck views. Expansion badges could accompany the source labels
+          already present in card footers. These are less urgent than improving
+          existing symbols and reference popups.
+        </p>
+        <div class="grid">
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/player_area/cardback_tf_ability.jpg"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/player_area/cardback_tf_ability.jpg"
+                alt="Ability card back"
+            /></a>
+            <figcaption>
+              <strong>Ability card back</strong><small>181.8 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/player_area/cardback_tf_ability.jpg"
+                  >TI4_map_generator_bot/src/main/resources/player_area/cardback_tf_ability.jpg</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/emojis/cards/TF_Genome_Card.jpg"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/emojis/cards/TF_Genome_Card.jpg"
+                alt="Genome card back"
+            /></a>
+            <figcaption>
+              <strong>Genome card back</strong><small>206.2 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/emojis/cards/TF_Genome_Card.jpg"
+                  >TI4_map_generator_bot/src/main/resources/emojis/cards/TF_Genome_Card.jpg</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/emojis/sources/TI4BaseGame.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/emojis/sources/TI4BaseGame.png"
+                alt="Base game"
+            /></a>
+            <figcaption>
+              <strong>Base game</strong><small>105.0 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/emojis/sources/TI4BaseGame.png"
+                  >TI4_map_generator_bot/src/main/resources/emojis/sources/TI4BaseGame.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/emojis/sources/PoK.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/emojis/sources/PoK.png"
+                alt="Prophecy of Kings"
+            /></a>
+            <figcaption>
+              <strong>Prophecy of Kings</strong><small>7.8 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/emojis/sources/PoK.png"
+                  >TI4_map_generator_bot/src/main/resources/emojis/sources/PoK.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/emojis/sources/ThundersEdgeIcon.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/emojis/sources/ThundersEdgeIcon.png"
+                alt="Thunder’s Edge"
+            /></a>
+            <figcaption>
+              <strong>Thunder’s Edge</strong><small>20.3 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/emojis/sources/ThundersEdgeIcon.png"
+                  >TI4_map_generator_bot/src/main/resources/emojis/sources/ThundersEdgeIcon.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+          <figure>
+            <a
+              class="art"
+              href="../TI4_map_generator_bot/src/main/resources/emojis/sources/DiscordantStars.png"
+              ><img
+                loading="lazy"
+                src="../TI4_map_generator_bot/src/main/resources/emojis/sources/DiscordantStars.png"
+                alt="Discordant Stars"
+            /></a>
+            <figcaption>
+              <strong>Discordant Stars</strong><small>14.2 KiB</small>
+              <details>
+                <summary>Source file</summary>
+                <a
+                  href="../TI4_map_generator_bot/src/main/resources/emojis/sources/DiscordantStars.png"
+                  >TI4_map_generator_bot/src/main/resources/emojis/sources/DiscordantStars.png</a
+                >
+              </details>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <h2>Verified original-card coverage</h2>
+        <p>
+          Each count is a catalog entry without an imagePath whose bot model
+          imageURL resolves to a local file. All 359 files are distinct, and
+          none are already bundled byte-for-byte in public. Counts include the
+          complete catalog, including errata and substitution entries; they are
+          not counts for a single draft pool.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Catalog category</th>
+              <th>Additional fronts</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Agent</td>
+              <td>32</td>
+            </tr>
+            <tr>
+              <td>Commander</td>
+              <td>30</td>
+            </tr>
+            <tr>
+              <td>Hero</td>
+              <td>30</td>
+            </tr>
+            <tr>
+              <td>Tech</td>
+              <td>92</td>
+            </tr>
+            <tr>
+              <td>Mech</td>
+              <td>64</td>
+            </tr>
+            <tr>
+              <td>Flagship</td>
+              <td>64</td>
+            </tr>
+            <tr>
+              <td>Breakthrough</td>
+              <td>47</td>
+            </tr>
+            <tr>
+              <th>Total</th>
+              <th>359</th>
+            </tr>
+          </tbody>
+        </table>
+        <p class="note">
+          The source originals total about 106 MiB. Import the relevant subset
+          and serve optimized images lazily rather than copying the complete 346
+          MiB hover_images directory. These are full reference cards, not
+          transparent illustrations that can directly replace the small ship
+          icons.
+        </p>
+      </section>
+      <section>
+        <h2>What to retain or treat separately</h2>
+        <ul>
+          <li>
+            Our existing faction reference cards already reproduce much of the
+            quick_reference artwork. The inspected Arborec card is visually the
+            same TE design at a different resolution. The bot also has 61 PoK
+            and 67 TE reference sheets; match the expansion before choosing
+            replacements.
+          </li>
+          <li>
+            Keep faction icons, existing tile art and the newly imported
+            resource / king assets. No blanket replacement is needed.
+          </li>
+          <li>
+            The web app often loads images through images.asyncti4.com and
+            references generated sprite sheets. Reuse local bot files for this
+            app; its sprite CSS is not a standalone local asset bundle.
+          </li>
+          <li>
+            Ordinary faction abilities, promissory notes, plots and monuments
+            did not yield additional card fronts through the direct imageURL
+            matching used for this audit. This does not prove artwork is absent
+            under every other name.
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h2>Implementation references</h2>
+        <ul>
+          <li>
+            <a href="../app/draft/bag/BagComponents.tsx"
+              >Card categories and current imagery</a
+            >
+          </li>
+          <li>
+            <a href="../app/components/Planet/PlanetTraitDot.tsx"
+              >Current trait dots</a
+            >
+          </li>
+          <li>
+            <a href="../app/components/features/Wormhole.tsx"
+              >Current wormhole drawings</a
+            >
+          </li>
+          <li>
+            <a href="../scripts/import-bag-catalog.py"
+              >Original-card import filter</a
+            >
+          </li>
+          <li>
+            <a
+              href="../ti4_web_new/src/domains/player/components/Leader/CompactLeader.tsx"
+              >Web clone’s portrait usage</a
+            >
+          </li>
+          <li>
+            <a
+              href="../ti4_web_new/src/shared/ui/Unit/components/BaseUnitImage.tsx"
+              >Web clone’s colored-unit lookup</a
+            >
+          </li>
+        </ul>
+      </section>
+      <footer>
+        Preview images link directly to the two local clone directories beside
+        this repository’s docs folder. Click an image to view its original file.
+        This review copies no artwork into public and adds no network
+        dependencies.
+      </footer>
+    </main>
+  </body>
+</html>

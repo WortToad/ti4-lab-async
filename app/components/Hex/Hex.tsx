@@ -47,6 +47,7 @@ export function Hex({
     <>
       <div style={{ position: "absolute", ...style }}>
         <svg
+          style={{ display: "block" }}
           width={2 * radius}
           height={2 * radius}
           viewBox={`-${radius} -${radius} ${2 * radius} ${2 * radius}`}

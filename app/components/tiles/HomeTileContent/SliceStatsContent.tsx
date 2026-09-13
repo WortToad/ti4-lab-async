@@ -2,6 +2,8 @@ import { Group, Stack, Text } from "@mantine/core";
 import type { CoreSliceData } from "~/hooks/useCoreSliceValues";
 import { SliceValuePopover } from "../../Slice/SliceValuePopover";
 import type { SliceStats } from "~/mapgen/utils/sliceScoring";
+import { useContext } from "react";
+import { MapContext } from "~/contexts/MapContext";
 
 const seatLabel = ["Speaker", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
 
@@ -24,6 +26,27 @@ export function SliceStatsContent({
   coreSliceData,
   fontSize,
 }: Props) {
+  const { radius } = useContext(MapContext);
+
+  // Overview tiles on a phone cannot fit the full stats stack. Zooming in
+  // restores the detailed numbers and breakdown control as the tiles grow.
+  if (radius < 40) {
+    return (
+      <Stack align="center" gap={2}>
+        {seat !== undefined && (
+          <Text fz={Math.min(12, radius * 0.45)} c="white" lh={1.1}>
+            {seatLabel[seat]}
+          </Text>
+        )}
+        {sliceValue !== undefined && (
+          <Text fz={Math.min(16, radius * 0.6)} fw="bold" c="yellow.5" lh={1.1}>
+            {sliceValue.toFixed(1)}
+          </Text>
+        )}
+      </Stack>
+    );
+  }
+
   return (
     <Stack align="center" gap={0} style={{ fontSize }}>
       {seat !== undefined && (
@@ -32,7 +55,7 @@ export function SliceStatsContent({
         </Text>
       )}
       {sliceValue !== undefined && (
-        <Group gap={4} align="center">
+        <Group gap={4} align="center" wrap="nowrap">
           <Text fz={{ base: "sm", xs: "lg" }} fw="bold" c="yellow.5" lh={1.1}>
             {sliceValue.toFixed(1)}
           </Text>

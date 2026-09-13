@@ -6,6 +6,7 @@ import { Server } from "socket.io";
 import "dotenv/config";
 import { appPath, normalizeBasePath } from "~/utils/appUrl.js";
 import { initEnv } from "~/env.server.js";
+import { SEARCH_ROBOTS } from "~/utils/searchIndexing.js";
 import {
   metricsMiddleware,
   observeSocketConnection,
@@ -24,6 +25,21 @@ startEventLoopLagMonitor();
 const app = express();
 const basePath = normalizeBasePath(process.env.TI4_BASE_PATH);
 const httpServer = createServer(app);
+
+// Apply before static files, redirects, API handlers and error responses.
+app.use((_req, res, next) => {
+  res.setHeader("X-Robots-Tag", SEARCH_ROBOTS);
+  next();
+});
+
+// Crawlers must be able to read the noindex response; Disallow: / would
+// prevent that and can leave linked URLs in search results.
+app.get(
+  ["/robots.txt", ...(basePath ? [`${basePath}/robots.txt`] : [])],
+  (_req, res) => {
+    res.type("text/plain").send("User-agent: *\nDisallow:\n");
+  },
+);
 
 const viteDevServer =
   process.env.NODE_ENV === "production"
@@ -119,7 +135,6 @@ io.on("connection", (socket) => {
   });
 
   registerDraftSyncHandlers(socket);
-
 });
 
 const port = Number(process.env.PORT || 3000);

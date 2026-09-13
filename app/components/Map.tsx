@@ -128,7 +128,15 @@ export function Map({
         disabled,
       }}
     >
-      <Box ref={ref} w="100%" h="100%" style={{ position: "relative" }}>
+      <Box
+        ref={ref}
+        w="100%"
+        h="100%"
+        style={{
+          position: "relative",
+          visibility: radius > 0 ? "visible" : "hidden",
+        }}
+      >
         {map
           .filter((t) => !!t.position)
           .map((tile) => {

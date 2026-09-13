@@ -26,9 +26,21 @@
   flex-shrink: 0;
 }
 
-.traitDot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+.traits {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
+}
+
+.traitIcon {
+  display: block;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.noTrait {
+  width: 20px;
+  text-align: center;
+  color: var(--mantine-color-dimmed);
 }

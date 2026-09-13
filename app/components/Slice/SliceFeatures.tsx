@@ -5,7 +5,7 @@ import { LegendaryIcon } from "../icons/LegendaryIcon";
 import { Wormhole } from "../features/Wormhole";
 import { Slice, System } from "~/types";
 import { systemsInSlice } from "~/utils/slice";
-import { TradeStationIcon } from "~/components/icons/TradeStationIcon";
+import { SpaceStationIcon } from "~/components/icons/SpaceStationIcon";
 
 type Props = {
   slice: Slice;
@@ -37,7 +37,7 @@ export function SystemFeatures({ systems }: { systems: System[] }) {
         <LegendaryIcon key={s.id} />
       ))}
       {tradeStationsSystems.map((s) => (
-        <TradeStationIcon key={s.id} />
+        <SpaceStationIcon key={s.id} />
       ))}
       {wormholes.map((w, idx) => (
         <Wormhole key={idx} wormhole={w} size={28} fontSize={14} />

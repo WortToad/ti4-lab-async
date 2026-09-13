@@ -11,6 +11,8 @@ from urllib.parse import unquote, urlparse
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("checkout", nargs="?", default="TI4_map_generator_bot")
+parser.add_argument("--web-checkout", default="ti4_web_new", help="Optional web checkout for economy symbols")
+parser.add_argument("--assets-only", action="store_true", help="Refresh artwork without replacing the catalog snapshot")
 args = parser.parse_args()
 resources = pathlib.Path(args.checkout) / "src/main/resources"
 destination = pathlib.Path(__file__).resolve().parents[1] / "app/draft/bag/catalog.json"
@@ -379,10 +381,16 @@ for unit in ["carrier", "cruiser", "destroyer", "dreadnought", "fighter", "flags
     filename = "Monument.png" if unit == "monument" else f"{unit}.png"
     copy_asset(resources / "emojis/units" / filename, f"units/{unit}.png")
 for color, alias in {"red": "red", "yellow": "ylw", "blue": "blu", "orange": "org", "purple": "ppl", "pink": "pnk", "black": "blk", "green": "grn"}.items():
-    for unit, unit_alias in {"flagship": "fs", "mech": "mf"}.items():
+    for unit, unit_alias in {"carrier": "cv", "cruiser": "ca", "destroyer": "dd", "dreadnought": "dn", "fighter": "ff", "flagship": "fs", "infantry": "gf", "mech": "mf", "pds": "pd", "spacedock": "sd", "warsun": "ws"}.items():
         copy_asset(resources / "units" / f"{alias}_{unit_alias}.png", f"units/kings/{color}_{unit}.png")
 copy_asset(resources / "general/Ressourcesbg.png", "symbols/resources.png")
-destination.parent.mkdir(parents=True, exist_ok=True)
-destination.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n")
-print(f"Imported {len(catalog)} components from {len(legal_factions)} factions to {destination}")
-print(f"Bundled {len(copied_assets)} original card, tile, faction and unit assets")
+copy_asset(resources / "emojis/other/SpaceStation.png", "symbols/space-station.png")
+for trait in ["Cultural", "Industrial", "Hazardous"]:
+    copy_asset(resources / "emojis/explore" / f"{trait}.png", f"symbols/traits/{trait.lower()}.png")
+for source, target in {"comms": "commodities", "tg": "trade-goods", "pnicon": "promissory-note"}.items():
+    copy_asset(pathlib.Path(args.web_checkout) / "public" / f"{source}.png", f"symbols/{target}.png")
+if not args.assets_only:
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n")
+    print(f"Imported {len(catalog)} components from {len(legal_factions)} factions to {destination}")
+print(f"Bundled {len(copied_assets)} original card, tile, faction, unit and symbol assets")

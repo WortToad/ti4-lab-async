@@ -228,7 +228,7 @@ function evaluateSystemValue(
 
     if (planet.tradeStation) {
       systemModifiers.push({
-        label: "Trade Station",
+        label: "Space station",
         value: modifiers.tradeStationValue,
       });
       modifierValue += modifiers.tradeStationValue;

@@ -1,20 +1,5 @@
-import {
-  AppShell,
-  ActionIcon,
-  Box,
-  Burger,
-  Button,
-  Drawer,
-  Group,
-  Popover,
-  Stack,
-} from "@mantine/core";
-import {
-  IconAdjustments,
-  IconArrowRight,
-  IconMap,
-  IconRestore,
-} from "@tabler/icons-react";
+import { AppShell, Burger, Button, Drawer, Group, Stack } from "@mantine/core";
+import { IconArrowRight, IconMap, IconRestore } from "@tabler/icons-react";
 import { Link, useLocation } from "react-router";
 import { useState } from "react";
 import { Logo } from "~/components/Logo";
@@ -22,10 +7,9 @@ import classes from "./MainAppShell.module.css";
 
 type Props = {
   children: React.ReactNode;
-  headerRightSection?: React.ReactNode;
 };
 
-export function MainAppShell({ children, headerRightSection }: Props) {
+export function MainAppShell({ children }: Props) {
   const [opened, setOpened] = useState(false);
   const { pathname } = useLocation();
   const links = [
@@ -82,20 +66,6 @@ export function MainAppShell({ children, headerRightSection }: Props) {
             {navigation()}
           </nav>
           <div className={classes.headerActions}>
-            {headerRightSection && (
-              <Popover position="bottom-end" width={300} withArrow trapFocus>
-                <Popover.Target>
-                  <ActionIcon
-                    variant="default"
-                    size={44}
-                    aria-label="Display settings"
-                  >
-                    <IconAdjustments size={21} aria-hidden="true" />
-                  </ActionIcon>
-                </Popover.Target>
-                <Popover.Dropdown p="md">{headerRightSection}</Popover.Dropdown>
-              </Popover>
-            )}
             <Button
               component={Link}
               to="/#draft-formats"
@@ -135,9 +105,6 @@ export function MainAppShell({ children, headerRightSection }: Props) {
           >
             New draft
           </Button>
-          {headerRightSection && (
-            <Box className={classes.mobileSettings}>{headerRightSection}</Box>
-          )}
         </Stack>
       </Drawer>
       <AppShell.Main id="main-content" tabIndex={-1} className={classes.main}>

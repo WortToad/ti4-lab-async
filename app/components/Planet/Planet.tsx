@@ -4,7 +4,6 @@ import { PlanetName } from "./PlanetName";
 import { PlanetStats } from "./PlanetStats";
 import { TechIcon } from "../icons/TechIcon";
 import { LegendaryIcon } from "../icons/LegendaryIcon";
-import { useSafeOutletContext } from "~/useSafeOutletContext";
 import { TradeStation } from "../features/TradeStation";
 import { LegendaryPopover } from "./LegendaryPopover";
 
@@ -51,22 +50,14 @@ export function Planet({
   largeFonts = false,
   disablePopover = false,
 }: Props) {
-  const { accessibleColors } = useSafeOutletContext();
   const theme = useMantineTheme();
 
-  const bgColor: Record<PlanetTrait, string> = {
-    CULTURAL: theme.colors.blue[4],
-    HAZARDOUS: theme.colors.red[5],
-    INDUSTRIAL: theme.colors.green[5],
-  };
-
-  const accessibleBgColor: Record<PlanetTrait, string> = {
+  const bgColors: Record<PlanetTrait, string> = {
     CULTURAL: theme.colors.blue[4],
     HAZARDOUS: "rgb(255 40 40)",
     INDUSTRIAL: theme.colors.green[5],
   };
 
-  const bgColors = accessibleColors ? accessibleBgColor : bgColor;
   const { trait, tech: techSpecialty } = planet;
 
   const fontSize = largeFonts ? "35px" : "24px";

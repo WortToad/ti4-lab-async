@@ -90,7 +90,7 @@ function calculateCoreSliceBreakdown(
 
       if (planet.tradeStation) {
         modifiers.push({
-          label: "Trade Station",
+          label: "Space station",
           value: cfg.tradeStationValue,
         });
         systemModifiersValue += cfg.tradeStationValue;

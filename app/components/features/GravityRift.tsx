@@ -1,13 +1,15 @@
-export function GravityRift() {
+export function GravityRift({ size = 40 }: { size?: number }) {
   return (
-    <div
+    <span
       style={{
+        display: "inline-block",
+        flexShrink: 0,
         background: "black",
-        borderRadius: 40,
-        width: 40,
-        height: 40,
-        border: "2px solid white",
-        boxShadow: "0 0 8px 5px rgba(255, 255, 255, 0.8)",
+        borderRadius: "50%",
+        width: size,
+        height: size,
+        border: `${size / 20}px solid white`,
+        boxShadow: `0 0 ${size / 5}px ${size / 8}px rgba(255, 255, 255, 0.8)`,
       }}
     />
   );

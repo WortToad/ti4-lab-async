@@ -2,6 +2,8 @@
 
 TI4 Draft Command is a Twilight Imperium 4 drafting and map building tool. It supports multiple draft formats, shared lobbies, and browser notifications.
 
+The site is unlisted: every page includes a `noindex` robots meta tag, and the server sends `X-Robots-Tag: noindex, nofollow, noimageindex, nosnippet` for pages, images, APIs and errors. Shared links still work; this is search exclusion, not password protection. `robots.txt` allows crawling so search engines can read the exclusion directive, following [Google's noindex guidance](https://developers.google.com/search/docs/crawling-indexing/block-indexing). Existing search listings disappear after recrawling. If hosting behind a proxy or CDN, preserve this header and allow crawlers to access the app in the domain's root `robots.txt`.
+
 For low-cost hosting at **obsecsolutions.com/ti4**, see the [Railway setup and cost guide](docs/railway.md). It uses one app service and a persistent SQLite volume, with an estimated initial budget of **US$5–10/month** for light use.
 
 ## Prerequisites

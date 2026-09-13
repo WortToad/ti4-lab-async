@@ -59,7 +59,7 @@ export function KeleresHomeSetup() {
             <Alert color="red">
               This saved draft uses all three Keleres homes. The admin can
               restore a checkpoint before the conflicting faction pick from
-              Manage lobby, or undo picks until a different faction can be
+              Admin controls, or undo picks until a different faction can be
               selected. Existing picks are preserved until then.
             </Alert>
           ) : (

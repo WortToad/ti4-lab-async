@@ -28,6 +28,8 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 import { BagItemCard, bagCategoryLabel } from "~/draft/bag/BagComponents";
+import { GameTerms } from "~/components/GameTerm";
+import { bagKingUnitColor } from "~/draft/bag/visuals";
 import { BagMapSetup } from "~/draft/bag/BagMapSetup";
 import { BagDraftGuide } from "~/draft/bag/BagDraftGuide";
 import { BagDraftProgress } from "~/draft/bag/BagDraftProgress";
@@ -216,12 +218,16 @@ function CollectedItems({
   items: BagDraftItem[];
   view: BagDraftView;
 }) {
+  const unitColor = bagKingUnitColor(items);
   return (
     <Accordion variant="separated" multiple>
       {groupedItems(items).map(([category, cards]) => (
         <Accordion.Item key={category} value={category}>
           <Accordion.Control>
-            {bagCategoryLabel(category, view.settings.variant)} · {cards.length}
+            <GameTerms showHelp={false}>
+              {bagCategoryLabel(category, view.settings.variant)}
+            </GameTerms>{" "}
+            · {cards.length}
           </Accordion.Control>
           <Accordion.Panel>
             <SimpleGrid cols={{ base: 1, sm: 2 }}>
@@ -230,6 +236,7 @@ function CollectedItems({
                   key={item.id}
                   item={item}
                   variant={view.settings.variant}
+                  unitColor={unitColor}
                 />
               ))}
             </SimpleGrid>
@@ -399,7 +406,9 @@ function DraftPicking({
             <Stack key={category} gap="sm">
               <Group justify="space-between">
                 <Title order={3} size="h4">
-                  {bagCategoryLabel(category, view.settings.variant)}
+                  <GameTerms>
+                    {bagCategoryLabel(category, view.settings.variant)}
+                  </GameTerms>
                 </Title>
                 <Group gap="xs">
                   <Badge
@@ -550,6 +559,7 @@ function FactionAssembly({
   const finalItems = twilightsFall
     ? selectedItems
     : includeAssemblyCompanions(selectedItems);
+  const unitColor = bagKingUnitColor(finalItems);
   const companionIds = finalItems
     .filter((item) => !selectedIds.includes(item.id))
     .map((item) => item.id);
@@ -696,6 +706,7 @@ function FactionAssembly({
                 key={item.id}
                 item={item}
                 variant={view.settings.variant}
+                unitColor={unitColor}
                 selected={selectedIds.includes(item.id)}
                 disabled={busy}
                 onSelect={(checked) =>
@@ -722,7 +733,9 @@ function FactionAssembly({
           <Stack key={category} gap="sm">
             <Group justify="space-between">
               <Title order={3} size="h4">
-                {bagCategoryLabel(category, view.settings.variant)}
+                <GameTerms>
+                  {bagCategoryLabel(category, view.settings.variant)}
+                </GameTerms>
               </Title>
               <Badge color={count === limit ? "green" : "blue"} variant="light">
                 Selected {count} of {limit} to keep
@@ -734,6 +747,7 @@ function FactionAssembly({
                   key={item.id}
                   item={item}
                   variant={view.settings.variant}
+                  unitColor={unitColor}
                   note={
                     !seat.assemblyBaseItemIds.includes(item.id) &&
                     seat.assemblyOptions.some((parent) =>

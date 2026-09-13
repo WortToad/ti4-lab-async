@@ -237,12 +237,18 @@ for (const mode of ["base", "texas", "bag", "raw", "mantis"] as const) {
         recovered.getByRole("textbox", { name: "Your name", exact: true }),
       ).toHaveCount(0);
 
-      await page
-        .getByRole("button", { name: "Manage lobby", exact: true })
-        .click();
-      await page
-        .getByRole("button", { name: "Admin controls", exact: true })
-        .click();
+      await expect(
+        page.getByRole("button", { name: "Manage lobby", exact: true }),
+      ).toHaveCount(0);
+      await expect(
+        page.getByRole("heading", { name: "Admin controls", exact: true }),
+      ).toBeVisible();
+      await expect(
+        recovered.getByRole("heading", { name: "Admin controls", exact: true }),
+      ).toHaveCount(0);
+      await expect(
+        recovered.getByRole("button", { name: "Pause draft", exact: true }),
+      ).toHaveCount(0);
       await page
         .getByRole("button", { name: "Pause draft", exact: true })
         .click();

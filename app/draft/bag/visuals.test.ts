@@ -3,9 +3,60 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { factions } from "~/data/factionData";
 import { BAG_CATALOG, getBagDraftItem, getBagDraftPool } from "./catalog";
-import { getBagFaction, unitIconPath } from "./visuals";
+import {
+  getBagFaction,
+  unitIconPath,
+  playerUnitColor,
+  bagKingUnitColor,
+} from "./visuals";
 
 describe("bag draft visual references", () => {
+  it("resolves every standard unit in each player color to bundled artwork", () => {
+    for (const playerColor of [
+      "Red",
+      "Yellow",
+      "Blue",
+      "Orange",
+      "Purple",
+      "Magenta",
+      "Black",
+      "Green",
+    ] as const) {
+      const color = playerUnitColor(playerColor)!;
+      for (const unit of [
+        "carrier",
+        "cruiser",
+        "destroyer",
+        "dreadnought",
+        "fighter",
+        "flagship",
+        "infantry",
+        "mech",
+        "pds",
+        "spacedock",
+        "warsun",
+      ]) {
+        const path = unitIconPath(unit, color)!;
+        expect(path).toContain(`/units/kings/${color}_`);
+        expect(existsSync(resolve("public", path.slice(1))), path).toBe(true);
+      }
+      expect(unitIconPath("monument", color)).toBe("/units/monument.png");
+    }
+    expect(playerUnitColor("Magenta")).toBe("pink");
+    expect(playerUnitColor()).toBeUndefined();
+    expect(playerUnitColor("unknown")).toBeUndefined();
+    expect(unitIconPath("unknown", "red")).toBeUndefined();
+  });
+
+  it("colors assembled fleets only when exactly one king is known", () => {
+    const fleet = getBagDraftItem("STARTINGFLEET:sol")!;
+    const red = getBagDraftItem("MAHACTKING:redtf")!;
+    const blue = getBagDraftItem("MAHACTKING:bluetf")!;
+    expect(bagKingUnitColor([fleet, red])).toBe("red");
+    expect(bagKingUnitColor([fleet])).toBeUndefined();
+    expect(bagKingUnitColor([fleet, red, blue])).toBeUndefined();
+  });
+
   it("reuses the lab's faction and Mahact king identities", () => {
     const examples = {
       "TECH:tf-armada": "barony",

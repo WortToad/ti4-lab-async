@@ -1,44 +1,31 @@
 import { MetaFunction, Outlet } from "react-router";
 import { useState } from "react";
 import { MainAppShell } from "~/components/MainAppShell";
-import { HeaderControls } from "~/components/HeaderControls";
 
 export type DraftOrderContext = {
   adminMode: boolean;
   pickForAnyone: boolean;
   originalArt: boolean;
-  accessibleColors: boolean;
   setAdminMode: (value: boolean) => void;
   setPickForAnyone: (value: boolean) => void;
   setOriginalArt: (value: boolean) => void;
-  setAccessibleColors: (value: boolean) => void;
 };
 
 export default function Draft() {
   const [originalArt, setOriginalArt] = useState(true);
-  const [accessibleColors, setAccessibleColors] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
   const [pickForAnyone, setPickForAnyone] = useState(false);
 
   return (
-    <MainAppShell
-      headerRightSection={
-        <HeaderControls
-          accessibleColors={accessibleColors}
-          onAccessibleColorsChange={setAccessibleColors}
-        />
-      }
-    >
+    <MainAppShell>
       <Outlet
         context={{
           adminMode,
           pickForAnyone,
           originalArt,
-          accessibleColors,
           setAdminMode,
           setPickForAnyone,
           setOriginalArt,
-          setAccessibleColors,
         }}
       />
     </MainAppShell>

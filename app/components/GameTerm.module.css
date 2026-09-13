@@ -1,0 +1,17 @@
+.term {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.term > :first-child {
+  align-self: center;
+}
+
+.icon {
+  display: block;
+  object-fit: contain;
+  flex-shrink: 0;
+}

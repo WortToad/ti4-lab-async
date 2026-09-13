@@ -8,6 +8,8 @@ Refresh it from the workspace root:
 python3 scripts/import-bag-catalog.py TI4_map_generator_bot
 ```
 
+Add `--assets-only` to refresh artwork while preserving the existing catalog snapshot.
+
 The importer uses Python's standard library and writes deterministic output. It fails when referenced models or errata dependencies cannot be resolved. The checked-in snapshot was imported from [AsyncTI4/TI4_map_generator_bot](https://github.com/AsyncTI4/TI4_map_generator_bot) commit `690bb6935d497e81667b6f59e00b0aa51902d858`.
 
 Data and eligibility follow `src/main/resources/data/`, `systems/`, `planets/`, and these bot classes:
@@ -22,7 +24,9 @@ Data and eligibility follow `src/main/resources/data/`, `systems/`, `planets/`, 
 
 The catalog also includes structured fleets, unit statistics, technology types, and local image references. `visualAliases.json` maps bot faction aliases to the existing lab faction identities, including Mahact kings. The importer reuses the lab's faction icons and tile images first, then copies missing icons and tiles from the bot into `public/draft/`. Original Twilight's Fall draft cards and Franken unit upgrades come from the bot's `hover_images/` directory; unit icons come from `emojis/units/` and are bundled in `public/units/`. These images load locally without requiring the bot checkout at runtime. Twilight's Fall lookups select the genome original along with its contextual name and rules text.
 
-Mahact flagship and mech colors use the bot's `units/{color}_{fs|mf}.png` artwork, following the color aliases used by `ti4_web_new`. The importer bundles all eight king colors in `public/units/kings/` and the filled resource symbol from `general/Ressourcesbg.png` in `public/symbols/resources.png`.
+Colored units use the bot's `units/{color}_{unit}.png` artwork, following the color aliases used by `ti4_web_new`. The importer bundles all 11 standard unit types in all eight king colors in `public/units/kings/`. Fleet displays use the selected player color or Mahact king color when available; the player's Magenta color maps to the pink artwork. Unassigned units and monuments use the generic icons.
+
+The filled resource symbol comes from `general/Ressourcesbg.png`, and the shaped planet traits come from `emojis/explore/{Cultural,Industrial,Hazardous}.png`. Hybrid planets display each trait separately. Economy symbols come from `ti4_web_new/public/{comms,tg,pnicon}.png` and keep the commodity, trade-good, and promissory-note wording alongside the artwork. All these symbols are bundled in `public/symbols/`. Use `--web-checkout path/to/ti4_web_new` to refresh economy symbols from another location; if that optional checkout is absent, the importer retains the bundled copies.
 
 The snapshot contains 1,766 components and faction packages from 83 eligible official, Discordant Stars, Blue Reverie, and Lost Legacies factions. Monuments and Uncharted Space tiles are available as separate opt-in catalog pools. Twilight's Fall uses the bot's `techs_tf`, `tf_genome`, and `tf_units` decks: 87 abilities, 31 unit upgrades, eight Mahact kings, and 25 draftable genomes after the bot's Franken errata exclusions. Discordant Stars can add 73 Twilight's Fall abilities.
 

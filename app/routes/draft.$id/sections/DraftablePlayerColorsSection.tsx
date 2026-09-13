@@ -6,6 +6,8 @@ import { useHydratedDraft } from "~/hooks/useHydratedDraft";
 import { useSyncDraft } from "~/hooks/useSyncDraft";
 import { PlayerChipOrSelect } from "../components/PlayerChipOrSelect";
 import { Surface, PlayerColor } from "~/ui";
+import { UnitSymbol } from "~/draft/bag/UnitDetails";
+import { playerUnitColor } from "~/draft/bag/visuals";
 
 const colors = [
   "Green",
@@ -85,6 +87,11 @@ export function DraftablePlayerColorsSection() {
                 pb={15}
                 px="sm"
               >
+                <UnitSymbol
+                  unit="carrier"
+                  color={playerUnitColor(color)}
+                  size={32}
+                />
                 <Text flex={1} size="md" fw={600}>
                   {color}
                 </Text>

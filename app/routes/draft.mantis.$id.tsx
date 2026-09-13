@@ -63,6 +63,7 @@ import {
   type MantisRoomData,
 } from "~/drizzle/mantisDraft.server";
 import { LobbyPanel, type LobbyOperation } from "~/draft/LobbyPanel";
+import { GameTerms } from "~/components/GameTerm";
 import { DraftTurnStatus } from "~/draft/DraftTurnStatus";
 import { useLobbyRefresh } from "~/hooks/useLobbyRefresh";
 import { createOrderedLoader } from "~/hooks/orderedLoader";
@@ -696,7 +697,11 @@ function ActiveMantisRoom({
                       <Text size="sm" fw={600}>
                         {keleresHeroes[factionId].name}
                       </Text>
-                      <Text size="sm">{keleresHeroes[factionId].summary}</Text>
+                      <Text size="sm">
+                        <GameTerms>
+                          {keleresHeroes[factionId].summary}
+                        </GameTerms>
+                      </Text>
                       <Button
                         disabled={!canPick}
                         onClick={() => pick({ type: "home", factionId })}

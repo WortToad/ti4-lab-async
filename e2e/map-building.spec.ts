@@ -8,6 +8,16 @@ import {
 import { mapConfigs } from "../app/mapgen/mapConfigs";
 
 const prefix = "/ti4";
+async function openMapTools(page: Page) {
+  await expect(
+    page.getByRole("button", { name: "Generate map", exact: true }),
+  ).toBeVisible();
+  const toggle = page.getByRole("button", {
+    name: "Map settings and tools",
+    exact: true,
+  });
+  if (await toggle.isVisible()) await toggle.click();
+}
 async function savedMap(page: Page) {
   return page.evaluate(() => {
     const saved = sessionStorage.getItem("ti4:map-editor:v1");
@@ -23,6 +33,7 @@ test("map spaces support keyboard editing, closing, resizing and redo", async ({
   page,
 }) => {
   await page.goto(`${prefix}/map-generator`);
+  await openMapTools(page);
   await page
     .getByRole("button", { name: "Add system at position 1", exact: true })
     .press("Enter");
@@ -84,6 +95,7 @@ for (const config of Object.values(mapConfigs)) {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(`${prefix}/map-generator`);
+    await openMapTools(page);
     await page
       .getByRole("textbox", { name: "Galaxy layout", exact: true })
       .click();
@@ -108,6 +120,7 @@ for (const config of Object.values(mapConfigs)) {
       .click();
     await expect.poll(() => savedMap(page)).toBe(generated);
     await page.reload();
+    await openMapTools(page);
     await expect.poll(() => savedMap(page)).toBe(generated);
     await expect(
       page.getByRole("textbox", { name: "Galaxy layout", exact: true }),
@@ -155,6 +168,7 @@ test("map imports reject invalid input, preserve edits on failure and recover af
   page,
 }) => {
   await page.goto(`${prefix}/map-generator`);
+  await openMapTools(page);
   await page.getByRole("button", { name: "Generate map", exact: true }).click();
   await expect.poll(() => savedMap(page)).not.toContain("_");
   const original = await savedMap(page);

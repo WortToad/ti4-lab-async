@@ -1,5 +1,5 @@
 import { FactionId } from "~/types";
-import type { KingUnitColor } from "~/draft/bag/visuals";
+import type { UnitColor } from "~/draft/bag/visuals";
 
 export type MahactKingUnitReference = {
   type: "Flagship" | "Mech";
@@ -11,7 +11,7 @@ export type MahactKingUnitReference = {
 
 export type MahactKingReference = {
   accent: string;
-  unitColor: KingUnitColor;
+  unitColor: UnitColor;
   commodities: number;
   units: [MahactKingUnitReference, MahactKingUnitReference];
 };

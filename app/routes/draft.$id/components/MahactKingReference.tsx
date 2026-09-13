@@ -3,6 +3,7 @@ import { Box, Group, Paper, Stack, Text } from "@mantine/core";
 import { MahactKingReference as MahactKingReferenceData } from "~/data/mahactKingReferences";
 import { Faction } from "~/types";
 import { UnitDetails } from "~/draft/bag/UnitDetails";
+import { GameTerm } from "~/components/GameTerm";
 
 type Props = {
   faction: Faction;
@@ -47,7 +48,7 @@ export function MahactKingReference({ faction, reference }: Props) {
             </Box>
           </Group>
           <Text size="sm" fw={600} c="var(--command-text-body)">
-            {reference.commodities} commodities
+            <GameTerm term="commodities">{`${reference.commodities} commodities`}</GameTerm>
           </Text>
         </Group>
 

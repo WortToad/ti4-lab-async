@@ -56,9 +56,6 @@
   gap: 12px;
   flex-shrink: 0;
 }
-.headerActions :global(.mantine-Switch-label) {
-  font-size: 0.875rem;
-}
 .burger {
   display: none;
   flex-shrink: 0;
@@ -67,10 +64,6 @@
   padding: 14px;
   width: 100%;
   border: 1px solid var(--command-border);
-}
-.mobileSettings {
-  padding-top: 20px;
-  border-top: 1px solid var(--command-border);
 }
 .main {
   padding-inline: clamp(16px, 3vw, 48px);

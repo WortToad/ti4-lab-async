@@ -42,6 +42,7 @@
   display: grid;
   grid-template-columns: minmax(150px, 1fr) minmax(180px, 1.3fr);
   gap: 20px;
+  padding-top: 20px;
 }
 .settings > :last-child {
   grid-column: 1 / -1;
@@ -51,7 +52,7 @@
   padding-block: 18px;
   margin-top: 20px;
 }
-.tools :global(.mantine-ActionIcon-root) {
+.toolbar :global(.mantine-ActionIcon-root) {
   min-width: 44px;
   min-height: 44px;
 }
@@ -71,12 +72,30 @@
     padding: 16px;
   }
   .heading {
-    padding-block: 24px;
+    padding-block: 16px;
+    gap: 12px;
   }
-}
-.mapViewport {
-  overflow: auto;
-  max-width: 100%;
-  border-radius: 0 0 var(--command-radius) var(--command-radius);
-  scrollbar-gutter: stable;
+  .heading h1 {
+    font-size: 1.5rem;
+  }
+  .headingActions {
+    gap: 8px;
+  }
+  .headingActions :global(.mantine-Button-root) {
+    padding-inline: 12px;
+    font-size: 0.875rem;
+  }
+  .primaryTools {
+    flex-wrap: nowrap;
+  }
+  .primaryTools > :first-child {
+    flex: 1;
+    padding-inline: 10px;
+  }
+  .primaryTools :global(.mantine-Button-section) {
+    display: none;
+  }
+  .primaryTools :global(.mantine-ActionIcon-root) {
+    flex-shrink: 0;
+  }
 }
