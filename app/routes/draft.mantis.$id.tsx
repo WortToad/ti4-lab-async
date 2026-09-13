@@ -744,7 +744,7 @@ function ActiveMantisRoom({
         )}
         <Group>
           <Badge size="lg">{draft.phase}</Badge>
-          <Text fw={600}>
+          <Text fw={600} style={{ overflowWrap: "anywhere" }}>
             {draft.phase === "complete"
               ? "Draft and map complete"
               : draft.phase === "discard"
@@ -756,32 +756,22 @@ function ActiveMantisRoom({
         </Group>
         {fetcher.data?.error && <Alert color="red">{fetcher.data.error}</Alert>}
         <Alert
-          color={
-            room.lobby.paused ? "orange.3" : canPick ? "success.4" : "sky.4"
-          }
+          color="sky.4"
           title={
             draft.phase === "complete"
               ? "Ready to play"
-              : room.lobby.paused
-                ? "Draft paused"
-                : canPick
-                  ? "Your turn"
-                  : controlled
-                    ? "Waiting for other players"
-                    : "Watching the draft"
+              : "How this phase works"
           }
         >
-          {room.lobby.paused
-            ? "The admin is resolving an issue. Picks will resume when the admin resumes the draft."
-            : draft.phase === "draft"
-              ? "On each turn, choose one faction, one speaker position, or one tile. By the end, you need one faction, one speaker position, and your full quota of blue and red tiles. The order reverses each round."
-              : draft.phase === "home"
-                ? "Keleres chooses the home system and hero of an unplayed Mentak, Xxcha, or Argent faction before map building."
-                : draft.phase === "discard"
-                  ? "Keep exactly 3 blue and 2 red tiles. Everyone can remove their extras at the same time. Map building begins automatically when all hands are ready."
-                  : draft.phase === "build"
-                    ? "The active player draws one tile privately, then places it in a highlighted space. Each player's five tiles become their own section of the map. A mulligan redraws without losing the previous tile."
-                    : "Your factions, speaker positions, and map are ready. Copy a map string below to set up your game."}
+          {draft.phase === "draft"
+            ? "On each turn, choose one faction, one speaker position, or one tile. By the end, you need one faction, one speaker position, and your full quota of blue and red tiles. The order reverses each round."
+            : draft.phase === "home"
+              ? "Keleres chooses the home system and hero of an unplayed Mentak, Xxcha, or Argent faction before map building."
+              : draft.phase === "discard"
+                ? "Keep exactly 3 blue and 2 red tiles. Everyone can remove their extras at the same time. Map building begins automatically when all hands are ready."
+                : draft.phase === "build"
+                  ? "The active player draws one tile privately, then places it in a highlighted space. Each player's five tiles become their own section of the map. A mulligan redraws without losing the previous tile."
+                  : "Your factions, speaker positions, and map are ready. Copy a map string below to set up your game."}
         </Alert>
         <Group gap="xs" aria-label="Mantis draft stages">
           {[

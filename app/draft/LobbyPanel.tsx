@@ -241,31 +241,12 @@ export function LobbyPanel({
       )}
       <Stack gap="md">
         <div className={classes.header}>
-          <Stack gap="xs" className={classes.heading}>
-            <Group gap="md" align="center">
-              <Title order={mode === "bag" ? 2 : 1} size="h2">
-                {lobby.started ? "Lobby" : "Draft lobby"}
-              </Title>
-              {isAdmin && (
-                <span className={classes.role}>
-                  <IconShield size={16} aria-hidden="true" />
-                  Admin
-                </span>
-              )}
-            </Group>
-            {(lobby.started || ownSlot) && (
-              <Group gap="md" className={classes.metadata}>
-                {lobby.started && (
-                  <StatusPill tone={lobby.paused ? "warning" : "success"}>
-                    {lobby.paused ? "Paused" : "Draft started"}
-                  </StatusPill>
-                )}
-                {ownSlot && (
-                  <Text size="sm">
-                    Playing as <strong>{ownSlot.name}</strong>
-                  </Text>
-                )}
-              </Group>
+          <Stack gap="xs" align="flex-start" className={classes.heading}>
+            <Title order={mode === "bag" ? 2 : 1} size="h2">
+              {lobby.started ? "Lobby" : "Draft lobby"}
+            </Title>
+            {lobby.started && !lobby.paused && (
+              <StatusPill tone="success">Draft started</StatusPill>
             )}
           </Stack>
           <Group gap="sm" className={classes.actions}>
@@ -391,27 +372,29 @@ export function LobbyPanel({
                     data-own={player.id === ownPlayerId || undefined}
                   >
                     <div className={classes.playerIdentity}>
-                      <span className={classes.playerName}>{player.name}</span>
+                      <span className={classes.playerName}>
+                        {player.name}
+                        {isAdmin && player.id === ownPlayerId && (
+                          <span
+                            className={classes.adminIcon}
+                            role="img"
+                            aria-label="Admin"
+                            title="Admin"
+                          >
+                            <IconShield size={18} aria-hidden="true" />
+                          </span>
+                        )}
+                      </span>
                       {player.id === ownPlayerId && (
                         <span className={classes.you}>You</span>
                       )}
                     </div>
-                    <span className={classes.playerStatus}>
-                      <IconCheck size={16} aria-hidden="true" />
-                      Joined
-                    </span>
                   </li>
                 ))}
             </ul>
           ) : (
             <Text size="sm" c="dimmed" className={classes.emptyPlayers}>
               No players have joined yet.
-            </Text>
-          )}
-          {!allJoined && (
-            <Text size="sm" c="dimmed">
-              {lobby.slots.length - joined} more player
-              {lobby.slots.length - joined === 1 ? "" : "s"} can join
             </Text>
           )}
         </section>
@@ -432,9 +415,6 @@ export function LobbyPanel({
                 }}
               >
                 <Stack gap="sm">
-                  <Text fw={600}>
-                    {isAdmin ? "Playing too? Join the lobby" : "Join the lobby"}
-                  </Text>
                   <Group align="end">
                     <TextInput
                       label="Your name"
@@ -477,22 +457,6 @@ export function LobbyPanel({
                 Everyone has joined. You can watch the draft, or restore your
                 access below if you’re already playing.
               </Text>
-            )}
-            {ownPlayerId !== undefined && (
-              <div className={classes.playerNotice}>
-                <IconCheck size={20} aria-hidden="true" />
-                <Stack gap="sm">
-                  <Text size="sm">
-                    {lobby.started
-                      ? "Your player view appears below."
-                      : "You are ready. The admin can start once everyone has joined."}
-                  </Text>
-                  <Text size="sm">
-                    Save your recovery code below to return on another device or
-                    after clearing browser data.
-                  </Text>
-                </Stack>
-              </div>
             )}
             <Accordion variant="contained">
               <Accordion.Item value="recovery">
@@ -575,18 +539,11 @@ export function LobbyPanel({
               <>
                 {!lobby.started && (
                   <div className={classes.startRow}>
-                    <div>
-                      <Text fw={600}>
-                        {allJoined
-                          ? "Your table is ready"
-                          : "Waiting for the full table"}
-                      </Text>
-                      <Text size="sm" c="dimmed">
-                        {allJoined
-                          ? "Start to reveal the draft and its order."
-                          : `${lobby.slots.length - joined} more player${lobby.slots.length - joined === 1 ? "" : "s"} needed before you can start.`}
-                      </Text>
-                    </div>
+                    <Text size="sm" className={classes.startInstruction}>
+                      {allJoined
+                        ? "Start to reveal the draft and its order."
+                        : "All players must join before you can start."}
+                    </Text>
                     <Button
                       color="imperial"
                       leftSection={

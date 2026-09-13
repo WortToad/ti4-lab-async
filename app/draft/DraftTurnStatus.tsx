@@ -135,7 +135,7 @@ export function DraftTurnStatus({
       }
     >
       <Group justify="space-between" gap="sm">
-        <Group gap="sm" style={{ flex: "1 1 220px" }}>
+        <Group gap="sm" style={{ flex: "1 1 220px" }} role="status">
           <StatusPill
             tone={
               complete || actionKey ? "success" : paused ? "warning" : "neutral"
@@ -154,20 +154,18 @@ export function DraftTurnStatus({
             }
           >
             {complete
-              ? "Complete"
+              ? "Draft complete"
               : paused
                 ? "Paused"
                 : actionKey
                   ? "Your turn"
-                  : "Waiting"}
+                  : "Waiting for other players"}
           </StatusPill>
-          <Text size="md" fw={600} role="status">
-            {complete
-              ? "Your draft is complete."
-              : paused
-                ? "The admin has paused play."
-                : (label ?? "Waiting for the other players.")}
-          </Text>
+          {label && (
+            <Text size="md" fw={600}>
+              {label}
+            </Text>
+          )}
         </Group>
         <Popover
           width={280}

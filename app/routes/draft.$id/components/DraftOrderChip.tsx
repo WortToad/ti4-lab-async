@@ -30,10 +30,21 @@ export function DraftOrderChip({
       ].join(" ")}
       p={padding}
       gap={gap}
+      miw={0}
+      maw="100%"
       data-active={entry.isActive ? "true" : undefined}
-      style={chipSize === "sm" ? { borderRadius: "var(--mantine-radius-sm)" } : undefined}
+      style={{
+        borderRadius:
+          chipSize === "sm" ? "var(--mantine-radius-sm)" : undefined,
+        flexShrink: compact ? 0 : undefined,
+      }}
     >
-      <Text size={textSize} fw={600} lh={1.4}>
+      <Text
+        size={textSize}
+        fw={600}
+        lh={1.4}
+        style={{ overflowWrap: "anywhere" }}
+      >
         {entry.player.name}
       </Text>
     </Group>

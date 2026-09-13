@@ -326,24 +326,19 @@ function RawGame({
         {fetcher.data?.error && <Alert color="red">{fetcher.data.error}</Alert>}
         <Paper withBorder p="lg" radius="md">
           <Stack gap="sm">
-            <Group>
-              <Badge>
-                {draft.phase === "complete" ? "Complete" : "In progress"}
-              </Badge>
-              <Title order={2} size="h3">
-                {details.title}
-              </Title>
-            </Group>
+            <Title order={2} size="h3">
+              {details.title}
+            </Title>
             <Text size="sm">{details.instructions}</Text>
             {activeId !== undefined && (
-              <Text fw={600}>
+              <Text fw={600} style={{ overflowWrap: "anywhere" }}>
                 {draft.players.find((entry) => entry.id === activeId)?.name}’s
                 turn
               </Text>
             )}
             {controlled && ready && (
               <Text c="teal" size="sm">
-                Your choice is submitted. Waiting for the other players.
+                Your choice is submitted.
               </Text>
             )}
           </Stack>

@@ -786,9 +786,6 @@ export default function BagDraftPage() {
     (entry) => entry.id === view.settings.variant,
   );
   const seat = view.privateSeat;
-  const playerName = view.players.find(
-    (player) => player.id === view.viewer.playerId,
-  )?.name;
   const publicPath = `/draft/bag/${view.id}`;
 
   function submit(
@@ -885,20 +882,9 @@ export default function BagDraftPage() {
 
   return (
     <Stack className="ph-no-capture" maw={1200} mx="auto" py="xl" gap="lg">
-      <Group justify="space-between">
-        <Anchor component={Link} to="/draft/bag/new" size="sm">
-          ← Create another bag draft
-        </Anchor>
-        <Text size="xs" c="dimmed">
-          {view.viewer.isAdmin
-            ? playerName
-              ? `Admin · Playing as ${playerName}`
-              : "Admin"
-            : playerName
-              ? `Playing as ${playerName}`
-              : "Spectator"}
-        </Text>
-      </Group>
+      <Anchor component={Link} to="/draft/bag/new" size="sm">
+        ← Create another bag draft
+      </Anchor>
       <Group justify="space-between" align="flex-start">
         <div>
           <Title order={1}>{variant?.name ?? "Bag draft"}</Title>
