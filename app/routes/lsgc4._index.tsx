@@ -85,7 +85,7 @@ export default function LGCS4() {
 
   return (
     <Box mt="lg">
-      <Grid gutter="xl">
+      <Grid gap="xl">
         <Grid.Col span={{ base: 12, md: 6 }}>
           <SectionTitle
             order={1}

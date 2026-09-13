@@ -1,3 +1,4 @@
+import { RouterContextProvider } from "react-router";
 import { afterAll, beforeAll, expect, test, vi } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -76,8 +77,14 @@ async function post(
       body: JSON.stringify(body),
     }),
     params: { id },
-    context: {},
-    unstable_pattern: "/api/draft/:id/keleres-home",
+    context: new RouterContextProvider(),
+    url: new URL(
+      `http://localhost/api/draft/${id}/keleres-home`.replace(
+        /\.data(?=\?|$)/,
+        "",
+      ),
+    ),
+    pattern: "/api/draft/:id/keleres-home",
   });
 }
 test("owned home choice survives persistence, checkpoints and admin undo without consuming a draft pick", async () => {

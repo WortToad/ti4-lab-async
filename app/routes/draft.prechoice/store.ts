@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { createWithEqualityFn } from "zustand/traditional";
 import { immer } from "zustand/middleware/immer";
 import {
   Player,
@@ -185,7 +185,7 @@ type DraftSetupStore = {
   };
 };
 
-export const useDraftSetup = create<DraftSetupStore>()(
+export const useDraftSetup = createWithEqualityFn<DraftSetupStore>()(
   immer((set, get) => {
     const getCurrentTileGameSets = (state: DraftSetupStore): GameSet[] => {
       if (state.draftMode === "twilightFalls") {

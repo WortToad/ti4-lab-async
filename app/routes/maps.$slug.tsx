@@ -156,7 +156,7 @@ type LoaderData = {
   };
 };
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export const meta: MetaFunction<typeof loader> = ({ loaderData: data }) => {
   const typed = data as LoaderData | undefined;
   if (!typed) return [];
 

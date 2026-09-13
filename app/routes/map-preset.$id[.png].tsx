@@ -34,7 +34,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
   const imageBuffer = await generateMapGeneratorImageBuffer(decoded.map);
   if (process.env.R2_INTEGRATION_DISABLED === "true") {
-    return new Response(imageBuffer, {
+    return new Response(new Uint8Array(imageBuffer), {
       headers: {
         "Content-Type": "image/png",
         "Cache-Control": "public, max-age=3600",

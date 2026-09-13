@@ -50,7 +50,7 @@ const viteDevServer =
             middlewareMode: true,
             // Keep live updates on this app's server. Vite's shared default
             // port can connect previews to another instance and cause reloads.
-            hmr: { server: httpServer },
+            ws: { server: httpServer },
           },
         }),
       );
@@ -91,11 +91,22 @@ if (viteDevServer) {
 }
 
 const build: ServerBuild | (() => Promise<ServerBuild>) = viteDevServer
-  ? async () =>
-      (await viteDevServer.ssrLoadModule(
+  ? async () => {
+      const { isRunnableDevEnvironment } = await import("vite");
+      const environment = viteDevServer.environments.ssr;
+      if (!isRunnableDevEnvironment(environment)) {
+        throw new Error(
+          "The app requires Vite's runnable Node SSR environment.",
+        );
+      }
+      return environment.runner.import<ServerBuild>(
         "virtual:react-router/server-build",
-      )) as ServerBuild
-  : ((await import("./build/server/index.js")) as unknown as ServerBuild);
+      );
+    }
+  : ((await import(
+      /* @vite-ignore */ new URL("./build/server/index.js", import.meta.url)
+        .href
+    )) as ServerBuild);
 
 if (
   typeof build !== "function" &&

@@ -133,7 +133,7 @@ test("phone map zoom, touch editing and tools remain usable", async ({
   await tools.tap();
   await expect(tools).toHaveAttribute("aria-expanded", "true");
   await expect(
-    page.getByRole("textbox", { name: "Galaxy layout", exact: true }),
+    page.getByRole("combobox", { name: "Galaxy layout", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Add outer ring", exact: true }).tap();
   await expect(map.locator(".map-tile-button")).toHaveCount(61);

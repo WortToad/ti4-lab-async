@@ -42,9 +42,7 @@ export function DraftConfigurationPanel({ maxSlices }: Props) {
   const playerCount = useDraftSetup((state) => state.player.players.length);
   const mapType = useDraftSetup((state) => state.map.selectedMapType);
 
-  const factionGameSets = useDraftSetup((state) =>
-    state.content.getFactionGameSets(),
-  );
+  const factionGameSets = content.getFactionGameSets();
   const factionConstraints = faction.getFactionConstraints();
 
   const [

@@ -1,4 +1,4 @@
-import { loadImage, FontLibrary } from "skia-canvas";
+import { loadImage, FontLibrary, type Image } from "skia-canvas";
 import path from "path";
 import { TechSpecialty, Anomaly } from "~/types";
 import {
@@ -9,21 +9,21 @@ import {
 import { factions } from "~/data/factionData";
 
 // Cache for loaded tech icons
-let techIconCache: Record<TechSpecialty, any> | null = null;
+let techIconCache: Record<TechSpecialty, Image> | null = null;
 // Cache for loaded anomaly images
-let anomalyImageCache: Record<Anomaly, any> | null = null;
+let anomalyImageCache: Record<Anomaly, Image> | null = null;
 // Cache for loaded legendary planet images
-let legendaryImageCache: Record<string, any> | null = null;
+let legendaryImageCache: Record<string, Image> | null = null;
 // Cache for legendary icon
-let legendaryIconCache: any | null = null;
+let legendaryIconCache: Image | null = null;
 // Cache for faction icons
-let factionIconCache: Record<string, any> | null = null;
+let factionIconCache: Record<string, Image> | null = null;
 // Cache for background tile image
-let backgroundTileCache: any | null = null;
+let backgroundTileCache: Image | null = null;
 // Cache for logo image
-let logoCache: any | null = null;
+let logoCache: Image | null = null;
 // Cache for trade station image
-let tradeStationCache: any | null = null;
+let tradeStationCache: Image | null = null;
 
 export function initializeFonts(): void {
   const orbitronPath = path.join(process.cwd(), "public", "orbitron.ttf");
@@ -32,14 +32,17 @@ export function initializeFonts(): void {
     "public",
     "Quantico-Bold.ttf",
   );
+  // This is Skia's font registration API, not React's use hook.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   FontLibrary.use(orbitronPath);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   FontLibrary.use(quanticoBoldPath);
 }
 
 export async function loadAllAssets(): Promise<void> {
   // Load tech icons if not cached
   if (!techIconCache) {
-    techIconCache = {} as Record<TechSpecialty, any>;
+    techIconCache = {} as Record<TechSpecialty, Image>;
     for (const [tech, filename] of Object.entries(TECH_ICON_PATHS)) {
       const iconPath = path.join(process.cwd(), "public", filename);
       try {
@@ -52,7 +55,7 @@ export async function loadAllAssets(): Promise<void> {
 
   // Load anomaly images if not cached
   if (!anomalyImageCache) {
-    anomalyImageCache = {} as Record<Anomaly, any>;
+    anomalyImageCache = {} as Record<Anomaly, Image>;
     for (const [anomaly, filename] of Object.entries(ANOMALY_IMAGE_PATHS)) {
       if (filename) {
         const imagePath = path.join(process.cwd(), "public", filename);
@@ -67,7 +70,7 @@ export async function loadAllAssets(): Promise<void> {
 
   // Load legendary planet images if not cached
   if (!legendaryImageCache) {
-    legendaryImageCache = {} as Record<string, any>;
+    legendaryImageCache = {} as Record<string, Image>;
     for (const [systemId, config] of Object.entries(LEGENDARY_IMAGE_PATHS)) {
       const imagePath = path.join(process.cwd(), "public", config.path);
       try {
@@ -97,7 +100,7 @@ export async function loadAllAssets(): Promise<void> {
 
   // Load faction icons if not cached
   if (!factionIconCache) {
-    factionIconCache = {} as Record<string, any>;
+    factionIconCache = {} as Record<string, Image>;
     for (const [factionId, factionData] of Object.entries(factions)) {
       const iconPath = path.join(process.cwd(), "public", factionData.iconPath);
       try {

@@ -22,7 +22,7 @@ process.once("SIGINT", () => process.exit(0));
 // Exercise the deployed bundle and keep editor changes from reloading test pages.
 const build = spawnSync(
   process.execPath,
-  ["node_modules/@react-router/dev/bin.js", "build"],
+  ["node_modules/@react-router/dev/bin.cjs", "build"],
   { stdio: "inherit" },
 );
 if (build.status !== 0) process.exit(build.status ?? 1);

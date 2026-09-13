@@ -1,17 +1,18 @@
 # Automated testing
 
-Use Node 22 (`nvm use`) and `yarn install --frozen-lockfile`. SQLite tests use the native `better-sqlite3` module; dependencies installed under another Node major must be rebuilt or reinstalled.
+Use Node 26.8.2 (`nvm use`) and `yarn install --frozen-lockfile`. SQLite tests use the native `better-sqlite3` module; dependencies installed under another Node major must be rebuilt or reinstalled.
 
 ```sh
 yarn test:run                         # All unit and integration tests
 yarn test app/routes/baseDraftFlows.test.ts --run  # One flow suite
 yarn playwright install --with-deps chromium      # Once per machine
 yarn test:e2e                        # Desktop and mobile Chromium
+yarn test:visual                     # Original-version desktop/mobile screenshots
 yarn test:e2e --project=desktop      # Desktop only
-yarn build && yarn typecheck
+yarn build && yarn typecheck && yarn lint
 ```
 
-`yarn test` retains Vitest's watch mode. The separate Vitest configuration limits concurrency to four workers and only discovers application tests; generated React Router types are not test suites. Route discovery excludes test files so they cannot become public endpoints. CI runs the production build, type checking, all unit/integration tests, and browser tests, with focused tests prohibited.
+`yarn test` retains Vitest's watch mode. The separate Vitest configuration limits concurrency to four workers and only discovers application tests; generated React Router types are not test suites. Route discovery excludes test files so they cannot become public endpoints. CI runs the production build, type checking, lint, all unit/integration tests, and browser tests, with focused tests prohibited.
 
 Browser tests build the production application with the `/ti4` base path, then start an isolated server on port 3187. Set `TI4_E2E_PORT` to choose another port. The test runner does not reuse a running application. It creates a temporary SQLite database, disables Discord/R2/analytics, and removes the database when the server exits. The browser build replaces the ignored `build/` directory; run `yarn build` again before starting a deployment with a different base path. No configured development or production database is used.
 
@@ -42,3 +43,5 @@ Most complete games run through the real engine or server route with actual pers
 When adding a flow, cover a successful journey and its meaningful rejection/recovery paths, keep random generation seeded, and update this inventory. Keep private state fixtures synthetic and avoid live integrations.
 
 The map suites guard against previously uncovered failures: Mantis losing its clickable placement targets when drag-and-drop is disabled, Standard 4p offering incompatible slice extraction, Standard 5p failing to prepare a preset faction draft, and Texas accepting layouts with incompatible tile counts. Standard 4p/5p can draft factions on their complete maps; slice drafting requires a compatible layout. External map strings preserve system positions and rotations, but encode home placeholders without seat identity and use the same empty marker for open and closed spaces; the native share format preserves that editor information.
+
+`appearance.spec.ts` compares eleven pages on desktop and mobile against screenshots captured before the dependency upgrade, using Playwright 1.63.0 on Linux. A fixed preview fixture removes random draft generation from the comparison. Up to five isolated antialiasing pixels are allowed; layout and text changes still fail. Keep browser and OS versions consistent, inspect differences, and only replace baselines for intended design changes. These checks also reject browser console errors. See [upgrade notes](dependency-upgrade.md) for package compatibility limits.

@@ -1,0 +1,796 @@
+{
+  "version": 1,
+  "draft": {
+    "settings": {
+      "factionGameSets": ["base", "pok", "te"],
+      "tileGameSets": ["base", "pok", "te"],
+      "type": "milty3p",
+      "numFactions": 6,
+      "randomizeMap": true,
+      "numSlices": 6,
+      "randomizeSlices": true,
+      "draftSpeaker": false,
+      "showMonumentImagesInFactionInfo": false,
+      "allowHomePlanetSearch": false,
+      "allowEmptyTiles": false,
+      "draftPlayerColors": false,
+      "sliceGenerationConfig": {
+        "minSliceValue": 9,
+        "maxSliceValue": 13,
+        "minOptimalInfluence": 4,
+        "minOptimalResources": 3,
+        "safePathToMecatol": 0,
+        "centerTileNotEmpty": 0,
+        "highQualityAdjacent": 0,
+        "numAlphas": 2,
+        "numBetas": 2,
+        "minLegendaries": 1,
+        "maxLegendaries": 3,
+        "sliceValueModifiers": {
+          "entropicScarValue": 2,
+          "techValue": 0.5,
+          "hopesEndValue": 2,
+          "emelparValue": 3,
+          "industrexValue": 2,
+          "otherLegendaryValue": 1,
+          "tradeStationValue": 1,
+          "equidistantMultiplier": 0.5,
+          "supernovaOnPathPenalty": -2,
+          "nebulaOnPathPenalty": -1
+        },
+        "mecatolPathSystemIndices": [1, 4],
+        "hasMinorFactions": false
+      }
+    },
+    "availableFactions": [
+      "arborec",
+      "mahact",
+      "hacan",
+      "muaat",
+      "jolnar",
+      "naalu"
+    ],
+    "integrations": {},
+    "players": [
+      {
+        "id": 0,
+        "name": "Player 1"
+      },
+      {
+        "id": 1,
+        "name": "Player 2"
+      },
+      {
+        "id": 2,
+        "name": "Player 3"
+      }
+    ],
+    "slices": [
+      {
+        "name": "Slice Ragh",
+        "tiles": [
+          {
+            "idx": 0,
+            "type": "HOME",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "idx": 1,
+            "position": {
+              "x": -1,
+              "y": 0
+            },
+            "type": "SYSTEM",
+            "systemId": "63"
+          },
+          {
+            "idx": 2,
+            "position": {
+              "x": 0,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "106"
+          },
+          {
+            "idx": 3,
+            "position": {
+              "x": 1,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "113"
+          },
+          {
+            "idx": 4,
+            "position": {
+              "x": -1,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "36"
+          },
+          {
+            "idx": 5,
+            "position": {
+              "x": 0,
+              "y": -2
+            },
+            "type": "SYSTEM",
+            "systemId": "115"
+          }
+        ]
+      },
+      {
+        "name": "Slice Darinia",
+        "tiles": [
+          {
+            "idx": 0,
+            "type": "HOME",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "idx": 1,
+            "position": {
+              "x": -1,
+              "y": 0
+            },
+            "type": "SYSTEM",
+            "systemId": "21"
+          },
+          {
+            "idx": 2,
+            "position": {
+              "x": 0,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "48"
+          },
+          {
+            "idx": 3,
+            "position": {
+              "x": 1,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "68"
+          },
+          {
+            "idx": 4,
+            "position": {
+              "x": -1,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "26"
+          },
+          {
+            "idx": 5,
+            "position": {
+              "x": 0,
+              "y": -2
+            },
+            "type": "SYSTEM",
+            "systemId": "29"
+          }
+        ]
+      },
+      {
+        "name": "Slice Cortex",
+        "tiles": [
+          {
+            "idx": 0,
+            "type": "HOME",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "idx": 1,
+            "position": {
+              "x": -1,
+              "y": 0
+            },
+            "type": "SYSTEM",
+            "systemId": "101"
+          },
+          {
+            "idx": 2,
+            "position": {
+              "x": 0,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "117"
+          },
+          {
+            "idx": 3,
+            "position": {
+              "x": 1,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "19"
+          },
+          {
+            "idx": 4,
+            "position": {
+              "x": -1,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "78"
+          },
+          {
+            "idx": 5,
+            "position": {
+              "x": 0,
+              "y": -2
+            },
+            "type": "SYSTEM",
+            "systemId": "28"
+          }
+        ]
+      },
+      {
+        "name": "Slice Octane",
+        "tiles": [
+          {
+            "idx": 0,
+            "type": "HOME",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "idx": 1,
+            "position": {
+              "x": -1,
+              "y": 0
+            },
+            "type": "SYSTEM",
+            "systemId": "30"
+          },
+          {
+            "idx": 2,
+            "position": {
+              "x": 0,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "77"
+          },
+          {
+            "idx": 3,
+            "position": {
+              "x": 1,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "64"
+          },
+          {
+            "idx": 4,
+            "position": {
+              "x": -1,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "43"
+          },
+          {
+            "idx": 5,
+            "position": {
+              "x": 0,
+              "y": -2
+            },
+            "type": "SYSTEM",
+            "systemId": "24"
+          }
+        ]
+      },
+      {
+        "name": "Slice Maelstrom",
+        "tiles": [
+          {
+            "idx": 0,
+            "type": "HOME",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "idx": 1,
+            "position": {
+              "x": -1,
+              "y": 0
+            },
+            "type": "SYSTEM",
+            "systemId": "20"
+          },
+          {
+            "idx": 2,
+            "position": {
+              "x": 0,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "39"
+          },
+          {
+            "idx": 3,
+            "position": {
+              "x": 1,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "75"
+          },
+          {
+            "idx": 4,
+            "position": {
+              "x": -1,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "67"
+          },
+          {
+            "idx": 5,
+            "position": {
+              "x": 0,
+              "y": -2
+            },
+            "type": "SYSTEM",
+            "systemId": "100"
+          }
+        ]
+      },
+      {
+        "name": "Slice Strata",
+        "tiles": [
+          {
+            "idx": 0,
+            "type": "HOME",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "idx": 1,
+            "position": {
+              "x": -1,
+              "y": 0
+            },
+            "type": "SYSTEM",
+            "systemId": "73"
+          },
+          {
+            "idx": 2,
+            "position": {
+              "x": 0,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "33"
+          },
+          {
+            "idx": 3,
+            "position": {
+              "x": 1,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "49"
+          },
+          {
+            "idx": 4,
+            "position": {
+              "x": -1,
+              "y": -1
+            },
+            "type": "SYSTEM",
+            "systemId": "45"
+          },
+          {
+            "idx": 5,
+            "position": {
+              "x": 0,
+              "y": -2
+            },
+            "type": "SYSTEM",
+            "systemId": "61"
+          }
+        ]
+      }
+    ],
+    "presetMap": [
+      {
+        "idx": 0,
+        "type": "SYSTEM",
+        "systemId": "18",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      {
+        "idx": 1,
+        "type": "OPEN",
+        "position": {
+          "x": 0,
+          "y": -1,
+          "z": 1
+        }
+      },
+      {
+        "idx": 2,
+        "type": "SYSTEM",
+        "position": {
+          "x": 1,
+          "y": -1,
+          "z": 0
+        },
+        "systemId": "86A",
+        "rotation": 240
+      },
+      {
+        "idx": 3,
+        "type": "OPEN",
+        "position": {
+          "x": 1,
+          "y": 0,
+          "z": -1
+        }
+      },
+      {
+        "idx": 4,
+        "type": "SYSTEM",
+        "position": {
+          "x": 0,
+          "y": 1,
+          "z": -1
+        },
+        "systemId": "86A",
+        "rotation": 0
+      },
+      {
+        "idx": 5,
+        "type": "OPEN",
+        "position": {
+          "x": -1,
+          "y": 1,
+          "z": 0
+        }
+      },
+      {
+        "idx": 6,
+        "type": "SYSTEM",
+        "position": {
+          "x": -1,
+          "y": 0,
+          "z": 1
+        },
+        "systemId": "86A",
+        "rotation": 120
+      },
+      {
+        "idx": 7,
+        "type": "OPEN",
+        "position": {
+          "x": 0,
+          "y": -2,
+          "z": 2
+        }
+      },
+      {
+        "idx": 8,
+        "type": "SYSTEM",
+        "position": {
+          "x": 1,
+          "y": -2,
+          "z": 1
+        },
+        "systemId": "88A",
+        "rotation": 240
+      },
+      {
+        "idx": 9,
+        "type": "OPEN",
+        "position": {
+          "x": 2,
+          "y": -2,
+          "z": 0
+        }
+      },
+      {
+        "idx": 10,
+        "type": "SYSTEM",
+        "position": {
+          "x": 2,
+          "y": -1,
+          "z": -1
+        },
+        "systemId": "87A",
+        "rotation": 240
+      },
+      {
+        "idx": 11,
+        "type": "OPEN",
+        "position": {
+          "x": 2,
+          "y": 0,
+          "z": -2
+        }
+      },
+      {
+        "idx": 12,
+        "type": "SYSTEM",
+        "position": {
+          "x": 1,
+          "y": 1,
+          "z": -2
+        },
+        "systemId": "88A",
+        "rotation": 0
+      },
+      {
+        "idx": 13,
+        "type": "OPEN",
+        "position": {
+          "x": 0,
+          "y": 2,
+          "z": -2
+        }
+      },
+      {
+        "idx": 14,
+        "type": "SYSTEM",
+        "position": {
+          "x": -1,
+          "y": 2,
+          "z": -1
+        },
+        "systemId": "87A",
+        "rotation": 0
+      },
+      {
+        "idx": 15,
+        "type": "OPEN",
+        "position": {
+          "x": -2,
+          "y": 2,
+          "z": 0
+        }
+      },
+      {
+        "idx": 16,
+        "type": "SYSTEM",
+        "position": {
+          "x": -2,
+          "y": 1,
+          "z": 1
+        },
+        "systemId": "88A",
+        "rotation": 120
+      },
+      {
+        "idx": 17,
+        "type": "OPEN",
+        "position": {
+          "x": -2,
+          "y": 0,
+          "z": 2
+        }
+      },
+      {
+        "idx": 18,
+        "type": "SYSTEM",
+        "position": {
+          "x": -1,
+          "y": -1,
+          "z": 2
+        },
+        "systemId": "87A",
+        "rotation": 120
+      },
+      {
+        "idx": 19,
+        "type": "HOME",
+        "seat": 0,
+        "position": {
+          "x": 0,
+          "y": -3,
+          "z": 3
+        }
+      },
+      {
+        "idx": 20,
+        "type": "OPEN",
+        "position": {
+          "x": 1,
+          "y": -3,
+          "z": 2
+        }
+      },
+      {
+        "idx": 21,
+        "type": "SYSTEM",
+        "position": {
+          "x": 2,
+          "y": -3,
+          "z": 1
+        },
+        "systemId": "83A",
+        "rotation": 240
+      },
+      {
+        "idx": 22,
+        "type": "SYSTEM",
+        "position": {
+          "x": 3,
+          "y": -3,
+          "z": 0
+        },
+        "systemId": "85A",
+        "rotation": 240
+      },
+      {
+        "idx": 23,
+        "type": "SYSTEM",
+        "position": {
+          "x": 3,
+          "y": -2,
+          "z": -1
+        },
+        "systemId": "84A",
+        "rotation": 240
+      },
+      {
+        "idx": 24,
+        "type": "OPEN",
+        "position": {
+          "x": 3,
+          "y": -1,
+          "z": -2
+        }
+      },
+      {
+        "idx": 25,
+        "type": "HOME",
+        "seat": 1,
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": -3
+        }
+      },
+      {
+        "idx": 26,
+        "type": "OPEN",
+        "position": {
+          "x": 2,
+          "y": 1,
+          "z": -3
+        }
+      },
+      {
+        "idx": 27,
+        "type": "SYSTEM",
+        "position": {
+          "x": 1,
+          "y": 2,
+          "z": -3
+        },
+        "systemId": "83A",
+        "rotation": 0
+      },
+      {
+        "idx": 28,
+        "type": "SYSTEM",
+        "position": {
+          "x": 0,
+          "y": 3,
+          "z": -3
+        },
+        "systemId": "85A",
+        "rotation": 0
+      },
+      {
+        "idx": 29,
+        "type": "SYSTEM",
+        "position": {
+          "x": -1,
+          "y": 3,
+          "z": -2
+        },
+        "systemId": "84A",
+        "rotation": 0
+      },
+      {
+        "idx": 30,
+        "type": "OPEN",
+        "position": {
+          "x": -2,
+          "y": 3,
+          "z": -1
+        }
+      },
+      {
+        "idx": 31,
+        "type": "HOME",
+        "seat": 2,
+        "position": {
+          "x": -3,
+          "y": 3,
+          "z": 0
+        }
+      },
+      {
+        "idx": 32,
+        "type": "OPEN",
+        "position": {
+          "x": -3,
+          "y": 2,
+          "z": 1
+        }
+      },
+      {
+        "idx": 33,
+        "type": "SYSTEM",
+        "position": {
+          "x": -3,
+          "y": 1,
+          "z": 2
+        },
+        "systemId": "83A",
+        "rotation": 120
+      },
+      {
+        "idx": 34,
+        "type": "SYSTEM",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 3
+        },
+        "systemId": "85A",
+        "rotation": 120
+      },
+      {
+        "idx": 35,
+        "type": "SYSTEM",
+        "position": {
+          "x": -2,
+          "y": -1,
+          "z": 3
+        },
+        "systemId": "84A",
+        "rotation": 120
+      },
+      {
+        "idx": 36,
+        "type": "OPEN",
+        "position": {
+          "x": -1,
+          "y": -2,
+          "z": 3
+        }
+      }
+    ],
+    "pickOrder": [],
+    "selections": []
+  }
+}

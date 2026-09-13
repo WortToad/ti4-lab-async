@@ -19,10 +19,12 @@ export function RollingDraftOrder({ pickOrder, currentPick, players }: Props) {
   const entries = getDraftOrderEntries(pickOrder, players, currentPick);
 
   const recalculateOffset = useCallback(() => {
-    if (!containerRef.current || !trackRef.current) return;
+    if (!trackRef.current || containerRect.width === 0) return;
 
     const track = trackRef.current;
-    const activeElement = track.querySelector('[data-active="true"]') as HTMLElement;
+    const activeElement = track.querySelector(
+      '[data-active="true"]',
+    ) as HTMLElement;
 
     if (!activeElement) return;
 
@@ -34,7 +36,7 @@ export function RollingDraftOrder({ pickOrder, currentPick, players }: Props) {
     const targetOffset = containerWidth / 2 - activeLeft - activeWidth / 2;
 
     setOffset(targetOffset);
-  }, [containerRef, containerRect.width]);
+  }, [containerRect.width]);
 
   useEffect(() => {
     recalculateOffset();

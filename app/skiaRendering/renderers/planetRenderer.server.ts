@@ -1,3 +1,4 @@
+import type { CanvasRenderingContext2D } from "skia-canvas";
 import { Planet, PlanetTrait, TechSpecialty } from "~/types";
 import {
   PLANET_RADIUS,
@@ -151,13 +152,7 @@ function drawPlanetStats(
       ? LEGENDARY_PLANET_RADIUS
       : PLANET_RADIUS;
 
-  drawResourceInfluenceStats(
-    ctx,
-    planet,
-    centerX,
-    centerY,
-    isLegendaryStyled,
-  );
+  drawResourceInfluenceStats(ctx, planet, centerX, centerY, isLegendaryStyled);
   drawPlanetLabel(ctx, planet, centerX, centerY, planetRadius, systemId);
 }
 
@@ -302,14 +297,7 @@ function drawPlanetLabel(
   const labelX = centerX - planetRadius - 2;
 
   if (planet.legendary && planet.trait && planet.trait.length > 0) {
-    drawLegendaryLabel(
-      ctx,
-      planet,
-      labelX,
-      labelY,
-      labelWidth,
-      labelHeight,
-    );
+    drawLegendaryLabel(ctx, planet, labelX, labelY, labelWidth, labelHeight);
   } else {
     // Regular black background box for non-legendary
     ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
@@ -378,8 +366,7 @@ function drawTechSpecialties(
     const icon = techIconCache[tech];
     if (!icon) return;
 
-    const x =
-      centerX + planetRadius - iconSize + rightOffset - index * spacing;
+    const x = centerX + planetRadius - iconSize + rightOffset - index * spacing;
     const y = centerY - planetRadius + topOffset;
 
     ctx.drawImage(icon, x, y, iconSize, iconSize);

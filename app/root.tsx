@@ -24,6 +24,7 @@ import {
   Text,
   Title,
   mantineHtmlProps,
+  v8CssVariablesResolver,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { io, type Socket } from "socket.io-client";
@@ -131,6 +132,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body>
         <MantineProvider
           theme={commandTheme}
+          cssVariablesResolver={v8CssVariablesResolver}
           defaultColorScheme="dark"
           forceColorScheme="dark"
         >

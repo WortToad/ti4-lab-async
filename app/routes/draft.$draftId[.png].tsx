@@ -63,7 +63,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   // Without object storage, serve generated images from this same service.
   if (lobby || devMode || process.env.R2_INTEGRATION_DISABLED === "true") {
-    return new Response(imageBuffer, {
+    return new Response(new Uint8Array(imageBuffer), {
       headers: {
         "Content-Type": "image/png",
         "Cache-Control": lobby

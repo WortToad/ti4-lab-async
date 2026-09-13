@@ -4,7 +4,7 @@ import { findDrafts } from "~/drizzle/draft.server";
 import { drafts } from "~/drizzle/schema.server";
 import { Draft, DraftPick } from "~/types";
 
-async function migrateState() {
+export async function migrateState() {
   let deletedCount = 0;
   let page = 1;
   let hasMore = true;
@@ -19,7 +19,9 @@ async function migrateState() {
       if (draftType === "miltyeqless" || draftType === "wekker") {
         await db.delete(drafts).where(eq(drafts.id, draft.id));
         deletedCount++;
-        console.log(`Deleted draft ${draft.id} with type ${draft.data.settings.type}`);
+        console.log(
+          `Deleted draft ${draft.id} with type ${draft.data.settings.type}`,
+        );
       }
     }
 
@@ -52,8 +54,8 @@ async function fixTwilightsFallPickOrder() {
     .where(
       and(
         gte(drafts.createdAt, "2026-01-21 00:00:00"),
-        lt(drafts.createdAt, "2026-01-23 00:00:00")
-      )
+        lt(drafts.createdAt, "2026-01-23 00:00:00"),
+      ),
     );
 
   let fixedCount = 0;
@@ -87,13 +89,11 @@ async function fixTwilightsFallPickOrder() {
 
     // Count sequential picks (numbers, not simultaneous phases)
     const sequentialPicks = pickOrder.filter(
-      (pick): pick is number => typeof pick === "number"
+      (pick): pick is number => typeof pick === "number",
     );
     const simultaneousPhases = pickOrder.filter(
-      (
-        pick,
-      ): pick is Extract<DraftPick, { kind: "simultaneous" }> =>
-        typeof pick === "object" && pick.kind === "simultaneous"
+      (pick): pick is Extract<DraftPick, { kind: "simultaneous" }> =>
+        typeof pick === "object" && pick.kind === "simultaneous",
     );
 
     // Check if this draft has 4 rounds instead of 3
@@ -115,7 +115,7 @@ async function fixTwilightsFallPickOrder() {
         (s) =>
           s.type === "COMMIT_SIMULTANEOUS" ||
           s.type === "COMMIT_PRIORITY_VALUES" ||
-          s.type === "COMMIT_HOME_SYSTEMS"
+          s.type === "COMMIT_HOME_SYSTEMS",
       );
 
       if (hasSimultaneousSelections) {
@@ -146,7 +146,7 @@ async function fixTwilightsFallPickOrder() {
       .where(eq(drafts.id, draft.id));
 
     console.log(
-      `Fixed draft ${draft.urlName}: ${sequentialPicks.length} -> ${correctSequentialPickCount} sequential picks`
+      `Fixed draft ${draft.urlName}: ${sequentialPicks.length} -> ${correctSequentialPickCount} sequential picks`,
     );
     fixedCount++;
   }

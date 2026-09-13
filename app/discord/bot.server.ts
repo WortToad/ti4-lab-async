@@ -30,6 +30,8 @@ declare module "discord.js" {
 }
 
 declare global {
+  // Global declarations require var to expose the property on globalThis.
+  // eslint-disable-next-line no-var
   var discordClient: Client;
 }
 export async function startDiscordBot() {
@@ -177,7 +179,12 @@ async function announceLastPick(
     previousPick,
     draft,
   );
-  await sendTrackedMessage(draftId, MESSAGE_TYPE.LAST_PICK, channel, pickMessage);
+  await sendTrackedMessage(
+    draftId,
+    MESSAGE_TYPE.LAST_PICK,
+    channel,
+    pickMessage,
+  );
 }
 
 async function notifyNextPlayer(
@@ -221,7 +228,7 @@ export async function notifyPick(
     await notifyNextPlayer(draftId, draftUrl, draft, context.channel);
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     return { success: false, ...classifyDiscordError(error) };
   }
 }

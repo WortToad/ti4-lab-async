@@ -44,3 +44,10 @@ deployment
 *.sqlite-*
 *.sqlite3
 docs
+
+# Other downloaded reference applications
+ti4-lab
+ti4_web_new
+e2e
+test-results
+playwright-report

@@ -57,7 +57,7 @@ export function TexasTileDraftPhase({
 
   const options: SystemId[] =
     phase.currentPlayer && texasDraft?.tileHands
-      ? texasDraft.tileHands[color][phase.currentPlayer.id] ?? []
+      ? (texasDraft.tileHands[color][phase.currentPlayer.id] ?? [])
       : [];
   const selectedTile =
     phase.currentPlayer && phase.stagingValues
@@ -134,7 +134,7 @@ export function TexasTileDraftPhase({
 
       {/* Main content */}
       <Center p="md" pt="lg">
-        <Grid maw={1400} w="100%" gutter="xl">
+        <Grid maw={1400} w="100%" gap="xl">
           <Grid.Col span={{ base: 12, md: 4 }}>
             <PlayerSelectionSidebar
               players={phase.hydratedPlayers}
@@ -228,7 +228,7 @@ export function TexasTileDraftPhase({
             <Button variant="default" onClick={() => setPendingPick(null)}>
               Cancel
             </Button>
-            <Button color="green" onClick={confirmPendingPick} autoFocus>
+            <Button color="green" onClick={confirmPendingPick} data-autofocus>
               Confirm
             </Button>
           </Group>

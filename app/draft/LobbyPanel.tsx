@@ -401,7 +401,7 @@ export function LobbyPanel({
             )}
           </section>
         )}
-        <Collapse in={showDetails} id={detailsId}>
+        <Collapse expanded={showDetails} id={detailsId}>
           <Stack gap="md">
             {ownPlayerId === undefined && !allJoined && (
               <form

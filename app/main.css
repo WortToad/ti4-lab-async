@@ -423,6 +423,7 @@ a {
   background: #0b1b2c;
 }
 .mantine-SegmentedControl-label {
+  font-weight: 500;
   color: #bdcbd7;
 }
 .mantine-SegmentedControl-label[data-active] {
@@ -432,6 +433,12 @@ a {
 .mantine-SegmentedControl-indicator {
   background: var(--command-accent);
   box-shadow: 0 2px 6px #020a1433;
+}
+/* Preserve the established control corners across Mantine's v9 defaults. */
+.mantine-SegmentedControl-indicator,
+.mantine-SegmentedControl-label,
+.mantine-SegmentedControl-label[data-active]::before {
+  border-radius: var(--sc-radius, var(--mantine-radius-default));
 }
 .mantine-SegmentedControl-input:focus-visible
   + .mantine-SegmentedControl-label {

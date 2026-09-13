@@ -1,4 +1,4 @@
-import { Canvas } from "skia-canvas";
+import { Canvas, type CanvasRenderingContext2D, type Image } from "skia-canvas";
 import { Map, HydratedPlayer } from "~/types";
 import { calculateConcentricCircles, calcHexHeight } from "~/utils/positioning";
 import { getBackgroundTileCache, getLogoCache } from "./cache.server";
@@ -208,7 +208,7 @@ export function createCanvas(
   ctx: CanvasRenderingContext2D;
 } {
   const canvas = new Canvas(width, height);
-  const ctx = canvas.getContext("2d") as any as CanvasRenderingContext2D;
+  const ctx = canvas.getContext("2d");
   return { canvas, ctx };
 }
 
@@ -232,7 +232,7 @@ export function withContext(
  */
 export function drawRotatedImage(
   ctx: CanvasRenderingContext2D,
-  image: any,
+  image: Image,
   x: number,
   y: number,
   size: number,

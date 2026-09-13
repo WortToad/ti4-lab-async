@@ -11,6 +11,8 @@ import {
   Input,
   InputBase,
   Modal,
+  MultiSelect,
+  NumberInput,
   Paper,
   parseThemeColor,
   Radio,
@@ -257,6 +259,11 @@ export const commandTheme = createTheme({
     }),
     Input: Input.extend({ defaultProps: { size: "md" } }),
     InputBase: InputBase.extend({ defaultProps: { size: "md" } }),
+    // Mantine 9 forwards InputBase's default size to multi-select fields.
+    // Preserve the compact fields used by the existing setup forms.
+    MultiSelect: MultiSelect.extend({ defaultProps: { size: "sm" } }),
+    // Keep the original small steppers with the InputBase-sized field.
+    NumberInput: NumberInput.extend({ defaultProps: { size: undefined } }),
     Checkbox: Checkbox.extend({ defaultProps: { size: "md", radius: "xs" } }),
     Radio: Radio.extend({ defaultProps: { size: "md" } }),
     Switch: Switch.extend({ defaultProps: { size: "md" } }),

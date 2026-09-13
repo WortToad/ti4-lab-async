@@ -1,3 +1,4 @@
+import { RouterContextProvider } from "react-router";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import type { DraftConfig } from "~/draft/types";
 import { draftConfig } from "~/draft/draftConfig";
@@ -62,8 +63,9 @@ test("a later generation failure creates no lobbies and reports how to recover",
   const response = await action({
     request: request(),
     params: {},
-    context: {},
-    unstable_pattern: "/multidraft",
+    context: new RouterContextProvider(),
+    url: new URL(request().url.replace(/\.data(?=\?|$)/, "")),
+    pattern: "/multidraft",
   });
   expect(response).toMatchObject({
     data: { error: expect.stringContaining("Lobby 2 could not be prepared") },
@@ -80,8 +82,9 @@ test("persists the batch only after all generation and validation succeeds", asy
   const response = await action({
     request: request(),
     params: {},
-    context: {},
-    unstable_pattern: "/multidraft",
+    context: new RouterContextProvider(),
+    url: new URL(request().url.replace(/\.data(?=\?|$)/, "")),
+    pattern: "/multidraft",
   });
   expect(response).toBeInstanceOf(Response);
   expect((response as Response).headers.get("Location")).toBe(

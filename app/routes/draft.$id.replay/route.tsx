@@ -57,7 +57,7 @@ export default function DraftReplay() {
     <Stack gap="sm" mb="60" mt="lg">
       <ReplayControls />
 
-      <Grid gutter="xl">
+      <Grid gap="xl">
         <Grid.Col span={12} order={{ base: 0 }}>
           <Text size="md" ta="right" c="dimmed">
             {appUrl(`/draft/${result.urlName}`)}

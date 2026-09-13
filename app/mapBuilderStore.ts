@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { createWithEqualityFn } from "zustand/traditional";
 import {
   FactionId,
   GameSet,
@@ -101,654 +101,659 @@ type MapBuilderStore = {
   };
 };
 
-export const useMapBuilder = create<MapBuilderStore>((setStore, get) => {
-  // Record complete edits, excluding transient hover and picker state.
-  const set = (update: (store: MapBuilderStore) => MapBuilderStore) => {
-    setStore((store) => {
-      const next = update(store);
-      if (
-        next.state.map === store.state.map &&
-        next.state.gameSets === store.state.gameSets &&
-        next.state.mapConfigId === store.state.mapConfigId &&
-        next.state.ringCount === store.state.ringCount
-      )
-        return next;
-      return {
-        ...next,
-        past: [...store.past.slice(-49), snapshot(store.state)],
-        future: [],
-      };
-    });
-  };
+export const useMapBuilder = createWithEqualityFn<MapBuilderStore>(
+  (setStore, get) => {
+    // Record complete edits, excluding transient hover and picker state.
+    const set = (update: (store: MapBuilderStore) => MapBuilderStore) => {
+      setStore((store) => {
+        const next = update(store);
+        if (
+          next.state.map === store.state.map &&
+          next.state.gameSets === store.state.gameSets &&
+          next.state.mapConfigId === store.state.mapConfigId &&
+          next.state.ringCount === store.state.ringCount
+        )
+          return next;
+        return {
+          ...next,
+          past: [...store.past.slice(-49), snapshot(store.state)],
+          future: [],
+        };
+      });
+    };
 
-  const restore = (direction: "undo" | "redo") => {
-    setStore((store) => {
-      const source = direction === "undo" ? store.past : store.future;
-      const previous = source.at(-1);
-      if (!previous) return store;
-      return {
-        ...store,
-        state: {
-          ...store.state,
-          ...previous,
+    const restore = (direction: "undo" | "redo") => {
+      setStore((store) => {
+        const source = direction === "undo" ? store.past : store.future;
+        const previous = source.at(-1);
+        if (!previous) return store;
+        return {
+          ...store,
+          state: {
+            ...store.state,
+            ...previous,
+            planetFinderModal: null,
+            hoveredHomeIdx: null,
+          },
+          systemPool: previous.systemPool,
           planetFinderModal: null,
-          hoveredHomeIdx: null,
-        },
-        systemPool: previous.systemPool,
-        planetFinderModal: null,
-        past:
-          direction === "undo"
-            ? store.past.slice(0, -1)
-            : [...store.past, snapshot(store.state)],
-        future:
-          direction === "redo"
-            ? store.future.slice(0, -1)
-            : [...store.future, snapshot(store.state)],
-      };
-    });
-  };
-  const initialGameSets: GameSet[] = ["base", "pok", "te"];
-  const systemPool = getSystemPool(initialGameSets);
-  const initialMapConfigId = defaultMapConfigId;
-  const initialMap = generateMapFromConfig(mapConfigs[initialMapConfigId]);
-  const initialRingCount = mapConfigs[initialMapConfigId].mapSize;
+          past:
+            direction === "undo"
+              ? store.past.slice(0, -1)
+              : [...store.past, snapshot(store.state)],
+          future:
+            direction === "redo"
+              ? store.future.slice(0, -1)
+              : [...store.future, snapshot(store.state)],
+        };
+      });
+    };
+    const initialGameSets: GameSet[] = ["base", "pok", "te"];
+    const systemPool = getSystemPool(initialGameSets);
+    const initialMapConfigId = defaultMapConfigId;
+    const initialMap = generateMapFromConfig(mapConfigs[initialMapConfigId]);
+    const initialRingCount = mapConfigs[initialMapConfigId].mapSize;
 
-  return {
-    past: [],
-    future: [],
-    state: {
-      map: initialMap,
+    return {
+      past: [],
+      future: [],
+      state: {
+        map: initialMap,
+        planetFinderModal: null,
+        systemPool,
+        gameSets: initialGameSets,
+        factionPool: [],
+        allowHomePlanetSearch: false,
+        mapConfigId: initialMapConfigId,
+        ringCount: initialRingCount,
+        hoveredHomeIdx: null,
+        closeTileMode: false,
+      },
+
+      // Expose for PlanetFinder compatibility
       planetFinderModal: null,
       systemPool,
-      gameSets: initialGameSets,
       factionPool: [],
-      allowHomePlanetSearch: false,
-      mapConfigId: initialMapConfigId,
-      ringCount: initialRingCount,
-      hoveredHomeIdx: null,
-      closeTileMode: false,
-    },
-
-    // Expose for PlanetFinder compatibility
-    planetFinderModal: null,
-    systemPool,
-    factionPool: [],
-    draft: {
-      settings: {
-        allowHomePlanetSearch: false,
-      },
-    },
-
-    actions: {
-      undo: () => restore("undo"),
-      redo: () => restore("redo"),
-      addSystemToMap: (
-        tileIdx: number,
-        systemId: SystemId,
-        rotation?: number,
-      ) => {
-        set((store) => {
-          if (tileIdx === 0 || !store.state.map[tileIdx] || systemId === "18")
-            return store;
-          const newMap = [...store.state.map];
-          const system = systemData[systemId];
-
-          if (!system) return store;
-
-          if (system.type !== "HYPERLANE") {
-            // Remove any existing instance of this system from the map
-            for (let i = 0; i < newMap.length; i++) {
-              const tile = newMap[i];
-              if (
-                tile.type === "SYSTEM" &&
-                tile.systemId === systemId &&
-                i !== 0 // Never remove Mecatol Rex
-              ) {
-                newMap[i] = {
-                  ...tile,
-                  type: "OPEN",
-                };
-              }
-            }
-          }
-
-          // Add the system to the new location
-          newMap[tileIdx] = {
-            ...newMap[tileIdx],
-            type: "SYSTEM",
-            systemId: systemId,
-            rotation: rotation,
-          };
-
-          return {
-            ...store,
-            state: {
-              ...store.state,
-              map: newMap,
-            },
-          };
-        });
+      draft: {
+        settings: {
+          allowHomePlanetSearch: false,
+        },
       },
 
-      removeSystemFromMap: (tileIdx: number) => {
-        set((store) => {
-          // Don't remove Mecatol Rex
-          if (tileIdx === 0 || !store.state.map[tileIdx]) {
-            return store;
-          }
+      actions: {
+        undo: () => restore("undo"),
+        redo: () => restore("redo"),
+        addSystemToMap: (
+          tileIdx: number,
+          systemId: SystemId,
+          rotation?: number,
+        ) => {
+          set((store) => {
+            if (tileIdx === 0 || !store.state.map[tileIdx] || systemId === "18")
+              return store;
+            const newMap = [...store.state.map];
+            const system = systemData[systemId];
 
-          const newMap = [...store.state.map];
+            if (!system) return store;
 
-          // Convert back to OPEN tile
-          newMap[tileIdx] = {
-            ...newMap[tileIdx],
-            type: "OPEN",
-          };
-
-          return {
-            ...store,
-            state: {
-              ...store.state,
-              map: newMap,
-            },
-          };
-        });
-      },
-
-      swapTiles: (originIdx: number, destIdx: number) => {
-        set((store) => {
-          // Protect Mecatol Rex (index 0)
-          if (
-            originIdx === destIdx ||
-            originIdx === 0 ||
-            destIdx === 0 ||
-            !store.state.map[originIdx] ||
-            !store.state.map[destIdx]
-          ) {
-            return store;
-          }
-
-          const newMap = [...store.state.map];
-          const originTile = newMap[originIdx];
-          const destTile = newMap[destIdx];
-
-          // Swap tiles, preserving idx and position
-          newMap[originIdx] = {
-            ...destTile,
-            idx: originIdx,
-            position: originTile.position,
-          };
-          newMap[destIdx] = {
-            ...originTile,
-            idx: destIdx,
-            position: destTile.position,
-          };
-
-          return {
-            ...store,
-            state: {
-              ...store.state,
-              map: newMap,
-            },
-          };
-        });
-      },
-
-      clearMap: () => {
-        set((store) => {
-          const config = mapConfigs[store.state.mapConfigId];
-          const newMap = generateMapFromConfig(config);
-          return {
-            ...store,
-            state: {
-              ...store.state,
-              map: newMap,
-              ringCount: config.mapSize,
-            },
-          };
-        });
-      },
-
-      setMapConfig: (configId: string) => {
-        set((store) => {
-          const config = mapConfigs[configId];
-          if (!config) return store;
-
-          const newMap = generateMapFromConfig(config);
-          return {
-            ...store,
-            state: {
-              ...store.state,
-              mapConfigId: configId,
-              map: newMap,
-              ringCount: config.mapSize,
-            },
-          };
-        });
-      },
-
-      setRingCount: (newRingCount: number) => {
-        set((store) => {
-          const currentRingCount = store.state.ringCount;
-          if (newRingCount === currentRingCount) return store;
-          if (
-            !Number.isInteger(newRingCount) ||
-            newRingCount < 2 ||
-            newRingCount > 5
-          )
-            return store;
-
-          const currentMap = store.state.map;
-          const newTileCount = getTileCount(newRingCount);
-          const coords = generateHexRings(newRingCount);
-
-          if (newRingCount > currentRingCount) {
-            // Expanding: add new OPEN tiles
-            const newMap: Map = [...currentMap];
-            for (let idx = currentMap.length; idx < newTileCount; idx++) {
-              const openTile: OpenTile = {
-                idx,
-                type: "OPEN",
-                position: coords[idx],
-              };
-              newMap.push(openTile);
-            }
-            return {
-              ...store,
-              state: {
-                ...store.state,
-                ringCount: newRingCount,
-                map: newMap,
-              },
-            };
-          } else {
-            // Shrinking: find displaced homes and snap them to new outer ring
-            const newMap: Map = [];
-            const displacedHomes: { seat: number; oldIdx: number }[] = [];
-
-            // First pass: copy tiles within new bounds, collect displaced homes
-            for (let idx = 0; idx < newTileCount; idx++) {
-              const tile = currentMap[idx];
-              newMap.push({
-                ...tile,
-                idx,
-                position: coords[idx],
-              });
-            }
-
-            // Find homes beyond new boundary
-            for (let idx = newTileCount; idx < currentMap.length; idx++) {
-              const tile = currentMap[idx];
-              if (tile.type === "HOME" && tile.seat !== undefined) {
-                displacedHomes.push({ seat: tile.seat, oldIdx: idx });
-              }
-            }
-
-            // Snap displaced homes to new outer ring
-            const occupiedIndices = new Set<number>();
-            newMap.forEach((tile, idx) => {
-              if (tile.type === "HOME" || tile.type === "SYSTEM") {
-                occupiedIndices.add(idx);
-              }
-            });
-
-            // Get old coordinates for finding closest positions
-            const oldCoords = generateHexRings(currentRingCount);
-
-            for (const { seat, oldIdx } of displacedHomes) {
-              const oldCoord = oldCoords[oldIdx];
-              const closestIdx = findClosestOnRing(
-                oldCoord,
-                newRingCount,
-                coords,
-              );
-              const availableIdx = findAvailableOnRing(
-                closestIdx,
-                newRingCount,
-                occupiedIndices,
-              );
-
-              if (availableIdx !== -1) {
-                // Convert the target position to a HOME tile
-                const homeTile: HomeTile = {
-                  idx: availableIdx,
-                  type: "HOME",
-                  seat,
-                  position: coords[availableIdx],
-                };
-                newMap[availableIdx] = homeTile;
-                occupiedIndices.add(availableIdx);
-              }
-              // If no available position, the home is lost (shouldn't happen with reasonable ring counts)
-            }
-
-            return {
-              ...store,
-              state: {
-                ...store.state,
-                ringCount: newRingCount,
-                map: newMap,
-              },
-            };
-          }
-        });
-      },
-
-      setMap: (map: Map) => {
-        set((store) => ({
-          ...store,
-          state: {
-            ...store.state,
-            map,
-          },
-        }));
-      },
-
-      setHoveredHomeIdx: (idx: number | null) => {
-        set((store) => ({
-          ...store,
-          state: {
-            ...store.state,
-            hoveredHomeIdx: idx,
-          },
-        }));
-      },
-
-      setGameSets: (gameSets: GameSet[]) => {
-        set((store) => {
-          const newSystemPool = getSystemPool(gameSets);
-          const poolSet = new Set(newSystemPool);
-          const config = mapConfigs[store.state.mapConfigId];
-          const presetTileIndices = new Set(
-            Object.keys(config.presetTiles).map(Number),
-          );
-
-          // Remove systems from map that are no longer in the pool
-          // NEVER remove Mecatol Rex (system 18) from index 0
-          // NEVER remove preset tiles (hyperlanes)
-          const newMap = store.state.map.map((tile, idx) => {
-            if (
-              tile.type === "SYSTEM" &&
-              !poolSet.has(tile.systemId) &&
-              !(idx === 0 && tile.systemId === "18") &&
-              !presetTileIndices.has(idx)
-            ) {
-              return {
-                ...tile,
-                type: "OPEN" as const,
-              };
-            }
-            return tile;
-          });
-
-          return {
-            ...store,
-            state: {
-              ...store.state,
-              gameSets,
-              systemPool: newSystemPool,
-              map: newMap,
-            },
-            systemPool: newSystemPool,
-          };
-        });
-      },
-
-      openPlanetFinderForMap: (tileIdx: number) => {
-        set((store) => ({
-          ...store,
-          state: {
-            ...store.state,
-            planetFinderModal: { mode: "map", tileIdx },
-          },
-          planetFinderModal: { mode: "map", tileIdx },
-        }));
-      },
-
-      closePlanetFinder: () => {
-        set((store) => ({
-          ...store,
-          state: {
-            ...store.state,
-            planetFinderModal: null,
-          },
-          planetFinderModal: null,
-        }));
-      },
-
-      selectSystemForPlanetFinder: (systemId: SystemId) => {
-        const store = get();
-
-        if (store.state.planetFinderModal?.tileIdx !== undefined) {
-          store.actions.addSystemToMap(
-            store.state.planetFinderModal.tileIdx,
-            systemId,
-          );
-        }
-
-        store.actions.closePlanetFinder();
-      },
-
-      toggleCloseTileMode: () => {
-        set((store) => ({
-          ...store,
-          state: {
-            ...store.state,
-            closeTileMode: !store.state.closeTileMode,
-          },
-        }));
-      },
-
-      toggleTileClosed: (idx: number) => {
-        set((store) => {
-          // Cannot close Mecatol Rex (idx 0)
-          if (idx === 0 || !store.state.map[idx]) return store;
-
-          // Cannot close HOME tiles
-          const tile = store.state.map[idx];
-          if (tile.type === "HOME") return store;
-          const newMap = [...store.state.map];
-
-          if (tile.type === "CLOSED") {
-            const openTile: OpenTile = {
-              idx,
-              type: "OPEN",
-              position: tile.position,
-            };
-            newMap[idx] = openTile;
-          } else {
-            const closedTile: ClosedTile = {
-              idx,
-              type: "CLOSED",
-              position: tile.position,
-            };
-            newMap[idx] = closedTile;
-          }
-
-          return {
-            ...store,
-            state: {
-              ...store.state,
-              map: newMap,
-            },
-          };
-        });
-      },
-
-      addHomeSystem: () => {
-        set((store) => {
-          const currentMap = store.state.map;
-          const ringCount = store.state.ringCount;
-
-          // Find current home systems and get next seat number
-          const homeTiles = currentMap.filter(
-            (tile) => tile.type === "HOME",
-          ) as HomeTile[];
-          const usedSeats = new Set(homeTiles.map((tile) => tile.seat));
-          let nextSeat = 0;
-          while (usedSeats.has(nextSeat)) nextSeat++;
-
-          // Find candidate tiles to convert to home (prioritize OPEN, then SYSTEM)
-          // Prefer tiles on the outer ring
-          const outerRingIndices = getRingIndices(ringCount);
-
-          // First, try to find an OPEN tile on the outer ring
-          let targetIdx = -1;
-          const outerOpenTiles = outerRingIndices.filter(
-            (idx) => currentMap[idx].type === "OPEN",
-          );
-
-          if (outerOpenTiles.length > 0) {
-            targetIdx =
-              outerOpenTiles[Math.floor(Math.random() * outerOpenTiles.length)];
-          } else {
-            // Try any OPEN tile (excluding Mecatol Rex and closed tiles)
-            const allOpenTiles = currentMap
-              .map((tile, idx) => ({ tile, idx }))
-              .filter(({ tile, idx }) => tile.type === "OPEN" && idx !== 0)
-              .map(({ idx }) => idx);
-
-            if (allOpenTiles.length > 0) {
-              targetIdx =
-                allOpenTiles[Math.floor(Math.random() * allOpenTiles.length)];
-            } else {
-              // Last resort: pick a random SYSTEM tile on outer ring (not Mecatol)
-              const outerSystemTiles = outerRingIndices.filter(
-                (idx) =>
-                  currentMap[idx].type === "SYSTEM" &&
-                  idx !== 0 &&
-                  (currentMap[idx] as SystemTile).systemId !== "18",
-              );
-
-              if (outerSystemTiles.length > 0) {
-                targetIdx =
-                  outerSystemTiles[
-                    Math.floor(Math.random() * outerSystemTiles.length)
-                  ];
-              } else {
-                // Try any SYSTEM tile
-                const allSystemTiles = currentMap
-                  .map((tile, idx) => ({ tile, idx }))
-                  .filter(
-                    ({ tile, idx }) =>
-                      tile.type === "SYSTEM" &&
-                      idx !== 0 &&
-                      (tile as SystemTile).systemId !== "18",
-                  )
-                  .map(({ idx }) => idx);
-
-                if (allSystemTiles.length > 0) {
-                  targetIdx =
-                    allSystemTiles[
-                      Math.floor(Math.random() * allSystemTiles.length)
-                    ];
+            if (system.type !== "HYPERLANE") {
+              // Remove any existing instance of this system from the map
+              for (let i = 0; i < newMap.length; i++) {
+                const tile = newMap[i];
+                if (
+                  tile.type === "SYSTEM" &&
+                  tile.systemId === systemId &&
+                  i !== 0 // Never remove Mecatol Rex
+                ) {
+                  newMap[i] = {
+                    ...tile,
+                    type: "OPEN",
+                  };
                 }
               }
             }
-          }
 
-          if (targetIdx === -1) {
-            // No available tile to convert
-            return store;
-          }
+            // Add the system to the new location
+            newMap[tileIdx] = {
+              ...newMap[tileIdx],
+              type: "SYSTEM",
+              systemId: systemId,
+              rotation: rotation,
+            };
 
-          const newMap = [...currentMap];
-          const targetTile = newMap[targetIdx];
+            return {
+              ...store,
+              state: {
+                ...store.state,
+                map: newMap,
+              },
+            };
+          });
+        },
 
-          const homeTile: HomeTile = {
-            idx: targetIdx,
-            type: "HOME",
-            seat: nextSeat,
-            position: targetTile.position,
-          };
-          newMap[targetIdx] = homeTile;
+        removeSystemFromMap: (tileIdx: number) => {
+          set((store) => {
+            // Don't remove Mecatol Rex
+            if (tileIdx === 0 || !store.state.map[tileIdx]) {
+              return store;
+            }
 
-          return {
+            const newMap = [...store.state.map];
+
+            // Convert back to OPEN tile
+            newMap[tileIdx] = {
+              ...newMap[tileIdx],
+              type: "OPEN",
+            };
+
+            return {
+              ...store,
+              state: {
+                ...store.state,
+                map: newMap,
+              },
+            };
+          });
+        },
+
+        swapTiles: (originIdx: number, destIdx: number) => {
+          set((store) => {
+            // Protect Mecatol Rex (index 0)
+            if (
+              originIdx === destIdx ||
+              originIdx === 0 ||
+              destIdx === 0 ||
+              !store.state.map[originIdx] ||
+              !store.state.map[destIdx]
+            ) {
+              return store;
+            }
+
+            const newMap = [...store.state.map];
+            const originTile = newMap[originIdx];
+            const destTile = newMap[destIdx];
+
+            // Swap tiles, preserving idx and position
+            newMap[originIdx] = {
+              ...destTile,
+              idx: originIdx,
+              position: originTile.position,
+            };
+            newMap[destIdx] = {
+              ...originTile,
+              idx: destIdx,
+              position: destTile.position,
+            };
+
+            return {
+              ...store,
+              state: {
+                ...store.state,
+                map: newMap,
+              },
+            };
+          });
+        },
+
+        clearMap: () => {
+          set((store) => {
+            const config = mapConfigs[store.state.mapConfigId];
+            const newMap = generateMapFromConfig(config);
+            return {
+              ...store,
+              state: {
+                ...store.state,
+                map: newMap,
+                ringCount: config.mapSize,
+              },
+            };
+          });
+        },
+
+        setMapConfig: (configId: string) => {
+          set((store) => {
+            const config = mapConfigs[configId];
+            if (!config) return store;
+
+            const newMap = generateMapFromConfig(config);
+            return {
+              ...store,
+              state: {
+                ...store.state,
+                mapConfigId: configId,
+                map: newMap,
+                ringCount: config.mapSize,
+              },
+            };
+          });
+        },
+
+        setRingCount: (newRingCount: number) => {
+          set((store) => {
+            const currentRingCount = store.state.ringCount;
+            if (newRingCount === currentRingCount) return store;
+            if (
+              !Number.isInteger(newRingCount) ||
+              newRingCount < 2 ||
+              newRingCount > 5
+            )
+              return store;
+
+            const currentMap = store.state.map;
+            const newTileCount = getTileCount(newRingCount);
+            const coords = generateHexRings(newRingCount);
+
+            if (newRingCount > currentRingCount) {
+              // Expanding: add new OPEN tiles
+              const newMap: Map = [...currentMap];
+              for (let idx = currentMap.length; idx < newTileCount; idx++) {
+                const openTile: OpenTile = {
+                  idx,
+                  type: "OPEN",
+                  position: coords[idx],
+                };
+                newMap.push(openTile);
+              }
+              return {
+                ...store,
+                state: {
+                  ...store.state,
+                  ringCount: newRingCount,
+                  map: newMap,
+                },
+              };
+            } else {
+              // Shrinking: find displaced homes and snap them to new outer ring
+              const newMap: Map = [];
+              const displacedHomes: { seat: number; oldIdx: number }[] = [];
+
+              // First pass: copy tiles within new bounds, collect displaced homes
+              for (let idx = 0; idx < newTileCount; idx++) {
+                const tile = currentMap[idx];
+                newMap.push({
+                  ...tile,
+                  idx,
+                  position: coords[idx],
+                });
+              }
+
+              // Find homes beyond new boundary
+              for (let idx = newTileCount; idx < currentMap.length; idx++) {
+                const tile = currentMap[idx];
+                if (tile.type === "HOME" && tile.seat !== undefined) {
+                  displacedHomes.push({ seat: tile.seat, oldIdx: idx });
+                }
+              }
+
+              // Snap displaced homes to new outer ring
+              const occupiedIndices = new Set<number>();
+              newMap.forEach((tile, idx) => {
+                if (tile.type === "HOME" || tile.type === "SYSTEM") {
+                  occupiedIndices.add(idx);
+                }
+              });
+
+              // Get old coordinates for finding closest positions
+              const oldCoords = generateHexRings(currentRingCount);
+
+              for (const { seat, oldIdx } of displacedHomes) {
+                const oldCoord = oldCoords[oldIdx];
+                const closestIdx = findClosestOnRing(
+                  oldCoord,
+                  newRingCount,
+                  coords,
+                );
+                const availableIdx = findAvailableOnRing(
+                  closestIdx,
+                  newRingCount,
+                  occupiedIndices,
+                );
+
+                if (availableIdx !== -1) {
+                  // Convert the target position to a HOME tile
+                  const homeTile: HomeTile = {
+                    idx: availableIdx,
+                    type: "HOME",
+                    seat,
+                    position: coords[availableIdx],
+                  };
+                  newMap[availableIdx] = homeTile;
+                  occupiedIndices.add(availableIdx);
+                }
+                // If no available position, the home is lost (shouldn't happen with reasonable ring counts)
+              }
+
+              return {
+                ...store,
+                state: {
+                  ...store.state,
+                  ringCount: newRingCount,
+                  map: newMap,
+                },
+              };
+            }
+          });
+        },
+
+        setMap: (map: Map) => {
+          set((store) => ({
             ...store,
-            state: {
-              ...store.state,
-              map: newMap,
-            },
-          };
-        });
-      },
-
-      removeHomeSystem: () => {
-        set((store) => {
-          const currentMap = store.state.map;
-
-          // Find home systems
-          const homeTiles = currentMap
-            .map((tile, idx) => ({ tile, idx }))
-            .filter(({ tile }) => tile.type === "HOME") as {
-            tile: HomeTile;
-            idx: number;
-          }[];
-
-          if (homeTiles.length <= 1) {
-            // Don't remove if only 1 or 0 homes remain
-            return store;
-          }
-
-          // Find the home with the highest seat number
-          const homeToRemove = homeTiles.reduce((max, current) =>
-            (current.tile.seat ?? 0) > (max.tile.seat ?? 0) ? current : max,
-          );
-
-          const newMap = [...currentMap];
-          const openTile: OpenTile = {
-            idx: homeToRemove.idx,
-            type: "OPEN",
-            position: homeToRemove.tile.position,
-          };
-          newMap[homeToRemove.idx] = openTile;
-
-          return {
-            ...store,
-            state: {
-              ...store.state,
-              map: newMap,
-            },
-          };
-        });
-      },
-
-      loadDecodedMap: (
-        map: Map,
-        ringCount: number,
-        gameSets: GameSet[],
-        configId?: string,
-        recordHistory = true,
-      ) => {
-        const mapConfigId =
-          configId && Object.hasOwn(mapConfigs, configId)
-            ? configId
-            : defaultMapConfigId;
-        (recordHistory ? set : setStore)((store) => {
-          if (
-            !recordHistory &&
-            store.state.ringCount === ringCount &&
-            store.state.mapConfigId === mapConfigId &&
-            JSON.stringify(store.state.gameSets) === JSON.stringify(gameSets) &&
-            encodeMapString(store.state.map) === encodeMapString(map)
-          )
-            return store;
-          const newSystemPool = getSystemPool(gameSets);
-          return {
-            ...store,
-            ...(!recordHistory ? { past: [], future: [] } : {}),
             state: {
               ...store.state,
               map,
-              ringCount,
-              gameSets,
-              systemPool: newSystemPool,
-              mapConfigId,
             },
-            systemPool: newSystemPool,
-          };
-        });
+          }));
+        },
+
+        setHoveredHomeIdx: (idx: number | null) => {
+          set((store) => ({
+            ...store,
+            state: {
+              ...store.state,
+              hoveredHomeIdx: idx,
+            },
+          }));
+        },
+
+        setGameSets: (gameSets: GameSet[]) => {
+          set((store) => {
+            const newSystemPool = getSystemPool(gameSets);
+            const poolSet = new Set(newSystemPool);
+            const config = mapConfigs[store.state.mapConfigId];
+            const presetTileIndices = new Set(
+              Object.keys(config.presetTiles).map(Number),
+            );
+
+            // Remove systems from map that are no longer in the pool
+            // NEVER remove Mecatol Rex (system 18) from index 0
+            // NEVER remove preset tiles (hyperlanes)
+            const newMap = store.state.map.map((tile, idx) => {
+              if (
+                tile.type === "SYSTEM" &&
+                !poolSet.has(tile.systemId) &&
+                !(idx === 0 && tile.systemId === "18") &&
+                !presetTileIndices.has(idx)
+              ) {
+                return {
+                  ...tile,
+                  type: "OPEN" as const,
+                };
+              }
+              return tile;
+            });
+
+            return {
+              ...store,
+              state: {
+                ...store.state,
+                gameSets,
+                systemPool: newSystemPool,
+                map: newMap,
+              },
+              systemPool: newSystemPool,
+            };
+          });
+        },
+
+        openPlanetFinderForMap: (tileIdx: number) => {
+          set((store) => ({
+            ...store,
+            state: {
+              ...store.state,
+              planetFinderModal: { mode: "map", tileIdx },
+            },
+            planetFinderModal: { mode: "map", tileIdx },
+          }));
+        },
+
+        closePlanetFinder: () => {
+          set((store) => ({
+            ...store,
+            state: {
+              ...store.state,
+              planetFinderModal: null,
+            },
+            planetFinderModal: null,
+          }));
+        },
+
+        selectSystemForPlanetFinder: (systemId: SystemId) => {
+          const store = get();
+
+          if (store.state.planetFinderModal?.tileIdx !== undefined) {
+            store.actions.addSystemToMap(
+              store.state.planetFinderModal.tileIdx,
+              systemId,
+            );
+          }
+
+          store.actions.closePlanetFinder();
+        },
+
+        toggleCloseTileMode: () => {
+          set((store) => ({
+            ...store,
+            state: {
+              ...store.state,
+              closeTileMode: !store.state.closeTileMode,
+            },
+          }));
+        },
+
+        toggleTileClosed: (idx: number) => {
+          set((store) => {
+            // Cannot close Mecatol Rex (idx 0)
+            if (idx === 0 || !store.state.map[idx]) return store;
+
+            // Cannot close HOME tiles
+            const tile = store.state.map[idx];
+            if (tile.type === "HOME") return store;
+            const newMap = [...store.state.map];
+
+            if (tile.type === "CLOSED") {
+              const openTile: OpenTile = {
+                idx,
+                type: "OPEN",
+                position: tile.position,
+              };
+              newMap[idx] = openTile;
+            } else {
+              const closedTile: ClosedTile = {
+                idx,
+                type: "CLOSED",
+                position: tile.position,
+              };
+              newMap[idx] = closedTile;
+            }
+
+            return {
+              ...store,
+              state: {
+                ...store.state,
+                map: newMap,
+              },
+            };
+          });
+        },
+
+        addHomeSystem: () => {
+          set((store) => {
+            const currentMap = store.state.map;
+            const ringCount = store.state.ringCount;
+
+            // Find current home systems and get next seat number
+            const homeTiles = currentMap.filter(
+              (tile) => tile.type === "HOME",
+            ) as HomeTile[];
+            const usedSeats = new Set(homeTiles.map((tile) => tile.seat));
+            let nextSeat = 0;
+            while (usedSeats.has(nextSeat)) nextSeat++;
+
+            // Find candidate tiles to convert to home (prioritize OPEN, then SYSTEM)
+            // Prefer tiles on the outer ring
+            const outerRingIndices = getRingIndices(ringCount);
+
+            // First, try to find an OPEN tile on the outer ring
+            let targetIdx = -1;
+            const outerOpenTiles = outerRingIndices.filter(
+              (idx) => currentMap[idx].type === "OPEN",
+            );
+
+            if (outerOpenTiles.length > 0) {
+              targetIdx =
+                outerOpenTiles[
+                  Math.floor(Math.random() * outerOpenTiles.length)
+                ];
+            } else {
+              // Try any OPEN tile (excluding Mecatol Rex and closed tiles)
+              const allOpenTiles = currentMap
+                .map((tile, idx) => ({ tile, idx }))
+                .filter(({ tile, idx }) => tile.type === "OPEN" && idx !== 0)
+                .map(({ idx }) => idx);
+
+              if (allOpenTiles.length > 0) {
+                targetIdx =
+                  allOpenTiles[Math.floor(Math.random() * allOpenTiles.length)];
+              } else {
+                // Last resort: pick a random SYSTEM tile on outer ring (not Mecatol)
+                const outerSystemTiles = outerRingIndices.filter(
+                  (idx) =>
+                    currentMap[idx].type === "SYSTEM" &&
+                    idx !== 0 &&
+                    (currentMap[idx] as SystemTile).systemId !== "18",
+                );
+
+                if (outerSystemTiles.length > 0) {
+                  targetIdx =
+                    outerSystemTiles[
+                      Math.floor(Math.random() * outerSystemTiles.length)
+                    ];
+                } else {
+                  // Try any SYSTEM tile
+                  const allSystemTiles = currentMap
+                    .map((tile, idx) => ({ tile, idx }))
+                    .filter(
+                      ({ tile, idx }) =>
+                        tile.type === "SYSTEM" &&
+                        idx !== 0 &&
+                        (tile as SystemTile).systemId !== "18",
+                    )
+                    .map(({ idx }) => idx);
+
+                  if (allSystemTiles.length > 0) {
+                    targetIdx =
+                      allSystemTiles[
+                        Math.floor(Math.random() * allSystemTiles.length)
+                      ];
+                  }
+                }
+              }
+            }
+
+            if (targetIdx === -1) {
+              // No available tile to convert
+              return store;
+            }
+
+            const newMap = [...currentMap];
+            const targetTile = newMap[targetIdx];
+
+            const homeTile: HomeTile = {
+              idx: targetIdx,
+              type: "HOME",
+              seat: nextSeat,
+              position: targetTile.position,
+            };
+            newMap[targetIdx] = homeTile;
+
+            return {
+              ...store,
+              state: {
+                ...store.state,
+                map: newMap,
+              },
+            };
+          });
+        },
+
+        removeHomeSystem: () => {
+          set((store) => {
+            const currentMap = store.state.map;
+
+            // Find home systems
+            const homeTiles = currentMap
+              .map((tile, idx) => ({ tile, idx }))
+              .filter(({ tile }) => tile.type === "HOME") as {
+              tile: HomeTile;
+              idx: number;
+            }[];
+
+            if (homeTiles.length <= 1) {
+              // Don't remove if only 1 or 0 homes remain
+              return store;
+            }
+
+            // Find the home with the highest seat number
+            const homeToRemove = homeTiles.reduce((max, current) =>
+              (current.tile.seat ?? 0) > (max.tile.seat ?? 0) ? current : max,
+            );
+
+            const newMap = [...currentMap];
+            const openTile: OpenTile = {
+              idx: homeToRemove.idx,
+              type: "OPEN",
+              position: homeToRemove.tile.position,
+            };
+            newMap[homeToRemove.idx] = openTile;
+
+            return {
+              ...store,
+              state: {
+                ...store.state,
+                map: newMap,
+              },
+            };
+          });
+        },
+
+        loadDecodedMap: (
+          map: Map,
+          ringCount: number,
+          gameSets: GameSet[],
+          configId?: string,
+          recordHistory = true,
+        ) => {
+          const mapConfigId =
+            configId && Object.hasOwn(mapConfigs, configId)
+              ? configId
+              : defaultMapConfigId;
+          (recordHistory ? set : setStore)((store) => {
+            if (
+              !recordHistory &&
+              store.state.ringCount === ringCount &&
+              store.state.mapConfigId === mapConfigId &&
+              JSON.stringify(store.state.gameSets) ===
+                JSON.stringify(gameSets) &&
+              encodeMapString(store.state.map) === encodeMapString(map)
+            )
+              return store;
+            const newSystemPool = getSystemPool(gameSets);
+            return {
+              ...store,
+              ...(!recordHistory ? { past: [], future: [] } : {}),
+              state: {
+                ...store.state,
+                map,
+                ringCount,
+                gameSets,
+                systemPool: newSystemPool,
+                mapConfigId,
+              },
+              systemPool: newSystemPool,
+            };
+          });
+        },
       },
-    },
-  };
-});
+    };
+  },
+);

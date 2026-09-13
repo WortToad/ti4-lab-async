@@ -410,7 +410,7 @@ function DraftBoard({
         <CurrentPickBanner />
       </Stack>
 
-      <Grid gutter="xl">
+      <Grid gap="xl">
         <Grid.Col span={12} order={{ base: 0 }}>
           <Text size="md" ta="right" c="dimmed">
             {appUrl(`/draft/${result.urlName}`)}
@@ -717,7 +717,7 @@ type LoaderData = {
   incompleteImageUrl: string | null;
 };
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export const meta: MetaFunction<typeof loader> = ({ loaderData: data }) => {
   const typed = data as LoaderData | undefined;
   if (!typed?.data)
     return [

@@ -1,3 +1,4 @@
+import { RouterContextProvider } from "react-router";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { afterAll, beforeAll, expect, test, vi } from "vitest";
@@ -54,8 +55,11 @@ function get(id: string, cookie = "") {
       headers: { Cookie: cookie },
     }),
     params: { id },
-    context: {},
-    unstable_pattern: "/draft/mantis/:id",
+    context: new RouterContextProvider(),
+    url: new URL(
+      `http://localhost/draft/mantis/${id}.data`.replace(/\.data(?=\?|$)/, ""),
+    ),
+    pattern: "/draft/mantis/:id",
   });
 }
 function post(id: string, fields: Record<string, string>, cookie = "") {
@@ -69,8 +73,11 @@ function post(id: string, fields: Record<string, string>, cookie = "") {
       headers: { Cookie: cookie },
     }),
     params: { id },
-    context: {},
-    unstable_pattern: "/draft/mantis/:id",
+    context: new RouterContextProvider(),
+    url: new URL(
+      `http://localhost/draft/mantis/${id}.data`.replace(/\.data(?=\?|$)/, ""),
+    ),
+    pattern: "/draft/mantis/:id",
   });
 }
 async function joinAll(id: string) {

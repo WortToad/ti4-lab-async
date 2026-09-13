@@ -52,6 +52,19 @@ export function EmptyTile({
   return (
     <div
       onClick={onSelect}
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      aria-label={onSelect ? "Select empty tile" : undefined}
+      onKeyDown={
+        onSelect
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onSelect();
+              }
+            }
+          : undefined
+      }
       style={{ cursor: onSelect ? "pointer" : undefined }}
     >
       <Hex

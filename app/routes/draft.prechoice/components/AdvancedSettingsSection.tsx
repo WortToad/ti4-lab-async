@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { Box, Button, Checkbox, Collapse, Group, Stack, Switch } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Checkbox,
+  Collapse,
+  Group,
+  Stack,
+  Switch,
+} from "@mantine/core";
 import { IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 import { SectionTitle } from "~/components/Section";
 import { NumberStepper } from "~/components/NumberStepper";
@@ -28,7 +36,7 @@ export function AdvancedSettingsSection() {
           Show advanced settings
         </Button>
       </Box>
-      <Collapse in={showAdvancedSettings}>
+      <Collapse expanded={showAdvancedSettings}>
         <Stack>
           <SectionTitle title="Advanced Options" />
 

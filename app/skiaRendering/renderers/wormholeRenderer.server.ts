@@ -1,3 +1,4 @@
+import type { CanvasRenderingContext2D } from "skia-canvas";
 import { Wormhole } from "~/types";
 import { WORMHOLE_COLORS } from "../constants";
 import { withContext } from "../canvasUtils.server";

@@ -2,12 +2,22 @@ import { sql } from "drizzle-orm";
 import {
   sqliteTable,
   text,
-  blob,
+  customType,
   index,
   integer,
   unique,
   real,
 } from "drizzle-orm/sqlite-core";
+
+// Existing SQLite databases declare this column as BLOB but store JSON text.
+// Drizzle now normalizes blob() reads to Buffer. Keep the string contract used
+// by JSON parsing and optimistic concurrency, including older binary rows.
+const draftJson = customType<{ data: string; driverData: string | Buffer }>({
+  dataType: () => "blob",
+  fromDriver: (value) =>
+    typeof value === "string" ? value : value.toString("utf8"),
+  toDriver: (value) => value,
+});
 
 export const bagDrafts = sqliteTable("bagDrafts", {
   id: text("id").primaryKey(),
@@ -48,7 +58,7 @@ export const drafts = sqliteTable(
   {
     id: text("id").primaryKey(),
     urlName: text("urlName"),
-    data: blob("data").notNull(),
+    data: draftJson("data").notNull(),
     type: text("type"),
     isComplete: integer("isComplete", { mode: "boolean" }),
     mode: text("mode"),

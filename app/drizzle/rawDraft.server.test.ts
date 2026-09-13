@@ -1,3 +1,4 @@
+import { RouterContextProvider } from "react-router";
 import { readFileSync } from "node:fs";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
@@ -32,8 +33,11 @@ function view(id: string, cookie = "") {
       headers: { Cookie: cookie },
     }),
     params: { id },
-    context: {},
-    unstable_pattern: "/draft/raw/:id",
+    context: new RouterContextProvider(),
+    url: new URL(
+      `http://localhost/draft/raw/${id}.data`.replace(/\.data(?=\?|$)/, ""),
+    ),
+    pattern: "/draft/raw/:id",
   });
 }
 function post(id: string, fields: Record<string, string>, cookie = "") {
@@ -44,8 +48,11 @@ function post(id: string, fields: Record<string, string>, cookie = "") {
       headers: { Cookie: cookie },
     }),
     params: { id },
-    context: {},
-    unstable_pattern: "/draft/raw/:id",
+    context: new RouterContextProvider(),
+    url: new URL(
+      `http://localhost/draft/raw/${id}.data`.replace(/\.data(?=\?|$)/, ""),
+    ),
+    pattern: "/draft/raw/:id",
   });
 }
 async function started(mode: RawSettings["mode"] = "base") {

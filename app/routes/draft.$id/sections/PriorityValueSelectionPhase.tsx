@@ -87,12 +87,7 @@ export function PriorityValueSelectionPhase() {
       <SpectatorModeNotice isSpectatorMode={isSpectatorMode} />
 
       <Center p="md" pt="lg">
-        <Grid
-          maw={1600}
-          w="100%"
-          gutter="xl"
-          style={{ alignItems: "flex-start" }}
-        >
+        <Grid maw={1600} w="100%" gap="xl" style={{ alignItems: "flex-start" }}>
           <Grid.Col span={{ base: 12, lg: 4 }}>
             <PlayerSelectionSidebar
               players={phase.hydratedPlayers}

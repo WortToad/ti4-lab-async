@@ -1,3 +1,4 @@
+import type { CanvasRenderingContext2D } from "skia-canvas";
 type Point = { x: number; y: number };
 
 /**

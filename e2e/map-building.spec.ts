@@ -97,7 +97,7 @@ for (const config of Object.values(mapConfigs)) {
     await page.goto(`${prefix}/map-generator`);
     await openMapTools(page);
     await page
-      .getByRole("textbox", { name: "Galaxy layout", exact: true })
+      .getByRole("combobox", { name: "Galaxy layout", exact: true })
       .click();
     await page.getByRole("option", { name: config.name, exact: true }).click();
     await expect(
@@ -123,7 +123,7 @@ for (const config of Object.values(mapConfigs)) {
     await openMapTools(page);
     await expect.poll(() => savedMap(page)).toBe(generated);
     await expect(
-      page.getByRole("textbox", { name: "Galaxy layout", exact: true }),
+      page.getByRole("combobox", { name: "Galaxy layout", exact: true }),
     ).toHaveValue(config.name);
     await page.getByRole("button", { name: "Share map", exact: true }).click();
     const share = page.getByRole("dialog", {
@@ -332,6 +332,9 @@ for (const mode of ["raw", "mantis"] as const) {
             const choice = player
               .getByRole("button", {
                 name: /^(Select|Draft tile \S+|Add system at position \d+|Choose .+ home)$/,
+                // Map targets exist before ResizeObserver reveals the map.
+                // Let click() wait for visibility instead of skipping that turn.
+                includeHidden: true,
               })
               .and(player.locator(":enabled"))
               .first();

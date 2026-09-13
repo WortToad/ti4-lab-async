@@ -4,7 +4,10 @@ import { useDraft } from "~/draftStore";
 import { draftSelectionToMessage } from "~/utils/selections";
 import { DraftSelection } from "~/types";
 
-function getSelectionPlayerName(selection: DraftSelection, players: { id: number; name: string }[]) {
+function getSelectionPlayerName(
+  selection: DraftSelection,
+  players: { id: number; name: string }[],
+) {
   if (!("playerId" in selection)) return "";
   return players.find((p) => p.id === selection.playerId)?.name ?? "";
 }
@@ -28,8 +31,8 @@ export function DraftLogSection() {
         }}
       >
         <Stack gap={0}>
-          {selections.map((selection) => (
-            <Text size="sm">
+          {selections.map((selection, index) => (
+            <Text key={index} size="sm">
               {draftSelectionToMessage(
                 getSelectionPlayerName(selection, players),
                 selection,

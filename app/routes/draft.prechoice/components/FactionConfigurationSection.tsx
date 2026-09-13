@@ -10,9 +10,8 @@ import { useDraftSetup } from "../store";
 export function FactionConfigurationSection() {
   const faction = useDraftSetup((state) => state.faction);
   const playerCount = useDraftSetup((state) => state.player.players.length);
-  const factionGameSets = useDraftSetup((state) =>
-    state.content.getFactionGameSets(),
-  );
+  const content = useDraftSetup((state) => state.content);
+  const factionGameSets = content.getFactionGameSets();
   const factionConstraints = faction.getFactionConstraints();
 
   const [

@@ -3,14 +3,22 @@ export type DiscordErrorResponse = {
   message: string;
 };
 
-export function classifyDiscordError(error: any): DiscordErrorResponse {
+export function classifyDiscordError(error: unknown): DiscordErrorResponse {
   console.error("Discord notification error:", error);
+  const code =
+    error && typeof error === "object" && "code" in error
+      ? error.code
+      : undefined;
+  const message =
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string"
+      ? error.message
+      : "Unknown error";
 
   // Permission errors
-  if (
-    error?.code === 50013 ||
-    error?.message?.includes("Missing Permissions")
-  ) {
+  if (code === 50013 || message.includes("Missing Permissions")) {
     return {
       error: "MISSING_PERMISSIONS",
       message:
@@ -19,7 +27,7 @@ export function classifyDiscordError(error: any): DiscordErrorResponse {
   }
 
   // Access errors (private channels, DMs)
-  if (error?.code === 50001 || error?.message?.includes("Missing Access")) {
+  if (code === 50001 || message.includes("Missing Access")) {
     return {
       error: "MISSING_ACCESS",
       message:
@@ -30,6 +38,6 @@ export function classifyDiscordError(error: any): DiscordErrorResponse {
   // Generic error
   return {
     error: "DISCORD_ERROR",
-    message: `Discord notification failed: ${error?.message || "Unknown error"}`,
+    message: `Discord notification failed: ${message}`,
   };
 }

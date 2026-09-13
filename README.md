@@ -10,7 +10,7 @@ For low-cost hosting at **obsecsolutions.com/ti4**, see the [Railway setup and c
 
 ### Dependencies
 
-- Node.js 22 (matches the Docker image; run `nvm use` if you use nvm)
+- Node.js 26.8.2 (matches the Docker image; run `nvm use` if you use nvm)
 - Sqlite3
 
 ### Environment setup
@@ -28,8 +28,8 @@ _NOTE_: The path must be an absolute path.
 Assuming all the prerequisites are met, you can run the following commands to install and run the app:
 
 ```shell
-npm install --global yarn
-yarn install
+npm install --global npm@12.0.2 yarn@1.22.22
+yarn install --frozen-lockfile
 yarn run dev
 ```
 
@@ -84,4 +84,6 @@ TI4_LAB_DATABASE_PATH=file:///absolute/path/ti4.sqlite \
   DISCORD_DISABLED=true R2_INTEGRATION_DISABLED=true yarn dev
 ```
 
-Node 22 is supported by the pinned native dependencies. See [the feature comparison](docs/draft-parity.md) for the bot reference, supported controls, and remaining differences. The downloaded bot repository is only needed to refresh the bundled catalogs and templates, not to run the app.
+Node 26.8.2 is supported by the pinned native dependencies. See [the feature comparison](docs/draft-parity.md) for the bot reference, supported controls, and remaining differences. The downloaded bot repository is only needed to refresh the bundled catalogs and templates, not to run the app.
+
+See the [dependency upgrade notes](docs/dependency-upgrade.md) for compatibility limits and verification.

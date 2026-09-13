@@ -1,6 +1,11 @@
+import type { CanvasRenderingContext2D } from "skia-canvas";
 import { Tile, HydratedPlayer } from "~/types";
 import { TILE_COLORS } from "../constants";
-import { generateHexVertices, createHexPath, clipToHex } from "../hexUtils.server";
+import {
+  generateHexVertices,
+  createHexPath,
+  clipToHex,
+} from "../hexUtils.server";
 import { getHexPosition } from "~/utils/positioning";
 import { systemData } from "~/data/systemData";
 import { drawAnomaly, drawAnomalyBorder } from "./anomalyRenderer.server";
@@ -56,10 +61,11 @@ export function drawHexTile(
     const system = systemData[tile.systemId];
     if (system) {
       const hasGravityRift = system.anomalies.includes("GRAVITY_RIFT");
-      const items = [...system.planets, ...system.wormholes];
-      if (hasGravityRift) items.push("GRAVITY_RIFT" as any);
-
-      if (items.length > 0) {
+      if (
+        system.planets.length > 0 ||
+        system.wormholes.length > 0 ||
+        hasGravityRift
+      ) {
         drawPlanetsWormholesAndGravityRifts(
           ctx,
           system.planets,

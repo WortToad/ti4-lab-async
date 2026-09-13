@@ -1,6 +1,8 @@
 import { appUrl } from "./utils/appUrl";
 
 declare global {
+  // Global declarations require var to expose the property on globalThis.
+  // eslint-disable-next-line no-var
   var env: Env;
 }
 

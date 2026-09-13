@@ -1,3 +1,4 @@
+import type { CanvasRenderingContext2D } from "skia-canvas";
 import { appUrl } from "~/utils/appUrl";
 import { Draft, Slice, Tile, System } from "~/types";
 import { calcHexHeight } from "~/utils/positioning";
@@ -23,7 +24,6 @@ import {
 } from "./canvasUtils.server";
 import { systemData } from "~/data/systemData";
 import { Wormhole, TechSpecialty } from "~/types";
-import { drawWormhole } from "./renderers/wormholeRenderer.server";
 import { factions } from "~/data/factionData";
 import { draftConfig } from "~/draft";
 import {
@@ -162,10 +162,7 @@ export async function generatePresetDraftImage(
     rows * (sliceWidth + sliceHeaderHeight) + (rows + 1) * gap;
   const mapDimensions = calculateCanvasDimensions(hydratedMap);
   const minMapHeight = mapDimensions.height + sectionLabelHeight + 20;
-  const canvasHeight = Math.max(
-    baseSlicesHeight,
-    minMapHeight,
-  ) + padding * 2;
+  const canvasHeight = Math.max(baseSlicesHeight, minMapHeight) + padding * 2;
 
   const { canvas, ctx } = createCanvas(canvasWidth, canvasHeight);
 
@@ -203,18 +200,14 @@ export async function generatePresetDraftImage(
 
   const mapOffsetX = mapAreaX + (slicesWidth - mapDimensions.width) / 2;
   const mapOffsetY =
-    mapAreaY + Math.max(0, (canvasHeight - mapAreaY - mapDimensions.height - padding) / 2);
+    mapAreaY +
+    Math.max(0, (canvasHeight - mapAreaY - mapDimensions.height - padding) / 2);
 
-  drawMap(
-    ctx,
-    hydratedMap,
-    hydratedPlayers,
-    {
-      ...mapDimensions,
-      wOffset: mapDimensions.wOffset + mapOffsetX,
-      hOffset: mapDimensions.hOffset + mapOffsetY,
-    },
-  );
+  drawMap(ctx, hydratedMap, hydratedPlayers, {
+    ...mapDimensions,
+    wOffset: mapDimensions.wOffset + mapOffsetX,
+    hOffset: mapDimensions.hOffset + mapOffsetY,
+  });
 
   return await canvas.toBuffer("png");
 }
@@ -299,7 +292,6 @@ function drawFactionList(
   });
 }
 
-
 function drawSlice(
   ctx: CanvasRenderingContext2D,
   slice: Slice,
@@ -344,7 +336,8 @@ function drawSlice(
   ctx.fillText(svText, x + 15, y + 55);
 
   ctx.fillStyle = "#51cf66";
-  const optimalSum = stats.optimal.resources + stats.optimal.influence + stats.optimal.flex;
+  const optimalSum =
+    stats.optimal.resources + stats.optimal.influence + stats.optimal.flex;
   const optimalText = `Opt: ${stats.optimal.resources}/${stats.optimal.influence}/${stats.optimal.flex} (${optimalSum})`;
   ctx.fillText(optimalText, x + 150, y + 55);
 

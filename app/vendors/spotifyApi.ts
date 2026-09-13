@@ -129,11 +129,17 @@ export const spotifyApi = {
         track: data.item,
         position: data.progress_ms,
         isPlaying: data.is_playing,
-        artists: data.item.artists.map((artist: any) => ({
-          name: artist.name,
-          id: artist.id,
-          uri: artist.external_urls.spotify,
-        })),
+        artists: data.item.artists.map(
+          (artist: {
+            name: string;
+            id: string;
+            external_urls: { spotify: string };
+          }) => ({
+            name: artist.name,
+            id: artist.id,
+            uri: artist.external_urls.spotify,
+          }),
+        ),
         albumImage: {
           height: data.item.album.images[2].height,
           width: data.item.album.images[2].width,

@@ -10,10 +10,10 @@ proxy service, or object storage account is needed.
 Prices checked 10 September 2026, in **USD**, excluding tax, exchange fees, and
 renewal of your existing domain.
 
-| Option | Monthly hosting cost | Suitability |
-| --- | --- | --- |
-| Free | $0, with $1 of monthly usage credit | An experiment for very occasional use; usage and memory limits can interrupt availability. |
-| Hobby | Minimum $5, including $5 of resource usage | Recommended for this app. Budget **$5–10/month** initially for a small group. |
+| Option | Monthly hosting cost                       | Suitability                                                                                |
+| ------ | ------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| Free   | $0, with $1 of monthly usage credit        | An experiment for very occasional use; usage and memory limits can interrupt availability. |
+| Hobby  | Minimum $5, including $5 of resource usage | Recommended for this app. Budget **$5–10/month** initially for a small group.              |
 
 The $5–10 range is an estimate, not a fixed price. Extra usage above the included
 $5 is billed; $8 of usage means an $8 total, not $13.
@@ -22,12 +22,12 @@ $5 is billed; $8 of usage means an $8 total, not $13.
 
 Railway's published resource rates are:
 
-| Resource | Rate |
-| --- | --- |
-| Average RAM while running | $10 per GB per month |
-| Average CPU consumed | $20 per vCPU per month |
-| Persistent storage used | $0.15 per GB per month |
-| Outbound traffic | $0.05 per GB |
+| Resource                  | Rate                   |
+| ------------------------- | ---------------------- |
+| Average RAM while running | $10 per GB per month   |
+| Average CPU consumed      | $20 per vCPU per month |
+| Persistent storage used   | $0.15 per GB per month |
+| Outbound traffic          | $0.05 per GB           |
 
 For example, 0.25 GB average RAM, 0.02 average vCPU, 0.5 GB storage, and 5 GB outbound
 traffic works out to about $3.23 of resources, covered by Hobby's $5 minimum.
@@ -64,17 +64,17 @@ about $6.65 total. These are illustrative workloads, not measured monthly usage.
    volume is mounted.
 5. Use the following service settings:
 
-   | Setting | Value |
-   | --- | --- |
-   | Build | Detected Dockerfile; no build command override |
-   | Start | Dockerfile command; no override |
-   | Health check | `/health` |
-   | Health check timeout | 120 seconds |
-   | Replicas | **1** (SQLite and live draft rooms live in this instance) |
-   | CPU limit | Start with 1 vCPU |
-   | Memory limit | Start with 1 GB; inspect peaks before reducing |
-   | Region | Closest available to your players; Singapore is a reasonable starting point for Australia |
-   | Serverless | Enable, then deploy to apply the setting |
+   | Setting              | Value                                                                                     |
+   | -------------------- | ----------------------------------------------------------------------------------------- |
+   | Build                | Detected Dockerfile; no build command override                                            |
+   | Start                | Dockerfile command; no override                                                           |
+   | Health check         | `/health`                                                                                 |
+   | Health check timeout | 120 seconds                                                                               |
+   | Replicas             | **1** (SQLite and live draft rooms live in this instance)                                 |
+   | CPU limit            | Start with 1 vCPU                                                                         |
+   | Memory limit         | Start with 1 GB; inspect peaks before reducing                                            |
+   | Region               | Closest available to your players; Singapore is a reasonable starting point for Australia |
+   | Serverless           | Enable, then deploy to apply the setting                                                  |
 
 6. Deploy, then generate a Railway public domain in **Settings → Networking**.
    Test `https://YOUR-SERVICE.up.railway.app/ti4/`. The server listens on Railway's
@@ -144,7 +144,7 @@ the new service is stopped. Download periodic database backups or enable Railway
 volume backups; account for their storage usage. Do not rely on an ephemeral
 container directory as a backup.
 
-To test the deployment locally with Node 22 and installed dependencies:
+To test the deployment locally with Node 26.8.2 and installed dependencies:
 
 ```sh
 TI4_BASE_PATH=/ti4 VITE_PUBLIC_ORIGIN=http://localhost:3000 yarn build

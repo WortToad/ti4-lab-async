@@ -1,3 +1,4 @@
+import { RouterContextProvider } from "react-router";
 import type { ActionFunctionArgs } from "react-router";
 
 export function formRequest(
@@ -13,8 +14,9 @@ export function formRequest(
       headers: { Cookie: cookie },
     }),
     params,
-    context: {},
-    unstable_pattern: path,
+    context: new RouterContextProvider(),
+    url: new URL(`http://localhost${path}`),
+    pattern: path,
   };
 }
 

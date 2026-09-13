@@ -59,35 +59,31 @@ async function execute(interaction: ChatInputCommandInteraction) {
   const data = interaction.options.data;
   const players = [
     data.find((option) => option.name === "player1")?.value as
-      | string
-      | undefined,
+      string | undefined,
     data.find((option) => option.name === "player2")?.value as
-      | string
-      | undefined,
+      string | undefined,
     data.find((option) => option.name === "player3")?.value as
-      | string
-      | undefined,
+      string | undefined,
     data.find((option) => option.name === "player4")?.value as
-      | string
-      | undefined,
+      string | undefined,
     data.find((option) => option.name === "player5")?.value as
-      | string
-      | undefined,
+      string | undefined,
     data.find((option) => option.name === "player6")?.value as
-      | string
-      | undefined,
+      string | undefined,
     data.find((option) => option.name === "player7")?.value as
-      | string
-      | undefined,
+      string | undefined,
     data.find((option) => option.name === "player8")?.value as
-      | string
-      | undefined,
+      string | undefined,
   ]
     .filter((name): name is string => !!name)
     .map((name, idx) => {
       if (name.startsWith("<@")) {
         const memberId = name.substring(2, name.length - 1);
-        const member = interaction.guild?.members.cache.get(memberId)!;
+        const member = interaction.guild?.members.cache.get(memberId);
+        if (!member)
+          throw new Error(
+            `Discord member ${memberId} is unavailable. Re-select the player and try again.`,
+          );
         const nickname = member.nickname;
         const username = member.user.username;
 

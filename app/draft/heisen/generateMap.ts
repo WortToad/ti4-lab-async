@@ -24,7 +24,7 @@ import {
 } from "~/types";
 import { generateEmptyMap } from "~/utils/map";
 import { draftConfig } from "../draftConfig";
-import { calculateMapStats } from "~/hooks/useFullMapStats";
+import { calculateMapStats } from "~/utils/draftMapStats";
 import {
   calculateSliceValue,
   getSliceValueConfig,

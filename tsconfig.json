@@ -1,11 +1,10 @@
 {
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "**/.server/**/*.ts",
-    "**/.server/**/*.tsx",
-    "**/.client/**/*.ts",
-    "**/.client/**/*.tsx",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "scripts/**/*.ts",
+    "e2e/**/*.ts",
+    "*.ts",
     ".react-router/types/**/*"
   ],
   "compilerOptions": {
@@ -13,6 +12,7 @@
     "types": ["@react-router/node", "vite/client"],
     "rootDirs": [".", "./.react-router/types"],
     "isolatedModules": true,
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
     "module": "ESNext",
@@ -23,7 +23,6 @@
     "allowJs": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
     "paths": {
       "~/*": ["./app/*"]
     },

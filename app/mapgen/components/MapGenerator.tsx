@@ -764,7 +764,7 @@ function MapGeneratorContent() {
                 Map settings and tools
               </Button>
               <Collapse
-                in={!!desktopTools || toolsOpened}
+                expanded={!!desktopTools || toolsOpened}
                 id="map-settings-and-tools"
               >
                 <div className={mapClasses.settings}>

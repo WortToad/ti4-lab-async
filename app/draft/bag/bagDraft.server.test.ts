@@ -1,3 +1,4 @@
+import { RouterContextProvider } from "react-router";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -170,8 +171,11 @@ describe("persistent private bag drafts", () => {
         }),
       }),
       params: { id: room.id },
-      context: {},
-      unstable_pattern: "/draft/bag/:id",
+      context: new RouterContextProvider(),
+      url: new URL(
+        `http://localhost/draft/bag/${room.id}`.replace(/\.data(?=\?|$)/, ""),
+      ),
+      pattern: "/draft/bag/:id",
     });
     expect(result.data.error).toBeNull();
     const cookie = new Headers(result.init?.headers).get("Set-Cookie")!;
@@ -299,8 +303,11 @@ describe("persistent private bag drafts", () => {
         }),
       }),
       params: { id: room.id },
-      context: {},
-      unstable_pattern: "/draft/bag/:id",
+      context: new RouterContextProvider(),
+      url: new URL(
+        `http://localhost/draft/bag/${room.id}`.replace(/\.data(?=\?|$)/, ""),
+      ),
+      pattern: "/draft/bag/:id",
     });
     const cookie = new Headers(result.init?.headers).get("Set-Cookie")!;
     expect(cookie).toContain("HttpOnly");
@@ -325,8 +332,11 @@ describe("persistent private bag drafts", () => {
         headers: { Cookie: cookie.split(";")[0] },
       }),
       params: { id: room.id },
-      context: {},
-      unstable_pattern: "/draft/bag/:id",
+      context: new RouterContextProvider(),
+      url: new URL(
+        `http://localhost/draft/bag/${room.id}`.replace(/\.data(?=\?|$)/, ""),
+      ),
+      pattern: "/draft/bag/:id",
     });
     if (revoked instanceof Response)
       throw new Error("Expected recovered lobby data");
@@ -340,8 +350,14 @@ describe("persistent private bag drafts", () => {
         `http://localhost/draft/bag/${room.id}?key=${room.adminToken}`,
       ),
       params: { id: room.id },
-      context: {},
-      unstable_pattern: "/draft/bag/:id",
+      context: new RouterContextProvider(),
+      url: new URL(
+        `http://localhost/draft/bag/${room.id}?key=${room.adminToken}`.replace(
+          /\.data(?=\?|$)/,
+          "",
+        ),
+      ),
+      pattern: "/draft/bag/:id",
     });
     expect(legacy).toBeInstanceOf(Response);
     if (!(legacy instanceof Response))
@@ -364,8 +380,11 @@ describe("persistent private bag drafts", () => {
         }),
       }),
       params: { id: room.id },
-      context: {},
-      unstable_pattern: "/draft/bag/:id",
+      context: new RouterContextProvider(),
+      url: new URL(
+        `http://localhost/draft/bag/${room.id}`.replace(/\.data(?=\?|$)/, ""),
+      ),
+      pattern: "/draft/bag/:id",
     });
     expect(result.data.error).toBeNull();
     const cookie = new Headers(result.init?.headers).get("Set-Cookie")!;
@@ -541,9 +560,8 @@ describe("persistent private bag drafts", () => {
     const fixture = await assemblyFixture();
     const bagRoute = await import("~/routes/draft.bag.$id");
     const mantisRoute = await import("~/routes/draft.mantis.$id");
-    const { getMantisRoom, mantisTokenHash } = await import(
-      "~/drizzle/mantisDraft.server"
-    );
+    const { getMantisRoom, mantisTokenHash } =
+      await import("~/drizzle/mantisDraft.server");
     const { db } = await import("~/drizzle/config.server");
     const { mantisDrafts } = await import("~/drizzle/schema.server");
     const roomCount = db.select().from(mantisDrafts).all().length;
@@ -572,8 +590,14 @@ describe("persistent private bag drafts", () => {
             },
           ),
           params: { id: fixture.id },
-          context: {},
-          unstable_pattern: "/draft/bag/:id",
+          context: new RouterContextProvider(),
+          url: new URL(
+            `http://localhost/draft/bag/${fixture.id}?key=${key}`.replace(
+              /\.data(?=\?|$)/,
+              "",
+            ),
+          ),
+          pattern: "/draft/bag/:id",
         }),
       ),
     );
@@ -614,8 +638,14 @@ describe("persistent private bag drafts", () => {
           { headers: { Cookie: cookie.split(";")[0] } },
         ),
         params: { id: fixture.id },
-        context: {},
-        unstable_pattern: "/draft/bag/:id",
+        context: new RouterContextProvider(),
+        url: new URL(
+          `http://localhost/draft/bag/${fixture.id}.data?map=1`.replace(
+            /\.data(?=\?|$)/,
+            "",
+          ),
+        ),
+        pattern: "/draft/bag/:id",
       });
       expect(redirected).toBeInstanceOf(Response);
       if (!(redirected instanceof Response))
@@ -630,8 +660,14 @@ describe("persistent private bag drafts", () => {
           headers: { Cookie: mapCookie?.split(";")[0] ?? "" },
         }),
         params: { id: map.id },
-        context: {},
-        unstable_pattern: "/draft/mantis/:id",
+        context: new RouterContextProvider(),
+        url: new URL(
+          `http://localhost/draft/mantis/${map.id}.data`.replace(
+            /\.data(?=\?|$)/,
+            "",
+          ),
+        ),
+        pattern: "/draft/mantis/:id",
       });
       expect(mapView.data.isHost).toBe(viewer.host);
       expect(mapView.data.ownPlayers).toEqual(viewer.players);
@@ -649,8 +685,14 @@ describe("persistent private bag drafts", () => {
         `http://localhost/draft/bag/${fixture.id}?results=1`,
       ),
       params: { id: fixture.id },
-      context: {},
-      unstable_pattern: "/draft/bag/:id",
+      context: new RouterContextProvider(),
+      url: new URL(
+        `http://localhost/draft/bag/${fixture.id}?results=1`.replace(
+          /\.data(?=\?|$)/,
+          "",
+        ),
+      ),
+      pattern: "/draft/bag/:id",
     });
     expect(summary).not.toBeInstanceOf(Response);
     if (summary instanceof Response)

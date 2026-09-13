@@ -1,3 +1,4 @@
+import type { CanvasRenderingContext2D } from "skia-canvas";
 import { Planet, Wormhole } from "~/types";
 import { hasLegendaryImage } from "../constants";
 import { calculateItemPositions } from "../layoutUtils.server";
@@ -33,12 +34,7 @@ export function drawSystemId(
     const bgHeight = scaledFontSize + padding * 2;
 
     ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-    ctx.fillRect(
-      centerX - bgWidth / 2,
-      textY - padding,
-      bgWidth,
-      bgHeight
-    );
+    ctx.fillRect(centerX - bgWidth / 2, textY - padding, bgWidth, bgHeight);
   }
 
   ctx.fillStyle = "white";

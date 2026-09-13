@@ -1,4 +1,4 @@
-import { useStore } from "zustand";
+import { useStoreWithEqualityFn } from "zustand/traditional";
 import {
   Draft,
   DraftIntegrations,
@@ -28,7 +28,10 @@ import {
 } from "./utils/slice";
 import { getSystemPool } from "./utils/system";
 import { getFactionPool } from "./utils/factions";
-import { generateReferenceCardPacks, generateTwilightsFallKings } from "./draft/twilightsFall/pools";
+import {
+  generateReferenceCardPacks,
+  generateTwilightsFallKings,
+} from "./draft/twilightsFall/pools";
 import { mapStringOrder } from "./data/mapStringOrder";
 import { getUsedSystemIdsInMap } from "./hooks/useUsedSystemIds";
 import { atomWithStore } from "jotai-zustand";
@@ -341,7 +344,10 @@ const getAvailableSystems = (
   );
 };
 
-const initializePools = (state: Pick<DraftV2State, "factionPool" | "systemPool">, settings: DraftSettings) => {
+const initializePools = (
+  state: Pick<DraftV2State, "factionPool" | "systemPool">,
+  settings: DraftSettings,
+) => {
   state.factionPool = getFactionPool(settings.factionGameSets);
   state.systemPool = getSystemPool(settings.tileGameSets);
 };
@@ -372,10 +378,16 @@ export const draftStore = createStore<DraftV2State>()(
         set((state) => {
           if (draftId === state.draftId) {
             if (state.replayMode) {
-              const index = Math.min(state.replayIndex ?? 0, draft.selections.length);
+              const index = Math.min(
+                state.replayIndex ?? 0,
+                draft.selections.length,
+              );
               state.replaySelections = [...draft.selections];
               state.replayIndex = index;
-              state.draft = { ...draft, selections: draft.selections.slice(0, index) };
+              state.draft = {
+                ...draft,
+                selections: draft.selections.slice(0, index),
+              };
             } else state.draft = draft;
             initializePools(state, draft.settings);
           }
@@ -509,12 +521,11 @@ export const draftStore = createStore<DraftV2State>()(
                 factionDrawPile,
                 initialFactionOptions,
                 initialFactionDrawPile,
-              } =
-                dealTexasFactionOptions(
-                  draftableFactions,
-                  state.draft.players,
-                  handSize,
-                );
+              } = dealTexasFactionOptions(
+                draftableFactions,
+                state.draft.players,
+                handSize,
+              );
               if (!state.draft.texasDraft) {
                 state.draft.texasDraft = {
                   ...createTexasSeatAssignments(state.draft.players),
@@ -522,7 +533,8 @@ export const draftStore = createStore<DraftV2State>()(
               }
               state.draft.texasDraft.factionOptions = factionOptions;
               state.draft.texasDraft.factionDrawPile = factionDrawPile;
-              state.draft.texasDraft.initialFactionOptions = initialFactionOptions;
+              state.draft.texasDraft.initialFactionOptions =
+                initialFactionOptions;
               state.draft.texasDraft.initialFactionDrawPile =
                 initialFactionDrawPile;
               state.draft.availableFactions = draftableFactions;
@@ -535,8 +547,12 @@ export const draftStore = createStore<DraftV2State>()(
               );
 
               // Regenerate player faction bags from new availableFactions
-              const numPreassigned = state.draft.settings.numPreassignedFactions;
-              if (state.draft.playerFactionPool && numPreassigned !== undefined) {
+              const numPreassigned =
+                state.draft.settings.numPreassignedFactions;
+              if (
+                state.draft.playerFactionPool &&
+                numPreassigned !== undefined
+              ) {
                 const available = shuffle([...state.draft.availableFactions]);
                 state.draft.players.forEach((player) => {
                   const bag = available.splice(0, numPreassigned);
@@ -547,7 +563,11 @@ export const draftStore = createStore<DraftV2State>()(
           }
         }),
 
-      placeTexasTile: (playerId: PlayerId, mapIdx: number, systemId: SystemId) =>
+      placeTexasTile: (
+        playerId: PlayerId,
+        mapIdx: number,
+        systemId: SystemId,
+      ) =>
         set((state) => {
           const texasDraft = state.draft.texasDraft;
           if (!texasDraft?.playerTiles) return;
@@ -715,9 +735,13 @@ export const draftStore = createStore<DraftV2State>()(
           initializePools(state, settings);
 
           if (settings.draftGameMode === "twilightsFall") {
-            draft.availableFactions = generateTwilightsFallKings(settings, players.length);
+            draft.availableFactions = generateTwilightsFallKings(
+              settings,
+              players.length,
+            );
             draft.availableReferenceCardPacks = generateReferenceCardPacks(
-              settings, players.length,
+              settings,
+              players.length,
             );
           } else if (settings.draftGameMode === "texasStyle") {
             const draftableFactions = getDraftableFactions(
@@ -860,11 +884,16 @@ export const draftStore = createStore<DraftV2State>()(
             draft.availableMinorFactions,
           ).filter((id) => id !== "keleres");
           if (availableMinorFactions.length === 0) {
-            notifications.show({ message: "No available minor factions", color: "red" });
+            notifications.show({
+              message: "No available minor factions",
+              color: "red",
+            });
             return;
           }
           const idx = Math.floor(Math.random() * availableMinorFactions.length);
-          (draft.availableMinorFactions ??= []).push(availableMinorFactions[idx]);
+          (draft.availableMinorFactions ??= []).push(
+            availableMinorFactions[idx],
+          );
           draft.settings.numMinorFactions += 1;
         }),
 
@@ -873,7 +902,8 @@ export const draftStore = createStore<DraftV2State>()(
           if (
             !draft.availableMinorFactions ||
             draft.availableMinorFactions.length <= draft.players.length
-          ) return;
+          )
+            return;
           const availableMinorFactions = draft.availableMinorFactions?.slice(
             0,
             -1,
@@ -887,7 +917,8 @@ export const draftStore = createStore<DraftV2State>()(
           if (
             !draft.availableMinorFactions?.includes(id) ||
             draft.availableMinorFactions.length <= draft.players.length
-          ) return;
+          )
+            return;
           draft.availableMinorFactions = draft.availableMinorFactions.filter(
             (f) => f !== id,
           );
@@ -898,7 +929,8 @@ export const draftStore = createStore<DraftV2State>()(
         set(({ draft }) => {
           if (draft.settings.draftGameMode !== "twilightsFall") return;
           draft.availableReferenceCardPacks = generateReferenceCardPacks(
-            draft.settings, draft.players.length,
+            draft.settings,
+            draft.players.length,
           );
         }),
 
@@ -906,7 +938,10 @@ export const draftStore = createStore<DraftV2State>()(
       randomizeFactions: () =>
         set(({ draft, factionPool }) => {
           if (draft.settings.draftGameMode === "twilightsFall") {
-            draft.availableFactions = generateTwilightsFallKings(draft.settings, draft.players.length);
+            draft.availableFactions = generateTwilightsFallKings(
+              draft.settings,
+              draft.players.length,
+            );
             return;
           }
           const takenFactions = getTakenNonPrimaryFactions(draft);
@@ -926,7 +961,8 @@ export const draftStore = createStore<DraftV2State>()(
       setNumFactionsToDraft: (num: number) =>
         set(({ draft }) => {
           draft.settings.numFactions = num;
-          if (draft.settings.draftGameMode === "twilightsFall") draft.settings.numKings = num;
+          if (draft.settings.draftGameMode === "twilightsFall")
+            draft.settings.numKings = num;
         }),
       addRandomFaction: () =>
         set((state) => {
@@ -950,7 +986,8 @@ export const draftStore = createStore<DraftV2State>()(
           const idx = Math.floor(Math.random() * availableFactions.length);
           draft.availableFactions.push(availableFactions[idx]);
           draft.settings.numFactions += 1;
-          if (draft.settings.draftGameMode === "twilightsFall") draft.settings.numKings = draft.settings.numFactions;
+          if (draft.settings.draftGameMode === "twilightsFall")
+            draft.settings.numKings = draft.settings.numFactions;
         }),
 
       removeLastFaction: () =>
@@ -961,7 +998,8 @@ export const draftStore = createStore<DraftV2State>()(
           if (
             !removable ||
             draft.availableFactions.length <= getMinimumFactionCount(draft)
-          ) return;
+          )
+            return;
           resetStratification({ draft });
 
           draft.availableFactions = draft.availableFactions.filter(
@@ -979,14 +1017,16 @@ export const draftStore = createStore<DraftV2State>()(
             !draft.availableFactions.includes(id) ||
             draft.settings.requiredFactions?.includes(id) ||
             draft.availableFactions.length <= getMinimumFactionCount(draft)
-          ) return;
+          )
+            return;
           resetStratification({ draft });
 
           draft.settings.numFactions = draft.availableFactions.length - 1;
           draft.availableFactions = draft.availableFactions.filter(
             (f) => f !== id,
           );
-          if (draft.settings.draftGameMode === "twilightsFall") draft.settings.numKings = draft.availableFactions.length;
+          if (draft.settings.draftGameMode === "twilightsFall")
+            draft.settings.numKings = draft.availableFactions.length;
         }),
 
       // planet finder actions
@@ -1198,7 +1238,8 @@ export const draftStore = createStore<DraftV2State>()(
 export function useDraft(): DraftV2State;
 export function useDraft<T>(selector: (state: DraftV2State) => T): T;
 export function useDraft<T>(selector?: (state: DraftV2State) => T) {
-  return useStore(draftStore, selector!);
+  // Preserve selector memoization for derived arrays and objects in Zustand 5.
+  return useStoreWithEqualityFn(draftStore, selector!);
 }
 
 export function useHasBanPhase() {

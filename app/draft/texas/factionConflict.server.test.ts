@@ -1,3 +1,4 @@
+import { RouterContextProvider } from "react-router";
 import { randomUUID } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -49,8 +50,14 @@ const args = (id: string, body: unknown, cookie = ""): ActionFunctionArgs => ({
     },
   ),
   params: { id },
-  context: {},
-  unstable_pattern: "/api/draft/:id/texas-faction-recovery",
+  context: new RouterContextProvider(),
+  url: new URL(
+    `http://localhost/api/draft/${id}/texas-faction-recovery`.replace(
+      /\.data(?=\?|$)/,
+      "",
+    ),
+  ),
+  pattern: "/api/draft/:id/texas-faction-recovery",
 });
 
 async function fixture({

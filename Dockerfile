@@ -1,7 +1,9 @@
 # syntax=docker/dockerfile:1
-ARG NODE_VERSION=22-bookworm-slim
+ARG NODE_VERSION=26.8.2-bookworm-slim
 FROM node:${NODE_VERSION} AS base
 WORKDIR /app
+# Node 26 images no longer bundle Yarn Classic. Pin the project package manager.
+RUN npm install --global npm@12.0.2 yarn@1.22.22
 ENV NODE_ENV=production
 # skia-canvas renders PNGs without Chrome or a separate browser service.
 RUN apt-get update && apt-get install -y --no-install-recommends \

@@ -121,7 +121,7 @@ export default function DraftTournament() {
   return (
     <Box mt="lg">
       <SectionTitle order={1} title="Tournament Table Setup" />
-      <Grid gutter="xl" mt="xl">
+      <Grid gap="xl" mt="xl">
         <Grid.Col span={12} pl="xl" pr="xl">
           <LobbyPlayerCount
             count={players.length}

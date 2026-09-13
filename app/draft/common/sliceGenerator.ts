@@ -21,7 +21,7 @@ import { mapStringOrder } from "~/data/mapStringOrder";
 import { generateEmptyMap } from "~/utils/map";
 import { draftConfig } from "../draftConfig";
 import { systemIdsInSlice, systemIdsToSlices } from "~/utils/slice";
-import { calculateMapStats } from "~/hooks/useFullMapStats";
+import { calculateMapStats } from "~/utils/draftMapStats";
 import { getSystemPool } from "~/utils/system";
 import { createSliceTierSampler } from "./tierRecipes";
 import { calculateSliceValue, getSliceValueConfig } from "~/stats";

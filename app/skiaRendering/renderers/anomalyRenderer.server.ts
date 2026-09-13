@@ -1,3 +1,4 @@
+import type { CanvasRenderingContext2D } from "skia-canvas";
 import { Anomaly } from "~/types";
 import { ANOMALY_SCALES } from "../constants";
 import { getAnomalyImageCache } from "../cache.server";

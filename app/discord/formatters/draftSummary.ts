@@ -72,7 +72,9 @@ function buildPlayerLine(
 }
 
 function getFactionEmoji(player: HydratedPlayer): string {
-  return player.faction ? (factionEmojis[player.faction] ?? unpickedFactionEmoji) : unpickedFactionEmoji;
+  return player.faction
+    ? (factionEmojis[player.faction] ?? unpickedFactionEmoji)
+    : unpickedFactionEmoji;
 }
 
 function getSliceEmoji(player: HydratedPlayer, draft: Draft): string {
@@ -99,7 +101,7 @@ function formatPlayerName(
   activePlayerId: number | undefined,
   nextPlayerId: number | undefined,
 ): string {
-  let name = player.name;
+  const name = player.name;
 
   if (player.id === activePlayerId) {
     return `**__${name}   <- CURRENTLY DRAFTING__**`;

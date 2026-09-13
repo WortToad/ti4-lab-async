@@ -46,7 +46,7 @@ export function BanPhase() {
         />
         <div style={{ height: 15 }} />
       </Stack>
-      <Grid gutter="xl">
+      <Grid gap="xl">
         <Grid.Col span={12}>
           <DraftOrderSection />
         </Grid.Col>

@@ -76,7 +76,7 @@ export function MapSection({ titleChildren }: Props) {
           <Button variant="default" onClick={() => setPendingSeat(null)}>
             Cancel
           </Button>
-          <Button color="green" onClick={handleConfirmSeat} autoFocus>
+          <Button color="green" onClick={handleConfirmSeat} data-autofocus>
             Confirm
           </Button>
         </Group>

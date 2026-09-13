@@ -2,7 +2,12 @@ import { Map as TiMap, SystemTile, Anomaly } from "~/types";
 import { systemData } from "~/data/systemData";
 
 /** Anomalies that we want to avoid when choosing between equal-length paths */
-const AVOIDABLE_ANOMALIES: Anomaly[] = ["SUPERNOVA", "NEBULA", "ASTEROID_FIELD", "GRAVITY_RIFT"];
+const AVOIDABLE_ANOMALIES: Anomaly[] = [
+  "SUPERNOVA",
+  "NEBULA",
+  "ASTEROID_FIELD",
+  "GRAVITY_RIFT",
+];
 
 /**
  * Check if a tile contains any avoidable anomaly.
@@ -14,7 +19,7 @@ function hasAvoidableAnomaly(map: TiMap, position: number): boolean {
   const system = systemData[(tile as SystemTile).systemId];
   if (!system) return false;
 
-  return system.anomalies.some(a => AVOIDABLE_ANOMALIES.includes(a));
+  return system.anomalies.some((a) => AVOIDABLE_ANOMALIES.includes(a));
 }
 
 /**
@@ -36,12 +41,12 @@ export type HexGraph = {
  * Sides are midpoints between consecutive vertices.
  */
 const DIRECTION_OFFSETS = [
-  { x: 0, y: -1, z: 1 },  // Side 0: North
-  { x: 1, y: -1, z: 0 },  // Side 1: Northeast
-  { x: 1, y: 0, z: -1 },  // Side 2: Southeast
-  { x: 0, y: 1, z: -1 },  // Side 3: South
-  { x: -1, y: 1, z: 0 },  // Side 4: Southwest
-  { x: -1, y: 0, z: 1 },  // Side 5: Northwest
+  { x: 0, y: -1, z: 1 }, // Side 0: North
+  { x: 1, y: -1, z: 0 }, // Side 1: Northeast
+  { x: 1, y: 0, z: -1 }, // Side 2: Southeast
+  { x: 0, y: 1, z: -1 }, // Side 3: South
+  { x: -1, y: 1, z: 0 }, // Side 4: Southwest
+  { x: -1, y: 0, z: 1 }, // Side 5: Northwest
 ];
 
 /**
@@ -49,7 +54,11 @@ const DIRECTION_OFFSETS = [
  * Uses tile positions from the map instead of external lookup.
  * Returns -1 if no neighbor exists at that position.
  */
-function getNeighborAtDirection(map: TiMap, position: number, direction: number): number {
+function getNeighborAtDirection(
+  map: TiMap,
+  position: number,
+  direction: number,
+): number {
   const tile = map[position];
   if (!tile?.position) return -1;
 
@@ -103,7 +112,7 @@ function applyRotation(side: number, rotationDegrees: number): number {
  */
 function getRotatedHyperlanes(
   hyperlanes: number[][],
-  rotationDegrees: number
+  rotationDegrees: number,
 ): number[][] {
   return hyperlanes.map(([a, b]) => [
     applyRotation(a, rotationDegrees),
@@ -118,7 +127,11 @@ function getRotatedHyperlanes(
  *
  * @param includeOpen - If true, treat OPEN tiles as passable (useful for adjacency checks during tile placement)
  */
-function isPassableTile(map: TiMap, position: number, includeOpen = false): boolean {
+function isPassableTile(
+  map: TiMap,
+  position: number,
+  includeOpen = false,
+): boolean {
   const tile = map[position];
   if (!tile) return false;
   if (includeOpen && tile.type === "OPEN") return true;
@@ -151,7 +164,7 @@ function isHyperlaneTile(map: TiMap, position: number): boolean {
  */
 function getHyperlaneData(
   map: TiMap,
-  position: number
+  position: number,
 ): { hyperlanes: number[][]; rotation: number } | null {
   const tile = map[position];
   if (!tile || tile.type !== "SYSTEM") return null;
@@ -315,7 +328,10 @@ type BuildHexGraphOptions = {
  *
  * @param options.includeOpenTiles - If true, OPEN tiles are treated as traversable
  */
-export function buildHexGraph(map: TiMap, options: BuildHexGraphOptions = {}): HexGraph {
+export function buildHexGraph(
+  map: TiMap,
+  options: BuildHexGraphOptions = {},
+): HexGraph {
   const { includeOpenTiles = false } = options;
   const edges = new Map<number, Map<number, number>>();
 
@@ -357,7 +373,7 @@ export function buildHexGraph(map: TiMap, options: BuildHexGraphOptions = {}): H
 export function getGraphDistance(
   graph: HexGraph,
   from: number,
-  to: number
+  to: number,
 ): number {
   if (from === to) return 0;
 
@@ -405,7 +421,7 @@ export function getGraphPath(
   graph: HexGraph,
   from: number,
   to: number,
-  map?: TiMap
+  map?: TiMap,
 ): number[] {
   if (from === to) return [from];
 
@@ -441,12 +457,15 @@ export function getGraphPath(
       const existingDist = dist.get(neighbor);
 
       // Count anomalies on this path (only if map provided)
-      const neighborHasAnomaly = map ? hasAvoidableAnomaly(map, neighbor) : false;
+      const neighborHasAnomaly = map
+        ? hasAvoidableAnomaly(map, neighbor)
+        : false;
       const newAnomalyCount = currentAnomalies + (neighborHasAnomaly ? 1 : 0);
       const existingAnomalyCount = anomalyCount.get(neighbor) ?? Infinity;
 
       // Update if: shorter distance, OR same distance but fewer anomalies
-      const isBetter = existingDist === undefined ||
+      const isBetter =
+        existingDist === undefined ||
         newDist < existingDist ||
         (newDist === existingDist && newAnomalyCount < existingAnomalyCount);
 
@@ -474,7 +493,7 @@ export function getGraphPath(
 export function getPositionsWithinDistance(
   graph: HexGraph,
   from: number,
-  maxDistance: number
+  maxDistance: number,
 ): Map<number, number> {
   const dist = new Map<number, number>();
   const deque: number[] = [from];
@@ -517,7 +536,11 @@ export function getPositionsWithinDistance(
  * Does NOT account for hyperlanes - use getGraphDistance for that.
  * Uses tile positions from the map.
  */
-export function getSimpleHexDistance(map: TiMap, idx1: number, idx2: number): number {
+export function getSimpleHexDistance(
+  map: TiMap,
+  idx1: number,
+  idx2: number,
+): number {
   const pos1 = map[idx1]?.position;
   const pos2 = map[idx2]?.position;
 
@@ -525,9 +548,7 @@ export function getSimpleHexDistance(map: TiMap, idx1: number, idx2: number): nu
 
   const dx = Math.abs(pos1.x - pos2.x);
   const dy = Math.abs(pos1.y - pos2.y);
-  const dz = Math.abs(
-    (-pos1.x - pos1.y) - (-pos2.x - pos2.y)
-  );
+  const dz = Math.abs(-pos1.x - pos1.y - (-pos2.x - pos2.y));
 
   return Math.max(dx, dy, dz);
 }
@@ -539,7 +560,7 @@ export function getSimpleHexDistance(map: TiMap, idx1: number, idx2: number): nu
 export function areAdjacent(
   graph: HexGraph,
   position1: number,
-  position2: number
+  position2: number,
 ): boolean {
   const cost = graph.edges.get(position1)?.get(position2);
   return cost !== undefined && cost <= 1;
@@ -550,14 +571,14 @@ export function areAdjacent(
  */
 export function getAdjacentPositions(
   graph: HexGraph,
-  position: number
+  position: number,
 ): number[] {
   const neighbors = graph.edges.get(position);
   if (!neighbors) return [];
 
   return Array.from(neighbors.entries())
-    .filter(([_, cost]) => cost <= 1)
-    .map(([pos, _]) => pos);
+    .filter(([, cost]) => cost <= 1)
+    .map(([pos]) => pos);
 }
 
 /**

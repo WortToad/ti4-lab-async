@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { createWithEqualityFn } from "zustand/traditional";
 import { GameSet, Map, SystemId } from "~/types";
 import {
   generateStandard6pMap,
@@ -100,7 +100,7 @@ function getCurrentPlaceableRing(map: Map): number {
   return 3;
 }
 
-export const useRawDraft = create<RawDraftStore>((set, get) => {
+export const useRawDraft = createWithEqualityFn<RawDraftStore>((set, get) => {
   const initialGameSets: GameSet[] = ["base", "pok"];
 
   return {
@@ -153,7 +153,6 @@ export const useRawDraft = create<RawDraftStore>((set, get) => {
       },
 
       placeTile: (mapIdx: number, systemId: SystemId) => {
-        const { state } = get();
         const activePlayer = get().getActivePlayer();
         const currentPickNumber = get().getCurrentPickNumber();
 
@@ -169,8 +168,7 @@ export const useRawDraft = create<RawDraftStore>((set, get) => {
         // Check if the target index is in the current placeable ring
         const ringKey = placeableRing as keyof typeof RING_INDICES;
         const ringIndices = RING_INDICES[ringKey] as
-          | readonly number[]
-          | undefined;
+          readonly number[] | undefined;
         const isInPlaceableRing = ringIndices?.includes(mapIdx);
         if (!isInPlaceableRing) {
           console.error(

@@ -1,3 +1,4 @@
+import { RouterContextProvider } from "react-router";
 import { randomUUID } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -34,8 +35,11 @@ const args = (id: string, body: unknown, cookie = ""): ActionFunctionArgs => ({
     body: JSON.stringify(body),
   }),
   params: { id },
-  context: {},
-  unstable_pattern: "/api/draft/:id/stage",
+  context: new RouterContextProvider(),
+  url: new URL(
+    `http://localhost/api/draft/${id}/stage`.replace(/\.data(?=\?|$)/, ""),
+  ),
+  pattern: "/api/draft/:id/stage",
 });
 
 async function fixture(start = true) {
@@ -205,9 +209,8 @@ describe("draft API ownership and private projections", () => {
           "allPlayersReady" in response.data && response.data.allPlayersReady,
       ),
     ).toHaveLength(1);
-    const { draftById, getDraftStagedSelections } = await import(
-      "~/drizzle/draft.server"
-    );
+    const { draftById, getDraftStagedSelections } =
+      await import("~/drizzle/draft.server");
     const draft = JSON.parse(
       (await draftById(room.id)).data as string,
     ) as Draft;

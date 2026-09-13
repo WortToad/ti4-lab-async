@@ -1,10 +1,8 @@
+import type { CanvasRenderingContext2D } from "skia-canvas";
 import { HydratedPlayer } from "~/types";
 import { PLAYER_COLORS } from "../constants";
 import { getFactionIconCache } from "../cache.server";
-import {
-  measureAndTruncateText,
-  drawRoundedRect,
-} from "../canvasUtils.server";
+import { measureAndTruncateText, drawRoundedRect } from "../canvasUtils.server";
 
 export function drawHomeTileContent(
   ctx: CanvasRenderingContext2D,
@@ -63,7 +61,15 @@ function drawPlayerNamePill(
   const playerColor = PLAYER_COLORS[playerId % PLAYER_COLORS.length];
 
   // Draw pill background
-  drawRoundedRect(ctx, pillX, pillY, pillWidth, pillHeight, borderRadius, playerColor);
+  drawRoundedRect(
+    ctx,
+    pillX,
+    pillY,
+    pillWidth,
+    pillHeight,
+    borderRadius,
+    playerColor,
+  );
 
   // Draw player name text
   ctx.fillStyle = "white";
