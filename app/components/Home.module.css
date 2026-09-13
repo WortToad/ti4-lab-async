@@ -332,6 +332,10 @@
   font-weight: 600;
   font-size: 1.0625rem;
 }
+.cardLink > span {
+  position: relative;
+  top: var(--command-button-label-offset);
+}
 /* Keep one native link per card, with a hit area covering the whole article. */
 .cardLink::after {
   content: "";

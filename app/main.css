@@ -81,6 +81,8 @@
   --command-font-body: 1.0625rem;
   --command-font-card-title: 1.1875rem;
   --command-font-dialog-title: 1.375rem;
+  /* Source Sans 3 capitals sit 0.5px above the line-box center at 16px. */
+  --command-button-label-offset: 0.03125em;
   --command-surface: #102235;
   --command-surface-raised: #142b40;
   --command-surface-hover: #1b354d;
@@ -131,6 +133,9 @@ a {
   text-wrap: balance;
 }
 .mantine-Button-root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 44px;
   height: auto;
   padding-block: 10px;
@@ -140,6 +145,23 @@ a {
     background-color 140ms ease,
     border-color 140ms ease,
     box-shadow 140ms ease;
+}
+.mantine-Button-root[data-block] {
+  display: flex;
+}
+.mantine-Button-inner {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+}
+.mantine-Button-label {
+  height: auto;
+  position: relative;
+  top: var(--command-button-label-offset);
+}
+/* Icon-only buttons have no font metrics to compensate for. */
+.mantine-Button-label:has(> svg:only-child) {
+  top: 0;
 }
 .mantine-Button-section > svg {
   width: 20px;
