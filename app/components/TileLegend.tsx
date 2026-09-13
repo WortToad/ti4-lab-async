@@ -18,8 +18,9 @@ import { TechIcon, techLabels } from "~/components/icons/TechIcon";
 import { LegendaryIcon } from "~/components/icons/LegendaryIcon";
 import { SpaceStationIcon } from "~/components/icons/SpaceStationIcon";
 import { Wormhole } from "~/components/features/Wormhole";
-import { AnomalyIcon } from "~/components/icons/AnomalyIcon";
+import { AnomalyDescription } from "~/components/features/AnomalyDescription";
 import { anomalyDetails } from "~/data/anomalies";
+import { spaceStationDescription } from "~/data/spaceStations";
 import type {
   Anomaly,
   PlanetTrait,
@@ -85,7 +86,7 @@ export function TileLegend() {
       >
         <Stack gap="md">
           <Text size="sm" c="dimmed">
-            Hover, focus, or tap a symbol on a tile card to see its name.
+            Hover, focus, or tap a symbol on a tile card to learn about it.
           </Text>
           <Stack gap={4}>
             <Text fw={700}>Planet values and traits</Text>
@@ -106,9 +107,6 @@ export function TileLegend() {
                   {trait[0] + trait.slice(1).toLowerCase()} planet
                 </Entry>
               ))}
-              <Entry symbol={<PlanetTraitIcons showHelp={false} />}>
-                No planet trait
-              </Entry>
               <Entry
                 symbol={
                   <PlanetTraitIcons
@@ -152,24 +150,23 @@ export function TileLegend() {
               <Entry symbol={<LegendaryIcon size={26} showHelp={false} />}>
                 Legendary planet
               </Entry>
-              <Entry symbol={<SpaceStationIcon size={26} showHelp={false} />}>
-                Space station
-              </Entry>
             </SimpleGrid>
+            <Stack gap={4} mt="xs">
+              <Group gap="xs" wrap="nowrap" align="center">
+                <SpaceStationIcon size={32} showHelp={false} />
+                <Text size="sm" fw={600}>
+                  Space station
+                </Text>
+              </Group>
+              <Text size="sm" pl="calc(32px + var(--mantine-spacing-xs))">
+                {spaceStationDescription}
+              </Text>
+            </Stack>
           </Stack>
           <Stack gap="xs">
             <Text fw={700}>Anomalies</Text>
             {anomalies.map((anomaly) => (
-              <Entry
-                key={anomaly}
-                symbol={
-                  <AnomalyIcon anomaly={anomaly} size={40} showHelp={false} />
-                }
-              >
-                <b>{anomalyDetails[anomaly].label}</b>
-                {" — "}
-                {anomalyDetails[anomaly].description}
-              </Entry>
+              <AnomalyDescription key={anomaly} anomaly={anomaly} />
             ))}
           </Stack>
           <Stack gap="xs">

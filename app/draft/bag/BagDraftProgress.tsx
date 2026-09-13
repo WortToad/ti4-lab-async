@@ -117,24 +117,29 @@ export function BagDraftProgress({ view }: { view: BagDraftView }) {
                     {playerName(recipient)}.
                   </VisuallyHidden>
                   {last ? (
-                    <IconCornerUpLeft size={22} aria-hidden="true" />
+                    <span className={classes.returnIcon} aria-hidden="true">
+                      <IconCornerUpLeft size={26} />
+                    </span>
                   ) : (
                     <>
                       <IconArrowRight
                         className={classes.rightArrow}
-                        size={20}
+                        size={30}
                         aria-hidden="true"
                       />
                       <IconArrowDown
                         className={classes.downArrow}
-                        size={18}
+                        size={28}
                         aria-hidden="true"
                       />
                     </>
                   )}
                   {last && (
-                    <span className={classes.returnLabel}>
-                      Back to {playerName(recipient)}
+                    <span className={classes.returnLabel} aria-hidden="true">
+                      <span className={classes.returnCaption}>Back to</span>
+                      <span className={classes.returnName}>
+                        {playerName(recipient)}
+                      </span>
                     </span>
                   )}
                 </span>

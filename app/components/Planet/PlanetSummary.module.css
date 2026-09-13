@@ -38,9 +38,3 @@
   object-fit: contain;
   flex-shrink: 0;
 }
-
-.noTrait {
-  width: 20px;
-  text-align: center;
-  color: var(--mantine-color-dimmed);
-}

@@ -16,19 +16,7 @@ export function PlanetTraitIcons({
   traits?: PlanetTrait[];
   showHelp?: boolean;
 }) {
-  if (!traits.length) {
-    return (
-      <SymbolHelp label="No planet trait" disabled={!showHelp}>
-        <span
-          className={classes.noTrait}
-          aria-label="No planet trait"
-          role="img"
-        >
-          —
-        </span>
-      </SymbolHelp>
-    );
-  }
+  if (!traits.length) return null;
 
   return (
     <span
