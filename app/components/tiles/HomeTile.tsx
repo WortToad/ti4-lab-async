@@ -54,8 +54,6 @@ export function HomeTile({
       : undefined;
 
   const scale = calcScale(radius);
-  const systemIdSize = radius >= 53 ? "10px" : "8px";
-  const fontSize = radius >= 60 ? "xs" : "10px";
 
   const handleMouseEnter = () => onHomeHover?.(tile.idx);
   const handleMouseLeave = () => onHomeHover?.(null);
@@ -133,7 +131,6 @@ export function HomeTile({
           <SystemId
             id={factionSystems[player.faction].id}
             radius={radius}
-            size={systemIdSize}
             scale={scale}
           />
         )}
@@ -147,7 +144,6 @@ export function HomeTile({
             sliceValue={sliceValue}
             sliceStats={sliceStats}
             coreSliceData={coreSliceData}
-            fontSize={fontSize}
           />
         ) : (
           <EmptySeatContent

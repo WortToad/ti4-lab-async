@@ -23,7 +23,8 @@ export function PlayerDemoTile({ tile, title, color }: Props) {
     >
       {tile.isHomeSystem && (
         <Text
-          fz={Math.min(24, radius * 0.38)}
+          fz={Math.max(16, Math.min(24, radius * 0.38))}
+          title={title}
           ff="var(--font-display)"
           fw={600}
           bg="#071321"
@@ -32,7 +33,7 @@ export function PlayerDemoTile({ tile, title, color }: Props) {
           style={{ zIndex: 1, whiteSpace: "nowrap" }}
           className={classes.title}
         >
-          {title}
+          {radius < 40 && title === "Speaker" ? "S" : title}
         </Text>
       )}
     </Hex>

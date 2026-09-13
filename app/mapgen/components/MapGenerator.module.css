@@ -76,14 +76,14 @@
     gap: 12px;
   }
   .heading h1 {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
   }
   .headingActions {
     gap: 8px;
   }
   .headingActions :global(.mantine-Button-root) {
     padding-inline: 12px;
-    font-size: 0.875rem;
+    font-size: var(--command-font-label);
   }
   .primaryTools {
     flex-wrap: nowrap;

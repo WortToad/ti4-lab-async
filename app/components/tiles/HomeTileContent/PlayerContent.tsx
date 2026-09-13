@@ -20,7 +20,6 @@ export function PlayerContent({ player, radius }: Props) {
     p != null && "faction" in p && typeof p.faction === "string";
 
   const playerColor = playerColors[player.id] ?? "gray";
-  const nameSize = radius >= 60 ? "xs" : "10px";
 
   return (
     <Stack
@@ -46,7 +45,7 @@ export function PlayerContent({ player, radius }: Props) {
         }}
       >
         <Text
-          size={nameSize}
+          size="xs"
           fw={700}
           ta="center"
           c={playerColor}

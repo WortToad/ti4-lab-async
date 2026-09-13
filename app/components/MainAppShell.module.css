@@ -31,7 +31,7 @@
   align-items: center;
   gap: 8px;
   color: #bdcbd7;
-  font-size: 1rem;
+  font-size: var(--command-font-control);
   font-weight: 500;
   text-decoration: none;
   border-radius: var(--mantine-radius-sm);
@@ -112,7 +112,7 @@
 .footer p {
   color: var(--command-text-muted);
   margin: 8px 0;
-  font-size: 0.875rem;
+  font-size: var(--command-font-label);
 }
 .footer a {
   color: #c4cfd9;

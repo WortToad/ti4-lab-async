@@ -37,8 +37,6 @@ export function RawSystemTile({ mapId, tile, hideValues = false, radius, disable
     </>
   );
 
-  const systemIdSize = radius >= 53 ? "10px" : "8px";
-
   return (
     <div
       style={{
@@ -57,7 +55,6 @@ export function RawSystemTile({ mapId, tile, hideValues = false, radius, disable
         {!hideValues && (
           <SystemId
             id={system.id}
-            size={systemIdSize}
             scale={scale}
             rotation={tile.rotation ? -tile.rotation : 0}
             highlight={system.type === "HYPERLANE"}

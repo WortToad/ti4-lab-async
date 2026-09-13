@@ -68,13 +68,21 @@ export function PlanetName({
     <Box
       pos="absolute"
       top={size - 10}
-      right={0}
-      left={0}
+      right={-6}
+      left={-6}
       bg={legendary ? bgColor : "rgba(0, 0, 0, 0.7)"}
       p={2}
       style={borderStyle}
     >
-      <Text size="10" c="white" fw="bolder" ta="center" lh={0.9}>
+      <Text
+        size="xs"
+        c="white"
+        fw="bolder"
+        ta="center"
+        lh={1.1}
+        truncate
+        title={children}
+      >
         {children}
       </Text>
     </Box>

@@ -97,7 +97,8 @@ export function BagDraftProgress({ view }: { view: BagDraftView }) {
                   <span className={classes.name}>{playerName(player)}</span>
                   {claimed && view.lobby.adminPlayerId === player.id && (
                     <span className={classes.admin}>
-                      <IconShield size={14} aria-hidden="true" /> Admin
+                      <IconShield size={14} aria-hidden="true" />
+                      <span>Admin</span>
                     </span>
                   )}
                   {ownSeat && <span className={classes.you}>You</span>}

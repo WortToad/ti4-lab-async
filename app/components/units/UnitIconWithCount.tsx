@@ -20,7 +20,7 @@ export function UnitIconWithCount({ unit, count, size = 28, color }: Props) {
       style={{ display: "inline-block" }}
     >
       <Image src={appPath(src)} w={size} h={size} alt={unit} fit="contain" />
-      <Text className={styles.count} fz={Math.round(size * 0.6)}>
+      <Text className={styles.count} fz={Math.max(16, Math.round(size * 0.6))}>
         {count}
       </Text>
     </Box>

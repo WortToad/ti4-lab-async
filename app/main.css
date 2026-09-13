@@ -76,11 +76,12 @@
   --command-border: #344c62;
   --command-border-subtle: #263c50;
   --command-border-control: #627e96;
-  --command-font-label: 0.875rem;
-  --command-font-control: 1rem;
-  --command-font-body: 1.0625rem;
-  --command-font-card-title: 1.1875rem;
-  --command-font-dialog-title: 1.375rem;
+  /* Keep the 16px minimum and hierarchy in sync with theme.fontSizes. */
+  --command-font-label: 1rem;
+  --command-font-control: 1.0625rem;
+  --command-font-body: 1.125rem;
+  --command-font-card-title: 1.25rem;
+  --command-font-dialog-title: 1.5rem;
   /* Source Sans 3 capitals sit 0.5px above the line-box center at 16px. */
   --command-button-label-offset: 0.03125em;
   --command-surface: #102235;
@@ -236,7 +237,7 @@ a {
 }
 .mantine-Badge-root {
   font-size: var(--command-font-label);
-  min-height: 28px;
+  min-height: 32px;
   height: auto;
   max-width: 100%;
   padding: 4px 10px;
@@ -271,7 +272,7 @@ a {
 }
 .mantine-Input-input {
   border-color: var(--command-border-control);
-  font-size: 1rem;
+  font-size: var(--command-font-control);
   transition:
     border-color 140ms ease,
     box-shadow 140ms ease;
@@ -295,6 +296,29 @@ a {
 .mantine-InputWrapper-error {
   color: var(--command-danger);
   margin-top: 6px;
+}
+/* These component details otherwise subtract from the theme's font sizes. */
+.mantine-InputWrapper-error,
+.mantine-InputWrapper-success,
+.mantine-Checkbox-description,
+.mantine-Checkbox-error,
+.mantine-Radio-description,
+.mantine-Radio-error,
+.mantine-Switch-description,
+.mantine-Switch-error,
+.mantine-Combobox-groupLabel,
+.mantine-Menu-label {
+  font-size: var(--command-font-label);
+  line-height: 1.5;
+}
+.mantine-Pill-root {
+  font-size: var(--command-font-label);
+  min-height: 28px;
+  height: auto;
+}
+.mantine-Pill-label {
+  padding-block: 3px;
+  line-height: 1.35;
 }
 .mantine-Input-input::placeholder {
   color: #9eb1c3;
@@ -459,7 +483,7 @@ a {
   box-shadow: none;
 }
 .command-eyebrow {
-  font-size: 0.875rem;
+  font-size: var(--command-font-label);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;

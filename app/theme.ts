@@ -59,23 +59,23 @@ export const commandTheme = createTheme({
   },
   fontFamily: '"Source Sans 3", system-ui, sans-serif',
   fontSizes: {
-    xs: "0.875rem",
-    sm: "1rem",
-    md: "1.0625rem",
-    lg: "1.1875rem",
-    xl: "1.375rem",
+    xs: "1rem",
+    sm: "1.0625rem",
+    md: "1.125rem",
+    lg: "1.25rem",
+    xl: "1.5rem",
   },
   lineHeights: { xs: "1.5", sm: "1.55", md: "1.6", lg: "1.6", xl: "1.5" },
   headings: {
     fontFamily: '"Cinzel", Georgia, serif',
     fontWeight: "600",
     sizes: {
-      h1: { fontSize: "clamp(1.8rem, 3.5vw, 2.75rem)", lineHeight: "1.18" },
-      h2: { fontSize: "clamp(1.5rem, 2.8vw, 2rem)", lineHeight: "1.25" },
-      h3: { fontSize: "1.375rem", lineHeight: "1.35" },
-      h4: { fontSize: "1.1875rem", lineHeight: "1.4" },
-      h5: { fontSize: "1.0625rem", lineHeight: "1.4" },
-      h6: { fontSize: "1rem", lineHeight: "1.4" },
+      h1: { fontSize: "clamp(2rem, 3.5vw, 3rem)", lineHeight: "1.18" },
+      h2: { fontSize: "clamp(1.75rem, 2.8vw, 2.25rem)", lineHeight: "1.25" },
+      h3: { fontSize: "1.5rem", lineHeight: "1.35" },
+      h4: { fontSize: "1.25rem", lineHeight: "1.4" },
+      h5: { fontSize: "1.125rem", lineHeight: "1.4" },
+      h6: { fontSize: "1.0625rem", lineHeight: "1.4" },
     },
   },
   breakpoints: {
@@ -296,7 +296,11 @@ export const commandTheme = createTheme({
     Tabs: Tabs.extend({
       defaultProps: { variant: "outline", keepMounted: false },
       styles: {
-        tab: { minHeight: 44, fontSize: "1rem", whiteSpace: "normal" },
+        tab: {
+          minHeight: 44,
+          fontSize: "var(--command-font-control)",
+          whiteSpace: "normal",
+        },
         tabLabel: { lineHeight: 1.4 },
       },
     }),

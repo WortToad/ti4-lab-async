@@ -1,8 +1,7 @@
 import { expect, test } from "@playwright/test";
 import draftPreview from "./fixtures/draft-preview.json" with { type: "json" };
 
-// These baselines were captured before the dependency/runtime upgrade.
-// Keep the same browser version when comparing dependency changes.
+// Keep the same browser version when comparing visual changes.
 const pages = [
   ["home", "/"],
   ["draft-preview", "/draft/new"],

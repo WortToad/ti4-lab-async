@@ -74,7 +74,7 @@ export function BagItemDescription({
                     <Wormhole
                       wormhole={wormhole.toUpperCase() as WormholeType}
                       size={22}
-                      fontSize={12}
+                      fontSize={16}
                     />
                   ) : (
                     <TechIcon

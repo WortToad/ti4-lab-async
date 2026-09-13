@@ -38,7 +38,7 @@
   width: 100%;
   height: 185px;
   flex-shrink: 0;
-  font-size: 14px;
+  font-size: var(--command-font-label);
 }
 
 .mapFigure {

@@ -12,9 +12,12 @@
 .adminIcon {
   display: inline-flex;
   align-items: center;
-  margin-inline-start: 6px;
-  vertical-align: -2px;
+  justify-content: center;
+  flex-shrink: 0;
   color: var(--command-accent);
+}
+.adminIcon > svg {
+  display: block;
 }
 .joined {
   display: inline-flex;
@@ -101,11 +104,17 @@
   min-width: 0;
 }
 .playerName {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
   color: var(--command-text-strong);
   font-size: var(--command-font-card-title);
   font-weight: 700;
   line-height: 1.3;
+}
+.playerNameText {
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 .you {

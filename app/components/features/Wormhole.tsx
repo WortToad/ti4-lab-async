@@ -59,7 +59,7 @@ function WormholeSymbol({ wormhole, size = 60, fontSize = 18 }: Props) {
           component="span"
           ff="Georgia, serif"
           fw="bold"
-          fz={Math.min(fontSize + 3, size * 0.75)}
+          fz={Math.max(16, Math.min(fontSize + 3, size * 0.75))}
           lh={1}
           c="inherit"
         >

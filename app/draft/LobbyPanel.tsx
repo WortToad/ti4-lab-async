@@ -375,7 +375,9 @@ export function LobbyPanel({
                     >
                       <div className={classes.playerIdentity}>
                         <span className={classes.playerName}>
-                          {player.name}
+                          <span className={classes.playerNameText}>
+                            {player.name}
+                          </span>
                           {isAdmin && player.id === ownPlayerId && (
                             <span
                               className={classes.adminIcon}

@@ -12,7 +12,6 @@ type Props = {
   sliceValue?: number;
   sliceStats: SliceStats;
   coreSliceData?: CoreSliceData;
-  fontSize: string;
 };
 
 /**
@@ -24,7 +23,6 @@ export function SliceStatsContent({
   sliceValue,
   sliceStats,
   coreSliceData,
-  fontSize,
 }: Props) {
   const { radius } = useContext(MapContext);
 
@@ -34,12 +32,12 @@ export function SliceStatsContent({
     return (
       <Stack align="center" gap={2}>
         {seat !== undefined && (
-          <Text fz={Math.min(12, radius * 0.45)} c="white" lh={1.1}>
-            {seatLabel[seat]}
+          <Text size="xs" c="white" lh={1.1} title={seatLabel[seat]}>
+            {seat === 0 ? "S" : seatLabel[seat]}
           </Text>
         )}
         {sliceValue !== undefined && (
-          <Text fz={Math.min(16, radius * 0.6)} fw="bold" c="yellow.5" lh={1.1}>
+          <Text size="xs" fw="bold" c="yellow.5" lh={1.1}>
             {sliceValue.toFixed(1)}
           </Text>
         )}
@@ -48,7 +46,7 @@ export function SliceStatsContent({
   }
 
   return (
-    <Stack align="center" gap={0} style={{ fontSize }}>
+    <Stack align="center" gap={0}>
       {seat !== undefined && (
         <Text fz={{ base: "xs", xs: "md" }} c="white" lh={1.1}>
           {seatLabel[seat]}
@@ -70,7 +68,7 @@ export function SliceStatsContent({
       )}
       <Stack align="center" gap={0}>
         <Text
-          fz={{ base: 10, xs: "sm" }}
+          fz={{ base: "xs", xs: "sm" }}
           fw="bolder"
           c="white"
           ta="center"
@@ -81,7 +79,7 @@ export function SliceStatsContent({
         </Text>
         {sliceStats.techs && (
           <Text
-            fz={{ base: 10, xs: "sm" }}
+            fz={{ base: "xs", xs: "sm" }}
             fw="bolder"
             c="white"
             ta="center"

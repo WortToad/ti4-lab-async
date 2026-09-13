@@ -40,7 +40,7 @@ export function SystemFeatures({ systems }: { systems: System[] }) {
         <SpaceStationIcon key={s.id} />
       ))}
       {wormholes.map((w, idx) => (
-        <Wormhole key={idx} wormhole={w} size={28} fontSize={14} />
+        <Wormhole key={idx} wormhole={w} size={28} fontSize={16} />
       ))}
     </Group>
   );

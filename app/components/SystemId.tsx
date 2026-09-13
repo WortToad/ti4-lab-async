@@ -3,7 +3,6 @@ import { SystemId as SystemIdType } from "~/types";
 
 type Props = {
   id: SystemIdType;
-  size: string;
   scale: number;
   radius: number;
   rotation?: number;
@@ -12,7 +11,6 @@ type Props = {
 
 export function SystemId({
   id,
-  size,
   scale,
   rotation,
   radius,
@@ -24,7 +22,8 @@ export function SystemId({
 
   return (
     <Text
-      size={size}
+      size="xs"
+      lh={1.1}
       c="white"
       pos="absolute"
       top={15 * scale}

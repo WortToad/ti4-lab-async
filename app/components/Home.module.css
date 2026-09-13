@@ -50,7 +50,7 @@
   gap: 12px;
   align-items: center;
   color: #c6d6e5;
-  font-size: 0.875rem;
+  font-size: var(--command-font-label);
   line-height: 1.6;
   font-weight: 600;
   text-transform: uppercase;
@@ -75,7 +75,7 @@
   color: var(--command-accent);
 }
 .heroDescription {
-  font-size: 1.1875rem;
+  font-size: var(--command-font-card-title);
   line-height: 1.65;
   max-width: 495px;
   color: var(--command-text-body);
@@ -86,7 +86,7 @@
   align-items: center;
   gap: 8px;
   color: var(--command-text-muted);
-  font-size: 0.9375rem;
+  font-size: var(--command-font-label);
   margin-top: 24px;
 }
 .modeCard[data-recommended] {
@@ -112,7 +112,7 @@
   align-items: center;
   gap: 16px;
   color: var(--command-accent);
-  font-size: 0.875rem;
+  font-size: var(--command-font-label);
   letter-spacing: 0.12em;
   line-height: 1.6;
   text-transform: uppercase;
@@ -132,7 +132,7 @@
   margin-top: 8px;
   color: #aebfce;
   font-family: var(--mantine-font-family);
-  font-size: 0.875rem;
+  font-size: var(--command-font-label);
   font-style: normal;
 }
 .briefing cite a {
@@ -214,7 +214,7 @@
   background: #142b40;
   border-radius: 3px;
   padding: 2px 7px;
-  font-size: 0.875rem;
+  font-size: var(--command-font-label);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -236,7 +236,7 @@
   gap: 16px;
 }
 .sectionHeading h2 {
-  font-size: 1.75rem;
+  font-size: 2rem;
 }
 .catalogHeading h2,
 .sectionHeading h2,
@@ -281,10 +281,11 @@
 }
 .cardTop {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 22px;
+  margin-bottom: 24px;
   color: #8bc6e7;
 }
 .cardTop > svg {
@@ -299,7 +300,7 @@
   align-items: center;
   gap: 6px;
   color: var(--command-text-muted);
-  font-size: 0.9375rem;
+  font-size: var(--command-font-label);
 }
 .modeCard h3 {
   color: var(--command-text-strong);
@@ -309,14 +310,14 @@
 }
 .modeCard .cardDescription {
   color: var(--command-text-body);
-  font-size: 1.0625rem;
+  font-size: var(--command-font-body);
   line-height: 1.55;
 }
 .cardDetail {
   color: var(--command-text-muted);
-  font-size: 0.9375rem;
+  font-size: var(--command-font-label);
   line-height: 1.6;
-  margin: 18px 0 22px;
+  margin: 20px 0 24px;
 }
 .cardLink {
   margin-top: auto;
@@ -330,7 +331,7 @@
   text-decoration: none;
   border-top: 1px solid var(--command-border-subtle);
   font-weight: 600;
-  font-size: 1.0625rem;
+  font-size: var(--command-font-body);
 }
 .cardLink > span {
   position: relative;
@@ -388,7 +389,7 @@
   color: var(--mantine-color-imperial-8);
   background: var(--mantine-color-imperial-2);
   padding: 4px 10px;
-  font-size: 0.875rem;
+  font-size: var(--command-font-label);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -562,10 +563,10 @@
   }
   .catalogNav a {
     min-height: 48px;
-    font-size: 1.0625rem;
+    font-size: var(--command-font-body);
   }
   .sectionHeading h2 {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
   }
   .sectionNumber {
     flex-shrink: 0;
