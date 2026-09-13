@@ -9,7 +9,7 @@
   top: 50%;
   transform: translate(-50%, -55%);
   color: white;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
   -webkit-text-stroke: 2px rgba(0, 0, 0, 0.6);
   paint-order: stroke fill;
@@ -17,5 +17,3 @@
     0 1px 2px rgba(0, 0, 0, 0.6),
     0 0 8px rgba(0, 0, 0, 0.5);
 }
-
-

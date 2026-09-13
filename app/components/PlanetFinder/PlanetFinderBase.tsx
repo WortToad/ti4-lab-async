@@ -149,16 +149,7 @@ export function PlanetFinderBase({
       opened={opened}
       onClose={onClose}
       size="900"
-      title={
-        <Text
-          size="sm"
-          fw={600}
-          tt="uppercase"
-          style={{ letterSpacing: "0.05em" }}
-        >
-          System Database
-        </Text>
-      }
+      title="System Database"
       styles={{
         content: { maxWidth: "95vw" },
       }}

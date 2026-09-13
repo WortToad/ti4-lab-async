@@ -197,9 +197,7 @@ export function FactionSettingsModal({
           <ThemeIcon size="lg" variant="light" color="orange" radius="sm">
             <IconAlien size={20} aria-hidden="true" />
           </ThemeIcon>
-          <Text size="lg" fw={600}>
-            Configure Faction Pool
-          </Text>
+          <span>Configure Faction Pool</span>
         </Group>
       }
       removeScrollProps={{ removeScrollBar: false }}

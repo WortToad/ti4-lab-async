@@ -4,8 +4,7 @@ import {
 } from "~/drizzle/baseDraftLobby.server";
 import { appPath } from "~/utils/appUrl";
 import { Group, SimpleGrid, Stack, Text, Title } from "@mantine/core";
-import { LoaderFunctionArgs, data } from "react-router";
-import { useLoaderData } from "react-router";
+import { LoaderFunctionArgs, data, useLoaderData } from "react-router";
 import { SectionTitle } from "~/components/Section";
 import { draftByPrettyUrl } from "~/drizzle/draft.server";
 import { multiDraftByPrettyUrl } from "~/drizzle/multiDraft.server";

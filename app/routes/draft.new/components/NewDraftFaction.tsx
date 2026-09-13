@@ -39,7 +39,7 @@ export function NewDraftFaction({
         faction={faction.id}
         style={{ minWidth: 28, maxWidth: 28 }}
       />
-      <Text size="sm" flex={1} lh={1.2} truncate>
+      <Text size="sm" fw={600} flex={1} miw={0} lh={1.4}>
         {faction.name}
       </Text>
       {onRemove && (

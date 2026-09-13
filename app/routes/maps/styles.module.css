@@ -40,7 +40,6 @@
   font-size: var(--mantine-h1-font-size);
   line-height: var(--mantine-h1-line-height);
   letter-spacing: 0.015em;
-  letter-spacing: 0.02em;
   color: var(--mantine-color-gray-1);
   margin: 0;
 }

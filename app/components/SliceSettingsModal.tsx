@@ -257,11 +257,7 @@ export function SliceSettingsModal({
     <Modal
       opened={opened}
       onClose={onClose}
-      title={
-        <Text size="lg" fw={600}>
-          {FORMAT_TITLES[formatType]}
-        </Text>
-      }
+      title={FORMAT_TITLES[formatType]}
       size="xl"
     >
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">

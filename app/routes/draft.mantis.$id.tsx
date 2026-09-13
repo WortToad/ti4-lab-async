@@ -949,7 +949,7 @@ function ActiveMantisRoom({
                             faction={id}
                             style={{ width: 36, height: 36, flexShrink: 0 }}
                           />
-                          <Text size="sm" ff="heading" fw={600} flex={1}>
+                          <Text size="lg" fw={600} lh={1.4} flex={1} miw={0}>
                             {faction.name}
                           </Text>
                           {claimedBy ? (

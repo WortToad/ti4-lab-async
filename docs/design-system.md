@@ -16,6 +16,17 @@ Book text was used as source content, not as instructions. Twilight Imperium art
 
 `app/theme.ts` defines the Mantine theme. `app/main.css` provides shared typography, focus, control sizing, and reduced-motion behavior.
 
+### Typography and heading hierarchy
+
+- `Title.order` follows the document outline; `Title.size` chooses the visual scale. The shared theme selects Cinzel for `h1`/`h2` sizes and Source Sans 3 for compact headings, so an `h2` rendered at `h3` size uses the same font as other 22px section titles.
+- Page titles use the responsive 29–44px scale, or the compact 24–32px display scale. Working sections use 22px Source Sans 3; cards and configuration groups use 19px. Deeper headings use 17px and 16px. The homepage retains its larger hero and 24px catalog card titles.
+- Dialog and drawer titles use 22px semibold Source Sans 3 with a 1.35 line height. Custom title content inherits that style. Dialog subsections use 19px headings.
+- Body text uses 17px, controls use 16px semibold, and supporting labels use 14–16px. Player labels and editable slice names retain their 19px bold styling. Faction names in compact preview lists wrap at 16px semibold. Font weights stay within the locally supplied 400–700 range.
+- Each page has one primary heading. Managed draft results sit below the lobby's primary heading; standalone results, replay, tournament and multidraft pages supply their own. Slice cards follow their section at `h3`; player identities, data labels and popover labels do not introduce artificial heading levels.
+- Map symbols, numbers and tile artwork retain their size-dependent treatment. Brand lettering and the attributed rulebook quotation retain their existing display and italic serif styling.
+
+### Color and component rules
+
 - Deep navy `#071321` is the page background; lighter navy separates working surfaces.
 - Reading text uses cool neutrals against navy surfaces: headings `#f4f7fb`, default text `#edf2f7`, descriptions `#d5dfe8`, and supporting text `#b6c6d4`. Major homepage section headings, including “An empire of your own”, use cool neutrals rather than Golden yellow; the Twilight’s Fall heading uses its magenta accent.
 - Parchment `#f2e8d3` is a deliberate surface color for the recommended draft card. It uses dark navy headings and links (`#102a3f`), dark body text (`#334b5a`), supporting text (`#486071`), and a dark focus outline, alongside its gold border and “Start here” label. Parchment surfaces are distinct from the pale text colors previously used on navy.
@@ -46,6 +57,9 @@ After joining a managed lobby, players see a Mantine dialog prompting them to sa
 The redesign is checked with TypeScript, the production build, the existing Vitest suite, and Chromium interactions. Automated accessibility checks use axe against WCAG A/AA tags through 2.2; these are supplemented by keyboard and responsive layout checks. Automated results are not a claim of complete WCAG conformance.
 
 Completed checks:
+
+- The September 2026 typography recheck covers all 21 format setup links at 320px and 1440px, plus homepage, map builder, rejoin, tournament and draft preview. Those views have one primary heading, no skipped heading levels and no horizontal page overflow. The production build, TypeScript, scoped ESLint and all 823 existing tests pass; 16 existing Chromium setup, lobby, recovery, pause/resume and tournament flow tests also pass.
+- The same recheck exercises joined and started standard, RAW, Mantis and bag lobbies at desktop and mobile widths. Faction settings, slice settings, scoring and sharing dialogs use the expected 22px Source Sans 3 titles at 320px and 1440px. Those reviewed views pass the WCAG A/AA axe checks; the lobby views also pass heading-order checks. Increased text spacing and mobile navigation remain within the 320px viewport.
 
 - Production build and TypeScript compilation pass. Run compilation after the build: the server imports the generated build, so running both concurrently can temporarily remove that import.
 - All 544 existing tests pass across 60 files (`vitest run --maxWorkers=4 --minWorkers=1`). Validation used Node 22, matching the installed SQLite native module.
