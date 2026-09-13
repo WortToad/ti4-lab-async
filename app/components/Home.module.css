@@ -461,7 +461,8 @@
 }
 .steps h3 {
   margin: 3px 0 8px;
-  font-size: 1.25rem;
+  font-size: var(--mantine-h3-font-size);
+  line-height: var(--mantine-h3-line-height);
   color: var(--command-text-strong);
   font-weight: 600;
 }

@@ -1,4 +1,4 @@
-import { Box, List, Modal, Stack, Text } from "@mantine/core";
+import { Box, List, Modal, Stack, Text, Title } from "@mantine/core";
 
 type Props = {
   opened: boolean;
@@ -15,17 +15,17 @@ export function SliceScoringInfoModal({ opened, onClose }: Props) {
     >
       <Stack gap="xl">
         <Box>
-          <Text size="xl" fw={700} ff="heading" mb="md">
+          <Title order={3} size="h4" mb="md">
             How Slice Scoring Works
-          </Text>
+          </Title>
           <Text size="sm" c="dimmed" mb="lg">
             Each starting position (slice) is scored based on nearby systems:
           </Text>
           <Stack gap="md">
             <Box bg="dark.6" p="md" style={{ borderRadius: "8px" }}>
-              <Text size="md" fw={600} mb="sm">
+              <Title order={4} size="h5" mb="sm">
                 System Value Calculation
-              </Text>
+              </Title>
               <List size="sm" spacing="xs">
                 <List.Item>Sum of all planet resources + influence</List.Item>
                 <List.Item>+1 bonus per tech specialty</List.Item>
@@ -35,9 +35,9 @@ export function SliceScoringInfoModal({ opened, onClose }: Props) {
             </Box>
 
             <Box bg="dark.6" p="md" style={{ borderRadius: "8px" }}>
-              <Text size="md" fw={600} mb="sm">
+              <Title order={4} size="h5" mb="sm">
                 Distance Weighting
-              </Text>
+              </Title>
               <List size="sm" spacing="xs">
                 <List.Item>
                   Adjacent tiles (distance 1): Full value (1.0×)
@@ -48,9 +48,9 @@ export function SliceScoringInfoModal({ opened, onClose }: Props) {
             </Box>
 
             <Box bg="dark.6" p="md" style={{ borderRadius: "8px" }}>
-              <Text size="md" fw={600} mb="sm">
+              <Title order={4} size="h5" mb="sm">
                 Slice Score
-              </Text>
+              </Title>
               <Text size="sm">
                 Sum of all weighted system values within 3 spaces of the home
                 system
@@ -58,9 +58,9 @@ export function SliceScoringInfoModal({ opened, onClose }: Props) {
             </Box>
 
             <Box bg="dark.6" p="md" style={{ borderRadius: "8px" }}>
-              <Text size="md" fw={600} mb="sm">
+              <Title order={4} size="h5" mb="sm">
                 Balance Gap
-              </Text>
+              </Title>
               <Text size="sm">
                 Difference between highest and lowest slice scores
               </Text>
@@ -69,9 +69,9 @@ export function SliceScoringInfoModal({ opened, onClose }: Props) {
         </Box>
 
         <Box>
-          <Text size="xl" fw={700} ff="heading" mb="md">
+          <Title order={3} size="h4" mb="md">
             How Improve Balance Works
-          </Text>
+          </Title>
           <Text size="sm" c="dimmed" mb="md">
             The algorithm reduces the balance gap by swapping systems:
           </Text>

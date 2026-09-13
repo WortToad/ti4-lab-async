@@ -189,7 +189,7 @@ export function BagDraftGuide({
       <Accordion variant="separated" radius="md" order={2}>
         <Accordion.Item value="guide">
           <Accordion.Control>
-            <Title component="span" order={2}>
+            <Title component="span" order={2} size="h3">
               How this draft works
             </Title>
           </Accordion.Control>
@@ -202,7 +202,9 @@ export function BagDraftGuide({
   return (
     <Paper withBorder p="lg" radius="md">
       <Stack gap="lg">
-        <Title order={2}>How this draft works</Title>
+        <Title order={2} size="h3">
+          How this draft works
+        </Title>
         {content}
       </Stack>
     </Paper>

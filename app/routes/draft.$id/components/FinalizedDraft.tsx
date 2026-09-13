@@ -25,7 +25,8 @@ import {
 import { useDraft } from "~/draftStore";
 import { Section, SectionTitle } from "~/components/Section";
 import { SummaryRow } from "./SummaryRow";
-import { useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
+import { LobbyIdentityContext } from "~/draft/LobbyIdentity";
 import { SummaryCard } from "./MidDraftSummary";
 import { useNavigate } from "react-router";
 import { PlayerInputSection } from "~/routes/draft.new/components/PlayerInputSection";
@@ -50,6 +51,7 @@ import { KeleresHomeSetup } from "~/draft/KeleresHomeSetup";
 import { getBaseKeleresSetup } from "~/draft/keleres";
 
 export function FinalizedDraft() {
+  const lobby = useContext(LobbyIdentityContext);
   const navigate = useNavigate();
   const { adminMode, originalArt, setOriginalArt } = useSafeOutletContext();
 
@@ -92,7 +94,7 @@ export function FinalizedDraft() {
       {/* Header */}
       <Box>
         <Group justify="space-between" align="flex-start" wrap="wrap" gap="md">
-          <Title order={1}>
+          <Title order={lobby?.managed ? 2 : 1}>
             {homePending ? "Finish your map" : "Draft Complete"}
           </Title>
           <Group gap="sm">

@@ -14,9 +14,11 @@
 }
 
 .formatTitle {
+  margin: 0;
   font-family: var(--mantine-font-family);
   font-weight: 600;
-  font-size: 1.0625rem;
+  font-size: var(--command-font-card-title);
+  line-height: 1.4;
   color: var(--mantine-color-dimmed);
 }
 

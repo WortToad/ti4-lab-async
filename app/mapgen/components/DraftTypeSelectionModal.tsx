@@ -45,7 +45,6 @@ export function DraftTypeSelectionModal({
             variant="outline"
             color="blue"
             size="md"
-            ff="heading"
             onClick={() => onSelect(type)}
           >
             {DRAFT_TYPE_LABELS[type] ?? type}

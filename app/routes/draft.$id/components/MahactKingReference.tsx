@@ -45,7 +45,7 @@ export function MahactKingReference({ faction, reference }: Props) {
               <Text
                 fz={{ base: "lg", sm: "xl" }}
                 fw={700}
-                ff="var(--font-display)"
+                ff="var(--mantine-font-family)"
                 lh={1.2}
                 style={{ overflowWrap: "anywhere" }}
               >

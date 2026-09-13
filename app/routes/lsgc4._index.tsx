@@ -87,7 +87,10 @@ export default function LGCS4() {
     <Box mt="lg">
       <Grid gutter="xl">
         <Grid.Col span={{ base: 12, md: 6 }}>
-          <SectionTitle title="Lone Star Galactic Council Tournament 4" />
+          <SectionTitle
+            order={1}
+            title="Lone Star Galactic Council Tournament 4"
+          />
           <Text pl="sm" pr="sm" mt="sm">
             Welcome to the Fourth Lone Star Galactic Council tournament, a
             weekend of intense Twilight Imperium competition complemented by

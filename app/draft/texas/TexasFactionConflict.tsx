@@ -62,7 +62,7 @@ export function TexasFactionConflict() {
 
   return (
     <Stack maw={1100} mx="auto" w="100%" p="md">
-      <Title order={1} size="h2">
+      <Title order={lobby?.managed ? 2 : 1} size="h2">
         Resolve the revealed faction conflict
       </Title>
       <Alert color="orange" title="Keleres needs an unused home faction">

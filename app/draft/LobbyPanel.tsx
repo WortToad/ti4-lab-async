@@ -243,10 +243,7 @@ export function LobbyPanel({
         <div className={classes.header}>
           <Stack gap="xs" className={classes.heading}>
             <Group gap="md" align="center">
-              <Title
-                order={mode === "bag" ? 2 : 1}
-                size={lobby.started ? "h3" : "h2"}
-              >
+              <Title order={mode === "bag" ? 2 : 1} size="h2">
                 {lobby.started ? "Lobby" : "Draft lobby"}
               </Title>
               {isAdmin && (

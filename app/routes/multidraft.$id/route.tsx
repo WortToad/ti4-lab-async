@@ -3,7 +3,7 @@ import {
   projectBaseDraft,
 } from "~/drizzle/baseDraftLobby.server";
 import { appPath } from "~/utils/appUrl";
-import { Group, SimpleGrid, Stack, Text } from "@mantine/core";
+import { Group, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import { LoaderFunctionArgs, data } from "react-router";
 import { useLoaderData } from "react-router";
 import { SectionTitle } from "~/components/Section";
@@ -53,6 +53,7 @@ export default function MultidraftRoute() {
   const { drafts } = useLoaderData<typeof loader>();
   return (
     <Stack p="lg" gap={50}>
+      <Title order={1}>Your draft lobbies</Title>
       {drafts.map(({ draft, urlName }) => {
         if (!draft) return null;
         if (draft.data == null)
@@ -73,9 +74,9 @@ export default function MultidraftRoute() {
             <a href={appPath(`/draft/${urlName}`)}>
               <SectionTitle title={urlName} />
             </a>
-            <Text ff="mono" fw={700}>
+            <Title order={3} size="h4">
               Factions
-            </Text>
+            </Title>
             <Group>
               {data.availableFactions.map((faction) => {
                 return (
@@ -84,9 +85,9 @@ export default function MultidraftRoute() {
               })}
             </Group>
 
-            <Text ff="mono" fw={700}>
+            <Title order={3} size="h4">
               Slices
-            </Text>
+            </Title>
             <SimpleGrid
               flex={1}
               cols={{ base: 1, sm: 2, md: 3, lg: 6, xxl: 6 }}

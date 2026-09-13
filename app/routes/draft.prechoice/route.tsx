@@ -10,6 +10,7 @@ import {
   Switch,
   Tabs,
   Text,
+  Title,
 } from "@mantine/core";
 import { DiscordData, Draft, DraftSettings } from "~/types";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -463,9 +464,9 @@ export default function DraftPrechoice() {
               <Text className="command-eyebrow" mb="xs">
                 01 / Your table
               </Text>
-              <Text fw={600} size="lg">
+              <Title order={2} size="h3">
                 Gather the great powers
-              </Text>
+              </Title>
               <Text c="dimmed" size="sm" mt="xs">
                 Names are entered when players join the lobby.
               </Text>

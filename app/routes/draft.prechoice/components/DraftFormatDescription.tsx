@@ -56,7 +56,7 @@ export function DraftFormatDescription({ mapType, data, title }: Props) {
   return (
     <div className={clsx(styles.container, variantClass)}>
       <div className={styles.header}>
-        <span className={styles.formatTitle}>{title}</span>
+        <h3 className={styles.formatTitle}>{title}</h3>
       </div>
       <div className={styles.content}>
         <p className={styles.description}>{data.description}</p>

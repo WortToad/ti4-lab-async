@@ -82,7 +82,9 @@ export function ReplayControls() {
     >
       <Group justify="space-between" mb="md">
         <div>
-          <Title order={3}>Draft Replay</Title>
+          <Title order={1} size="h2">
+            Draft Replay
+          </Title>
           <Text size="sm" c="dimmed">
             Pick {currentPick} of {totalPicks}
           </Text>

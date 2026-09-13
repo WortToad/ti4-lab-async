@@ -80,6 +80,7 @@
   --command-font-control: 1rem;
   --command-font-body: 1.0625rem;
   --command-font-card-title: 1.1875rem;
+  --command-font-dialog-title: 1.375rem;
   --command-surface: #102235;
   --command-surface-raised: #142b40;
   --command-surface-hover: #1b354d;
@@ -126,15 +127,8 @@ a {
   outline: 3px solid var(--command-focus);
   outline-offset: 4px;
 }
-:where(h1, h2, h3, h4) {
+:where(h1, h2, h3, h4, h5, h6) {
   text-wrap: balance;
-}
-.mantine-Title-root {
-  letter-spacing: 0.015em;
-}
-.mantine-Title-root:where(h3, h4, h5, h6) {
-  font-family: var(--mantine-font-family);
-  letter-spacing: 0;
 }
 .mantine-Button-root {
   min-height: 44px;
@@ -311,8 +305,9 @@ a {
 .mantine-Modal-title,
 .mantine-Drawer-title {
   font-family: var(--mantine-font-family);
-  font-size: 1.25rem;
+  font-size: var(--command-font-dialog-title);
   font-weight: 600;
+  line-height: 1.35;
 }
 .mantine-Modal-header,
 .mantine-Drawer-header {

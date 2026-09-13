@@ -1,4 +1,4 @@
-import { List, SimpleGrid, Stack, Title } from "@mantine/core";
+import { List, SimpleGrid, Stack, Text } from "@mantine/core";
 import { FleetComposition } from "~/types";
 
 type Props = {
@@ -48,9 +48,9 @@ export function StartingUnitsTable({
   return (
     <Stack gap="xs">
       {showTitle && (
-        <Title order={6} size="xs" c="dimmed">
+        <Text size="xs" fw={600} c="dimmed">
           {title}
-        </Title>
+        </Text>
       )}
       <SimpleGrid cols={2} spacing={4}>
         <List size="xs" spacing={2}>

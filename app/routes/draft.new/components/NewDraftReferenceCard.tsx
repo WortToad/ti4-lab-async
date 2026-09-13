@@ -26,7 +26,7 @@ export function NewDraftReferenceCard({ faction }: Props) {
           </div>
           {faction.priorityOrder !== undefined && (
             <div className={styles.priorityPill}>
-              <Text size="sm" fw="bold" c="white" ff="heading">
+              <Text size="sm" fw="bold" c="white">
                 {faction.priorityOrder}
               </Text>
             </div>
@@ -38,9 +38,9 @@ export function NewDraftReferenceCard({ faction }: Props) {
             pt={5}
             pb={6}
           >
-            <Text flex={1} size="md" fw={600} pl="xs">
+            <Title order={3} size="h4" flex={1} pl="xs">
               {faction.name}
-            </Text>
+            </Title>
           </Group>
         </Stack>
       </Surface>
@@ -48,9 +48,9 @@ export function NewDraftReferenceCard({ faction }: Props) {
         <Stack p="sm" gap="md">
           <Stack gap="xs" className={styles.homeSystemSection}>
             <Group gap="xs">
-              <Title order={6} size="xs" c="dimmed">
+              <Text size="xs" fw={600} c="dimmed">
                 Home System
-              </Title>
+              </Text>
             </Group>
             <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xs">
               {homeSystem?.planets.map((planet, idx) => (

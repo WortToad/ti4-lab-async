@@ -1,5 +1,7 @@
 .editableSliceName input {
-  font-family: var(--font-display);
+  font-family: var(--mantine-font-family);
+  font-size: var(--command-font-card-title);
+  font-weight: 700;
 }
 
 .stats {

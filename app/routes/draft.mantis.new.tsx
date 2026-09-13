@@ -250,7 +250,9 @@ export default function MantisNew() {
           </Group>
           <Paper withBorder p="md" radius="md">
             <Stack gap="sm">
-              <Title order={3}>Build the map with your drafted tiles</Title>
+              <Title order={2} size="h3">
+                Build the map with your drafted tiles
+              </Title>
               <Text size="sm">
                 If you draft extra tiles, choose which to discard until you have
                 exactly 3 blue and 2 red. Once every hand is ready, map building

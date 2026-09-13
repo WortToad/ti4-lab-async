@@ -17,6 +17,7 @@ import {
   SegmentedControl,
   Switch,
   Tabs,
+  Title,
   Tooltip,
 } from "@mantine/core";
 
@@ -71,6 +72,8 @@ export const commandTheme = createTheme({
       h2: { fontSize: "clamp(1.5rem, 2.8vw, 2rem)", lineHeight: "1.25" },
       h3: { fontSize: "1.375rem", lineHeight: "1.35" },
       h4: { fontSize: "1.1875rem", lineHeight: "1.4" },
+      h5: { fontSize: "1.0625rem", lineHeight: "1.4" },
+      h6: { fontSize: "1rem", lineHeight: "1.4" },
     },
   },
   breakpoints: {
@@ -228,6 +231,20 @@ export const commandTheme = createTheme({
     ],
   },
   components: {
+    Title: Title.extend({
+      styles: (_theme, { order = 1, size }) => {
+        // Visual size determines the font; order describes the document outline.
+        const display = ["h1", "h2"].includes(String(size ?? `h${order}`));
+        return {
+          root: {
+            fontFamily: display
+              ? "var(--font-display)"
+              : "var(--mantine-font-family)",
+            letterSpacing: display ? "0.015em" : 0,
+          },
+        };
+      },
+    }),
     Button: Button.extend({
       defaultProps: { variant: "filled", size: "md" },
       styles: {

@@ -30,7 +30,7 @@ export function ConfigSection({
       >
         {icon}
       </ThemeIcon>
-      <span style={{ flex: 1 }}>{title}</span>
+      <span style={{ flex: 1, minWidth: 0 }}>{title}</span>
       {badge}
     </Group>
   );
@@ -40,6 +40,7 @@ export function ConfigSection({
         defaultValue={defaultCollapsed ? null : "settings"}
         variant="separated"
         order={3}
+        styles={{ label: { fontSize: "var(--command-font-card-title)" } }}
       >
         <Accordion.Item value="settings">
           <Accordion.Control>{heading}</Accordion.Control>
@@ -52,8 +53,7 @@ export function ConfigSection({
     <Paper withBorder p="md">
       <Title
         order={3}
-        size="1.0625rem"
-        ff="var(--mantine-font-family)"
+        size="h4"
         mb="md"
         pb="sm"
         style={{

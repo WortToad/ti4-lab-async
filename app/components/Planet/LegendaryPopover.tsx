@@ -1,4 +1,4 @@
-import { Popover, Text, Title, UnstyledButton } from "@mantine/core";
+import { Popover, Text, UnstyledButton } from "@mantine/core";
 import { ReactNode, useState } from "react";
 
 type Props = {
@@ -54,9 +54,9 @@ export function LegendaryPopover({
       </Popover.Target>
       <Popover.Dropdown>
         {title && (
-          <Title order={6} mb={4}>
+          <Text size="lg" fw={600} lh={1.4} mb={4}>
             {title}
-          </Title>
+          </Text>
         )}
         {description && <Text size="sm">{description}</Text>}
       </Popover.Dropdown>

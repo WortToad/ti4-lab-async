@@ -300,7 +300,7 @@ function RawGame({
         </Anchor>
         <Group justify="space-between">
           <div>
-            <Title order={1} size="h2">
+            <Title order={2} size="h2">
               {draft.settings.mode === "twilightsFall"
                 ? "Twilight’s Fall"
                 : "TI4"}{" "}
