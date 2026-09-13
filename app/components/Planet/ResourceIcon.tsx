@@ -8,9 +8,18 @@ type Props = {
 
 export function ResourceIcon({ value, size = 20 }: Props) {
   return (
-    <Box pos="relative" w={size} h={size} style={{ display: "inline-block" }}>
+    <Box
+      component="span"
+      pos="relative"
+      w={size}
+      h={size}
+      role="img"
+      aria-label={`${value} resources`}
+      style={{ display: "inline-block", flexShrink: 0 }}
+    >
       <Image src={appPath("/pa_resources.png")} w={size} h={size} alt="Resources" />
       <Text
+        component="span"
         fz="sm"
         fw="bold"
         c="white"

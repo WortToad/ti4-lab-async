@@ -17,7 +17,13 @@ export function PlanetStatsPill({
   compact = false,
 }: Props) {
   return (
-    <Group gap={2} className={compact ? classes.compact : undefined}>
+    <Group
+      gap={2}
+      wrap="nowrap"
+      role="img"
+      aria-label={`${resources} resources, ${influence} influence${flex === undefined ? "" : `, ${flex} flex`}`}
+      className={compact ? classes.compact : undefined}
+    >
       <Box className={classes.resources} px={compact ? 5 : "xs"}>
         <Text fw={600} size={size} className={classes.text}>
           {resources}

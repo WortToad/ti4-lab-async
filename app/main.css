@@ -59,7 +59,10 @@
   --font-display: "Cinzel", Georgia, serif;
   --command-accent: var(--mantine-color-imperial-4, #e8bc58);
   --command-focus: var(--mantine-color-imperial-1, #fbedc7);
-  --command-blue: #82c7ed;
+  --command-blue: var(--mantine-color-blue-5);
+  --command-resources: #ffc400;
+  --command-influence: var(--mantine-color-blue-6);
+  --command-flex: var(--mantine-color-purple-6);
   --command-ink: #071321;
   --command-paper: #f2e8d3;
   --command-paper-ink: #102a3f;
@@ -84,8 +87,8 @@
   --command-shadow: 0 8px 28px #020a1426;
   --command-surface-active: #123b59;
   --command-info: #38bdf8;
-  --command-warning: #ffc078;
-  --command-danger: #ffa8a8;
+  --command-warning: var(--mantine-color-orange-5);
+  --command-danger: var(--mantine-color-red-5);
   --command-success: #3eeb91;
 }
 :root[data-mantine-color-scheme="dark"] {
@@ -95,7 +98,7 @@
   --mantine-color-default: #102235;
   --mantine-color-default-hover: var(--command-surface-hover);
   --mantine-color-default-border: var(--command-border);
-  --mantine-color-anchor: #82c7ed;
+  --mantine-color-anchor: var(--command-blue);
   --mantine-color-error: var(--command-danger);
 }
 html {
@@ -229,7 +232,7 @@ a {
   min-height: 32px;
 }
 .mantine-Badge-root:where([data-variant="light"]) {
-  background: #203348;
+  background: var(--command-surface);
   border: 1px solid transparent;
   color: var(--badge-color, var(--command-text-body));
 }

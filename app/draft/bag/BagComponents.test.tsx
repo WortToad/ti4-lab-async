@@ -34,7 +34,9 @@ describe("bag component presentation", () => {
     const html = renderItem("TECH:ac2");
     expect(html).toContain("/factions/ti_sol.png");
     expect(html).toContain("/units/carrier.png");
-    expect(html).toContain("Prerequisites: BB");
+    expect(html).toContain("Prerequisites: ");
+    expect(html).not.toContain("Prerequisites: BB");
+    expect(html.match(/alt="PROPULSION"/g)).toHaveLength(2);
     expect(html).toContain("SUSTAIN DAMAGE");
   });
 

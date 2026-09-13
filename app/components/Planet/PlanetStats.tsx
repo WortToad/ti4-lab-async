@@ -21,7 +21,7 @@ export function PlanetStats({
       style={{ zIndex: 1 }}
     >
       <Box
-        bg="imperial.4"
+        bg="var(--command-resources)"
         px={3}
         style={{ borderRadius: 3, border: "1px solid #071321" }}
       >
@@ -30,11 +30,11 @@ export function PlanetStats({
         </Text>
       </Box>
       <Box
-        bg="#82c7ed"
+        bg="var(--command-influence)"
         px={3}
         style={{ borderRadius: 3, border: "1px solid #071321" }}
       >
-        <Text size={fontSize} lh={1.25} fw={700} c="#071321">
+        <Text size={fontSize} lh={1.25} fw={700} c="#fff">
           {influence}
         </Text>
       </Box>

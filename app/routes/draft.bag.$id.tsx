@@ -485,9 +485,7 @@ function DraftPicking({
         })}
       {seat.hand.length > 0 && (
         <Stack>
-          <Title order={2} size="h3">
-            Your drafted components ({seat.hand.length})
-          </Title>
+          <Title order={2}>Your drafted components ({seat.hand.length})</Title>
           <CollectedItems items={seat.hand} view={view} />
         </Stack>
       )}
@@ -597,9 +595,7 @@ function FactionAssembly({
     <Stack gap="lg">
       <Paper withBorder p="lg" radius="md">
         <Stack gap="sm">
-          <Title order={2} size="h3">
-            Build your final faction
-          </Title>
+          <Title order={2}>Build your final faction</Title>
           <Text>
             Collection is complete. Choose which components to keep for your
             final faction and the tiles to use for the map. Keep the required
@@ -936,7 +932,16 @@ export default function BagDraftPage() {
         rules={view.rules}
         variant={view.settings.variant}
         phase={view.phase}
-      />
+      >
+        <BagMapSetup
+          rules={view.rules}
+          playerCount={view.players.length}
+          phase={view.phase}
+          mapRoomId={view.mapRoomId}
+          mapBuildError={view.mapBuildError}
+          mapPath={`${publicPath}?map=1`}
+        />
+      </BagDraftGuide>
       {view.phase !== "lobby" && (
         <>
           {seat && view.phase === "drafting" ? (
@@ -952,14 +957,6 @@ export default function BagDraftPage() {
           ) : (
             <BagDraftProgress view={view} />
           )}
-          <BagMapSetup
-            rules={view.rules}
-            playerCount={view.players.length}
-            phase={view.phase}
-            mapRoomId={view.mapRoomId}
-            mapBuildError={view.mapBuildError}
-            mapPath={`${publicPath}?map=1`}
-          />
           {view.viewer.isAdmin && view.canUndoRound && (
             <Button
               color="orange"
@@ -999,6 +996,11 @@ export default function BagDraftPage() {
               <Group justify="space-between">
                 <Title order={2}>Completed factions</Title>
                 <Group>
+                  {view.mapRoomId && (
+                    <Button component={Link} to={`${publicPath}?map=1`}>
+                      Open map room
+                    </Button>
+                  )}
                   {seat && !view.mapRoomId && (
                     <Button
                       variant="light"

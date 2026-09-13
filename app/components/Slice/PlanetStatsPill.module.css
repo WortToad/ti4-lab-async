@@ -2,21 +2,21 @@
   border-radius: 4px;
   min-width: 26px;
   text-align: center;
-  background-color: var(--command-accent);
+  background-color: var(--command-resources);
 }
 
 .influence {
   border-radius: 4px;
   min-width: 26px;
   text-align: center;
-  background-color: var(--command-blue);
+  background-color: var(--command-influence);
 }
 
 .flex {
   border-radius: 4px;
   min-width: 26px;
   text-align: center;
-  background-color: #d0bfff;
+  background-color: var(--command-flex);
 }
 
 .text {
@@ -24,6 +24,11 @@
   font-variant-numeric: tabular-nums;
   line-height: 1.4;
   color: var(--command-ink);
+}
+
+.influence .text,
+.flex .text {
+  color: #fff;
 }
 
 .compact > * {

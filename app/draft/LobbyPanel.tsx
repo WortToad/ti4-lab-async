@@ -1,7 +1,6 @@
 import {
   Accordion,
   Alert,
-  Badge,
   Button,
   Collapse,
   CopyButton,
@@ -29,7 +28,6 @@ import {
   IconSettings,
   IconShield,
   IconUserMinus,
-  IconUsers,
 } from "@tabler/icons-react";
 import { useEffect, useId, useRef, useState } from "react";
 import type { LobbyView } from "./lobby";
@@ -151,6 +149,7 @@ export function LobbyPanel({
   const [lobbyUrl, setLobbyUrl] = useState("");
   const [detailsOpened, setDetailsOpened] = useState(false);
   const detailsId = useId();
+  const playersHeadingId = useId();
   const recovered = useRef(new Set<string>());
   const downloaded = useRef<string | null>(null);
   const resetImportFile = useRef<() => void>(null);
@@ -257,24 +256,20 @@ export function LobbyPanel({
                 </span>
               )}
             </Group>
-            <Group gap="md" className={classes.metadata}>
-              <span className={classes.joined}>
-                <IconUsers size={18} aria-hidden="true" />
-                <span>
-                  <strong>{joined}</strong> / {lobby.slots.length} joined
-                </span>
-              </span>
-              {lobby.started && (
-                <StatusPill tone={lobby.paused ? "warning" : "success"}>
-                  {lobby.paused ? "Paused" : "Draft started"}
-                </StatusPill>
-              )}
-              {ownSlot && (
-                <Text size="sm">
-                  Playing as <strong>{ownSlot.name}</strong>
-                </Text>
-              )}
-            </Group>
+            {(lobby.started || ownSlot) && (
+              <Group gap="md" className={classes.metadata}>
+                {lobby.started && (
+                  <StatusPill tone={lobby.paused ? "warning" : "success"}>
+                    {lobby.paused ? "Paused" : "Draft started"}
+                  </StatusPill>
+                )}
+                {ownSlot && (
+                  <Text size="sm">
+                    Playing as <strong>{ownSlot.name}</strong>
+                  </Text>
+                )}
+              </Group>
+            )}
           </Stack>
           <Group gap="sm" className={classes.actions}>
             <CopyButton value={lobbyUrl}>
@@ -357,6 +352,72 @@ export function LobbyPanel({
               : "This browser could not restore saved access automatically. If you already joined, paste your recovery code below."}
           </Alert>
         )}
+        <section className={classes.players} aria-labelledby={playersHeadingId}>
+          <Group justify="space-between" gap="sm">
+            <Title
+              id={playersHeadingId}
+              order={mode === "bag" ? 3 : 2}
+              size="h3"
+              className={classes.playersHeading}
+            >
+              Players
+            </Title>
+            <span
+              className={classes.joined}
+              data-complete={allJoined || undefined}
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              <span>
+                <strong>{joined}</strong> / {lobby.slots.length}
+              </span>
+              joined
+            </span>
+          </Group>
+          <div className={classes.playerCapacity} aria-hidden="true">
+            {lobby.slots.map((slot, index) => (
+              <span
+                key={slot.id}
+                data-filled={index < joined || undefined}
+                data-complete={allJoined || undefined}
+              />
+            ))}
+          </div>
+          {joined > 0 ? (
+            <ul className={classes.playerList}>
+              {lobby.slots
+                .filter((player) => player.claimed)
+                .map((player) => (
+                  <li
+                    key={player.id}
+                    className={classes.playerCard}
+                    data-own={player.id === ownPlayerId || undefined}
+                  >
+                    <div className={classes.playerIdentity}>
+                      <span className={classes.playerName}>{player.name}</span>
+                      {player.id === ownPlayerId && (
+                        <span className={classes.you}>You</span>
+                      )}
+                    </div>
+                    <span className={classes.playerStatus}>
+                      <IconCheck size={16} aria-hidden="true" />
+                      Joined
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          ) : (
+            <Text size="sm" c="dimmed" className={classes.emptyPlayers}>
+              No players have joined yet.
+            </Text>
+          )}
+          {!allJoined && (
+            <Text size="sm" c="dimmed">
+              {lobby.slots.length - joined} more player
+              {lobby.slots.length - joined === 1 ? "" : "s"} can join
+            </Text>
+          )}
+        </section>
         <Collapse in={showDetails} id={detailsId}>
           <Stack gap="md">
             {ownPlayerId === undefined && !allJoined && (
@@ -414,34 +475,6 @@ export function LobbyPanel({
                 </Stack>
               </form>
             )}
-            <Stack gap="xs">
-              <Text size="sm" fw={600}>
-                Players
-              </Text>
-              <Group gap="xs">
-                {lobby.slots
-                  .filter((player) => player.claimed)
-                  .map((player) => (
-                    <Badge
-                      key={player.id}
-                      variant="light"
-                      className={classes.playerChip}
-                      data-own={player.id === ownPlayerId || undefined}
-                      size="lg"
-                      tt="none"
-                    >
-                      {player.name}
-                      {player.id === ownPlayerId ? " · You" : ""}
-                    </Badge>
-                  ))}
-                {!allJoined && (
-                  <Text size="sm" c="dimmed">
-                    {lobby.slots.length - joined} more player
-                    {lobby.slots.length - joined === 1 ? "" : "s"} can join
-                  </Text>
-                )}
-              </Group>
-            </Stack>
             {ownPlayerId === undefined && allJoined && (
               <Text size="sm" c="dimmed">
                 Everyone has joined. You can watch the draft, or restore your

@@ -1,12 +1,20 @@
-import { Text, lighten } from "@mantine/core";
+import { Text } from "@mantine/core";
 import { Wormhole as TWormhole } from "~/types";
 
 const wormholeColor: Record<TWormhole, string> = {
-  ALPHA: "var(--mantine-color-orange-6)",
-  BETA: "var(--mantine-color-green-8)",
-  DELTA: "var(--mantine-color-blue-8)",
-  GAMMA: "var(--mantine-color-purple-8)",
-  EPSILON: "var(--mantine-color-red-8)",
+  ALPHA: "var(--mantine-color-orange-5)",
+  BETA: "var(--mantine-color-green-5)",
+  DELTA: "var(--mantine-color-blue-5)",
+  GAMMA: "var(--mantine-color-purple-5)",
+  EPSILON: "var(--mantine-color-red-5)",
+};
+
+const wormholeSymbol: Record<TWormhole, string> = {
+  ALPHA: "α",
+  BETA: "β",
+  GAMMA: "γ",
+  DELTA: "δ",
+  EPSILON: "ε",
 };
 
 type Props = {
@@ -23,19 +31,29 @@ export function Wormhole({ wormhole, size = 60, fontSize = 18 }: Props) {
       <div
         role="img"
         aria-label={label}
+        title={label}
         style={{
           borderRadius: 99,
           height: size,
           width: size,
-          border: `4px solid ${wormholeColor[wormhole]}`,
-          background: lighten(wormholeColor[wormhole], 0.3),
+          border: `2px solid ${swirlColor}`,
+          background: "var(--command-ink)",
+          color: swirlColor,
+          flexShrink: 0,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <Text ff="heading" fw="bold" size={`${fontSize}px`} c="white">
-          {wormhole.slice(0, 1)}
+        <Text
+          component="span"
+          ff="Georgia, serif"
+          fw="bold"
+          fz={Math.min(fontSize + 3, size * 0.75)}
+          lh={1}
+          c="inherit"
+        >
+          {wormholeSymbol[wormhole]}
         </Text>
       </div>
     );
@@ -45,6 +63,7 @@ export function Wormhole({ wormhole, size = 60, fontSize = 18 }: Props) {
     <div
       role="img"
       aria-label={label}
+      title={label}
       style={{
         borderRadius: 99,
         height: size,
@@ -53,6 +72,7 @@ export function Wormhole({ wormhole, size = 60, fontSize = 18 }: Props) {
         alignItems: "center",
         justifyContent: "center",
         position: "relative",
+        flexShrink: 0,
         background: "var(--mantine-color-spaceBlue-9)",
       }}
     >
@@ -62,7 +82,7 @@ export function Wormhole({ wormhole, size = 60, fontSize = 18 }: Props) {
           borderRadius: 99,
           height: size * 0.5,
           width: size * 0.5,
-          background: wormholeColor[wormhole],
+          background: "var(--command-ink)",
         }}
       />
       <svg viewBox="15 25 150 200" style={{ zIndex: 1 }}>

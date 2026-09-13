@@ -1,6 +1,7 @@
 import {
   Accordion,
   Badge,
+  Divider,
   Group,
   Paper,
   SimpleGrid,
@@ -9,6 +10,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import type { ReactNode } from "react";
 import { bagCategoryLabel } from "./BagComponents";
 import { isTwilightsFallBag } from "./rules";
 import type { BagItemCategory } from "./catalog";
@@ -18,10 +20,12 @@ export function BagDraftGuide({
   rules,
   variant,
   phase = "lobby",
+  children,
 }: {
   rules: BagRules;
   variant: BagVariant;
   phase?: BagDraftView["phase"];
+  children: ReactNode;
 }) {
   const hasTiles =
     (rules.draftLimits.BLUETILE ?? 0) + (rules.draftLimits.REDTILE ?? 0) > 0;
@@ -60,7 +64,7 @@ export function BagDraftGuide({
     ]),
   ] as BagItemCategory[];
   const content = (
-    <Stack gap="md">
+    <Stack gap="lg">
       <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="sm">
         {stages.map((stage, index) => (
           <Paper
@@ -72,16 +76,18 @@ export function BagDraftGuide({
             aria-current={index === active ? "step" : undefined}
           >
             <Stack gap="xs">
-              <Group gap="xs">
+              <Group gap="xs" wrap="nowrap" align="flex-start">
                 <Badge
                   color="sky"
                   variant={index === active ? "filled" : "light"}
+                  mt={2}
+                  style={{ flexShrink: 0 }}
                 >
                   {index + 1}
                 </Badge>
-                <Text size="sm" fw={600}>
+                <Title order={3} size="h4">
                   {stage.title}
-                </Text>
+                </Title>
               </Group>
               <Text size="sm">{stage.text}</Text>
             </Stack>
@@ -173,14 +179,20 @@ export function BagDraftGuide({
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>
+      <Divider />
+      {children}
     </Stack>
   );
 
   if (phase !== "lobby") {
     return (
-      <Accordion variant="separated" radius="md">
+      <Accordion variant="separated" radius="md" order={2}>
         <Accordion.Item value="guide">
-          <Accordion.Control>How this draft works</Accordion.Control>
+          <Accordion.Control>
+            <Title component="span" order={2}>
+              How this draft works
+            </Title>
+          </Accordion.Control>
           <Accordion.Panel>{content}</Accordion.Panel>
         </Accordion.Item>
       </Accordion>
@@ -189,10 +201,8 @@ export function BagDraftGuide({
 
   return (
     <Paper withBorder p="lg" radius="md">
-      <Stack gap="md">
-        <Title order={2} size="h3">
-          How this draft works
-        </Title>
+      <Stack gap="lg">
+        <Title order={2}>How this draft works</Title>
         {content}
       </Stack>
     </Paper>

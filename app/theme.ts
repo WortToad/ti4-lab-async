@@ -25,7 +25,7 @@ export const commandTheme = createTheme({
   primaryColor: "imperial",
   primaryShade: 4,
   autoContrast: true,
-  luminanceThreshold: 0.35,
+  luminanceThreshold: 0.2,
   black: "#071321",
   white: "#f4f7fb",
   defaultRadius: "sm",
@@ -34,15 +34,22 @@ export const commandTheme = createTheme({
   respectReducedMotion: true,
   variantColorResolver: (input) => {
     const resolved = defaultVariantColorsResolver(input);
-    // Mantine's dark light-variant uses shade 0 with our primary shade of 4.
-    // Use a readable tint that retains the action's semantic color instead.
+    // Keep semantic labels saturated instead of using Mantine's pale dark-mode tints.
     if (["light", "subtle", "transparent"].includes(input.variant)) {
       const parsed = parseThemeColor({
         color: input.color ?? input.theme.primaryColor,
         theme: input.theme,
       });
       if (parsed.isThemeColor && parsed.shade === undefined) {
-        return { ...resolved, color: `var(--mantine-color-${parsed.color}-3)` };
+        const shade = ["gray", "dark"].includes(parsed.color)
+          ? 3
+          : parsed.color === "imperial"
+            ? 4
+            : 5;
+        return {
+          ...resolved,
+          color: `var(--mantine-color-${parsed.color}-${shade})`,
+        };
       }
     }
     return resolved;
@@ -75,6 +82,30 @@ export const commandTheme = createTheme({
     xxl: "120em",
   },
   colors: {
+    red: [
+      "#fff0f0",
+      "#ffd6d6",
+      "#ffaaaa",
+      "#ff8080",
+      "#ff6060",
+      "#ff4545",
+      "#e52e2e",
+      "#c91d1d",
+      "#a51212",
+      "#7c0b0b",
+    ],
+    green: [
+      "#eafff0",
+      "#c5ffdb",
+      "#94f8ba",
+      "#61ee97",
+      "#38e57d",
+      "#20d368",
+      "#12b653",
+      "#079240",
+      "#047132",
+      "#035226",
+    ],
     dark: [
       "#edf2f7",
       "#d5dfe8",
@@ -124,28 +155,28 @@ export const commandTheme = createTheme({
       "#0c4a6e",
     ],
     blue: [
-      "#ebf7ff",
-      "#d3eaff",
-      "#add9fa",
-      "#82c7ed",
-      "#64b6e0",
-      "#399aca",
-      "#237cac",
-      "#18648d",
-      "#124c6e",
-      "#0b354f",
+      "#ebf6ff",
+      "#cce7ff",
+      "#99d0ff",
+      "#66baff",
+      "#42aaff",
+      "#249dff",
+      "#0874dc",
+      "#075bb5",
+      "#06448c",
+      "#053164",
     ],
     purple: [
-      "#f3efff",
-      "#e0d9fa",
-      "#ccc1ed",
-      "#b6a5e3",
-      "#a491d5",
-      "#8773b8",
-      "#7060a0",
-      "#594781",
-      "#42356a",
-      "#30284e",
+      "#f5efff",
+      "#e8d6ff",
+      "#d4b3ff",
+      "#bd91ff",
+      "#ae7aff",
+      "#a16bff",
+      "#8b3dff",
+      "#7225d9",
+      "#5719ae",
+      "#3e117f",
     ],
     palePurple: [
       "#f3efff",

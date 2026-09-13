@@ -1,7 +1,6 @@
 import { Fragment } from "react";
 import { Text } from "@mantine/core";
-import { SmallNumberHex } from "~/components/Hex/SmallNumberHex";
-import { ResourceIcon } from "~/components/Planet/ResourceIcon";
+import { PlanetValueIcons } from "~/components/Planet/PlanetValueIcons";
 import { Wormhole } from "~/components/features/Wormhole";
 import { TechIcon } from "~/components/icons/TechIcon";
 import type { TechSpecialty, Wormhole as WormholeType } from "~/types";
@@ -9,7 +8,14 @@ import classes from "./BagComponents.module.css";
 
 // Keep the catalog's wording, punctuation and line breaks around each symbol.
 const descriptionSymbol =
-  /\((\d+)\/(\d+)\)|\b((alpha|beta|gamma|delta|epsilon) wormholes?)\b|\b((biotic|cybernetic|propulsion|warfare) technology specialty)\b/gi;
+  /\((\d+)\/(\d+)\)|\b((alpha|beta|gamma|delta|epsilon) wormholes?)\b|\b((biotic|cybernetic|propulsion|warfare) technology specialty)\b|\b(prerequisites?:[ \t]*)([RGBY]+)\b/gi;
+
+const prerequisiteTech: Record<string, TechSpecialty> = {
+  R: "WARFARE",
+  G: "BIOTIC",
+  B: "PROPULSION",
+  Y: "CYBERNETIC",
+};
 
 export function BagItemDescription({
   description,
@@ -34,23 +40,31 @@ export function BagItemDescription({
           wormhole,
           techPhrase,
           tech,
+          prerequisiteLabel,
+          prerequisites,
         ] = match;
 
         return (
           <Fragment key={match.index}>
             {preceding}
-            {resources !== undefined && planetStats ? (
-              <div
-                role="img"
-                aria-label={`${resources} resources, ${influence} influence`}
-                title={`${resources} resources, ${influence} influence`}
-                className={classes.inlineStats}
-              >
-                <div aria-hidden className={classes.inlineSymbols}>
-                  <ResourceIcon value={Number(resources)} size={22} />
-                  <SmallNumberHex value={Number(influence)} size={22} />
-                </div>
-              </div>
+            {prerequisites ? (
+              <>
+                {prerequisiteLabel}
+                <span className={classes.inlineSymbols}>
+                  {[...prerequisites.toUpperCase()].map((code, index) => (
+                    <TechIcon
+                      key={index}
+                      techSpecialty={prerequisiteTech[code]}
+                      size={20}
+                    />
+                  ))}
+                </span>
+              </>
+            ) : resources !== undefined && planetStats ? (
+              <PlanetValueIcons
+                resources={Number(resources)}
+                influence={Number(influence)}
+              />
             ) : wormholePhrase || techPhrase ? (
               <>
                 {wormholePhrase ?? techPhrase}{" "}

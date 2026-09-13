@@ -2,8 +2,7 @@ import { Group, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import { FactionIcon } from "~/components/icons/FactionIcon";
 import { Faction } from "~/types";
 import { factionSystems } from "~/data/systemData";
-import { ResourceIcon } from "~/components/Planet/ResourceIcon";
-import { SmallNumberHex } from "~/components/Hex/SmallNumberHex";
+import { PlanetValueIcons } from "~/components/Planet/PlanetValueIcons";
 import styles from "./NewDraftReferenceCard.module.css";
 import { Surface } from "~/ui";
 import { StartingUnitsTable } from "~/components/StartingUnitsTable";
@@ -56,8 +55,10 @@ export function NewDraftReferenceCard({ faction }: Props) {
             <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xs">
               {homeSystem?.planets.map((planet, idx) => (
                 <Group key={idx} gap="xs" align="center" wrap="nowrap">
-                  <ResourceIcon value={planet.resources} size={20} />
-                  <SmallNumberHex value={planet.influence} size={20} />
+                  <PlanetValueIcons
+                    resources={planet.resources}
+                    influence={planet.influence}
+                  />
                   <Text size="sm" lineClamp={1}>
                     {planet.name}
                   </Text>

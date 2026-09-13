@@ -13,12 +13,13 @@ export function SmallNumberHex({ value, size = 20, color = "#1c7ed6" }: Props) {
   const pointsString = points.map((p) => `${p.x},${p.y}`).join(" ");
 
   return (
-    <div
+    <span
       style={{
         position: "relative",
         width: size,
         height: size,
         display: "inline-block",
+        flexShrink: 0,
       }}
     >
       <svg
@@ -30,6 +31,7 @@ export function SmallNumberHex({ value, size = 20, color = "#1c7ed6" }: Props) {
         <polygon points={pointsString} fill={color} />
       </svg>
       <Text
+        component="span"
         fz="sm"
         fw="bold"
         c="white"
@@ -43,6 +45,6 @@ export function SmallNumberHex({ value, size = 20, color = "#1c7ed6" }: Props) {
       >
         {value}
       </Text>
-    </div>
+    </span>
   );
 }

@@ -67,13 +67,19 @@ export function LobbyPlayerKeyPrompt({
           value={uuid}
           readOnly
           autosize
-          minRows={2}
+          minRows={1}
           autoComplete="off"
           autoCapitalize="none"
           spellCheck={false}
           onFocus={(event) => event.currentTarget.select()}
           styles={{
-            input: { fontFamily: "monospace", overflowWrap: "anywhere" },
+            input: {
+              fontFamily: "monospace",
+              textAlign: "center",
+              lineHeight: 1.5,
+              padding: "12px",
+              overflowWrap: "anywhere",
+            },
           }}
         />
         <Text size="sm" c="dimmed">

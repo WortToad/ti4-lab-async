@@ -9,8 +9,12 @@
   padding-bottom: var(--mantine-spacing-sm);
   margin-top: calc(-1 * var(--mantine-spacing-md));
 
-  @mixin light { background: var(--mantine-color-white); }
-  @mixin dark { background: var(--mantine-color-dark-7); }
+  @mixin light {
+    background: var(--mantine-color-white);
+  }
+  @mixin dark {
+    background: var(--mantine-color-dark-7);
+  }
 }
 
 /* Two-column layout */
@@ -61,8 +65,12 @@
   padding-bottom: var(--mantine-spacing-sm);
   border-bottom: 1px solid;
 
-  @mixin light { border-color: var(--mantine-color-gray-2); }
-  @mixin dark { border-color: var(--mantine-color-dark-4); }
+  @mixin light {
+    border-color: var(--mantine-color-gray-2);
+  }
+  @mixin dark {
+    border-color: var(--mantine-color-dark-4);
+  }
 }
 
 .filterSection:last-child {
@@ -83,8 +91,12 @@
   transition: all 0.15s ease;
   border: 1px solid transparent;
 
-  @mixin dark { background: var(--mantine-color-dark-7); }
-  @mixin light { background: var(--mantine-color-white); }
+  @mixin dark {
+    background: var(--mantine-color-dark-7);
+  }
+  @mixin light {
+    background: var(--mantine-color-white);
+  }
 }
 
 .systemRow:hover {
@@ -104,21 +116,50 @@
 }
 
 .systemRow.inUse {
-  opacity: 0.5;
+  border-style: dashed;
+  border-color: var(--command-border-control);
+}
+
+.systemIdentity {
+  min-width: 76px;
+}
+
+.planetDetails {
+  min-width: 0;
+}
+
+.filterChip:not([data-disabled]) {
+  color: var(--chip-color);
+  border: 1px solid color-mix(in srgb, var(--chip-color) 55%, transparent);
+  background: var(--command-surface);
+  font-weight: 600;
+}
+
+.filterChip:not([data-disabled])[data-checked] {
+  border-color: var(--chip-color);
+  background: color-mix(in srgb, var(--chip-color) 16%, var(--command-ink));
 }
 
 /* Trait dot */
 .traitDot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.traitDot.cultural { background: var(--mantine-color-blue-5); }
-.traitDot.hazardous { background: var(--mantine-color-red-5); }
-.traitDot.industrial { background: var(--mantine-color-green-5); }
-.traitDot.neutral { background: var(--mantine-color-gray-5); }
+.traitDot.cultural {
+  background: var(--mantine-color-blue-5);
+}
+.traitDot.hazardous {
+  background: var(--mantine-color-red-5);
+}
+.traitDot.industrial {
+  background: var(--mantine-color-green-5);
+}
+.traitDot.neutral {
+  background: var(--mantine-color-gray-5);
+}
 
 /* Planet divider */
 .planetDivider {
@@ -126,14 +167,22 @@
   height: 12px;
   margin: 0 2px;
 
-  @mixin dark { background: var(--mantine-color-dark-4); }
-  @mixin light { background: var(--mantine-color-gray-4); }
+  @mixin dark {
+    background: var(--mantine-color-dark-4);
+  }
+  @mixin light {
+    background: var(--mantine-color-gray-4);
+  }
 }
 
 /* Active filters bar - just needs background colors for theming */
 .activeFiltersBar {
   border-radius: var(--mantine-radius-sm);
 
-  @mixin dark { background: var(--mantine-color-dark-6); }
-  @mixin light { background: var(--mantine-color-gray-1); }
+  @mixin dark {
+    background: var(--mantine-color-dark-6);
+  }
+  @mixin light {
+    background: var(--mantine-color-gray-1);
+  }
 }

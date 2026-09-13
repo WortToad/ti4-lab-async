@@ -36,11 +36,22 @@ describe("component description symbols", () => {
     expect(html).toContain('aria-label="Epsilon wormhole"');
   });
 
-  it("preserves unrelated rules and numeric pairs outside planet descriptions", () => {
-    const description = "Roll (1/2) dice.\nPrerequisites: BB. <special rules>";
+  it("renders repeated and mixed prerequisites while preserving surrounding rules", () => {
+    const description =
+      "Roll (1/2) dice.\nPrerequisites: YYRGBB. <special rules>";
     const html = renderDescription(description, false);
-    expect(html).toContain("Roll (1/2) dice.\nPrerequisites: BB.");
-    expect(html).toContain("&lt;special rules&gt;");
-    expect(html).not.toContain("/pa_resources.png");
+    expect(html).toContain("Roll (1/2) dice.\nPrerequisites: ");
+    expect(html).toContain(". &lt;special rules&gt;");
+    expect(html).not.toContain("YYRGBB");
+    expect(
+      [...html.matchAll(/alt="([A-Z]+)"/g)].map((match) => match[1]),
+    ).toEqual([
+      "CYBERNETIC",
+      "CYBERNETIC",
+      "WARFARE",
+      "BIOTIC",
+      "PROPULSION",
+      "PROPULSION",
+    ]);
   });
 });

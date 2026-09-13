@@ -16,7 +16,10 @@ import {
   systemData,
   systemGameSetLabels,
 } from "~/data/systemData";
-import { PlanetStatsPill } from "~/components/Slice/PlanetStatsPill";
+import { PlanetValueIcons } from "~/components/Planet/PlanetValueIcons";
+import { Wormhole } from "~/components/features/Wormhole";
+import { LegendaryIcon } from "~/components/icons/LegendaryIcon";
+import { TradeStationIcon } from "~/components/icons/TradeStationIcon";
 import { FactionId, System, SystemId } from "~/types";
 import { useArrowFocus } from "~/hooks/useArrowFocus";
 import { TechIcon } from "~/components/icons/TechIcon";
@@ -218,12 +221,7 @@ export function PlanetFinderBase({
                       &quot;{searchString}&quot; ×
                     </Badge>
                   )}
-                  <Button
-                    variant="subtle"
-                    size="compact-xs"
-                    color="red"
-                    onClick={clearFilters}
-                  >
+                  <Button variant="default" size="sm" onClick={clearFilters}>
                     Clear All
                   </Button>
                 </>
@@ -256,6 +254,7 @@ export function PlanetFinderBase({
                         size="xs"
                         color={filter.color}
                         variant="light"
+                        classNames={{ label: styles.filterChip }}
                       >
                         {filter.label}
                       </Chip>
@@ -323,7 +322,11 @@ export function PlanetFinderBase({
                   onClick={() => onSystemSelected(system)}
                 >
                   <Group gap="sm" wrap="wrap" style={{ flex: 1 }}>
-                    <Group gap={4} wrap="nowrap">
+                    <Group
+                      gap={4}
+                      wrap="nowrap"
+                      className={styles.systemIdentity}
+                    >
                       <Badge
                         variant="default"
                         size="sm"
@@ -336,7 +339,10 @@ export function PlanetFinderBase({
                         <Text
                           size="xs"
                           c="dimmed"
-                          style={{ width: 28, opacity: 0.6, flexShrink: 0 }}
+                          style={{
+                            whiteSpace: "nowrap",
+                            flexShrink: 0,
+                          }}
                         >
                           {systemGameSetLabels[getSystemGameSet(system.id)!]}
                         </Text>
@@ -346,7 +352,11 @@ export function PlanetFinderBase({
                     {system.planets.map((planet, pIdx) => (
                       <Fragment key={planet.name}>
                         {pIdx > 0 && <span className={styles.planetDivider} />}
-                        <Group gap={6} wrap="nowrap">
+                        <Group
+                          gap={6}
+                          wrap="wrap"
+                          className={styles.planetDetails}
+                        >
                           <span
                             className={`${styles.traitDot} ${
                               planet.trait?.[0]
@@ -354,8 +364,10 @@ export function PlanetFinderBase({
                                 : styles.neutral
                             }`}
                           />
-                          <Text size="sm">{planet.name}</Text>
-                          <PlanetStatsPill
+                          <Text size="sm" fw={600}>
+                            {planet.name}
+                          </Text>
+                          <PlanetValueIcons
                             resources={planet.resources}
                             influence={planet.influence}
                           />
@@ -363,41 +375,18 @@ export function PlanetFinderBase({
                             <TechIcon
                               key={tech}
                               techSpecialty={tech}
-                              size={14}
+                              size={20}
                             />
                           ))}
-                          {planet.legendary && (
-                            <Badge size="xs" color="yellow" variant="light">
-                              ★
-                            </Badge>
-                          )}
-                          {planet.tradeStation && (
-                            <Badge size="xs" color="cyan" variant="light">
-                              Station
-                            </Badge>
-                          )}
+                          {planet.legendary && <LegendaryIcon />}
+                          {planet.tradeStation && <TradeStationIcon />}
                         </Group>
                       </Fragment>
                     ))}
 
-                    {system.wormholes.map((wormhole) => {
-                      const wormholeColor: Record<string, string> = {
-                        ALPHA: "orange",
-                        BETA: "green",
-                        GAMMA: "violet",
-                        DELTA: "blue",
-                      };
-                      return (
-                        <Badge
-                          key={wormhole}
-                          size="xs"
-                          color={wormholeColor[wormhole] ?? "gray"}
-                          variant="light"
-                        >
-                          {wormhole}
-                        </Badge>
-                      );
-                    })}
+                    {system.wormholes.map((wormhole) => (
+                      <Wormhole key={wormhole} wormhole={wormhole} size={28} />
+                    ))}
 
                     {system.anomalies.map((anomaly) => (
                       <Badge

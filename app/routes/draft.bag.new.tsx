@@ -214,9 +214,7 @@ export default function NewBagDraft() {
           <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
             <Paper withBorder p="lg" radius="md">
               <Stack>
-                <Title order={2} size="h3">
-                  Draft format
-                </Title>
+                <Title order={2}>Draft format</Title>
                 <Select
                   label="Variant"
                   data={BAG_VARIANTS.map((entry) => ({
@@ -246,9 +244,7 @@ export default function NewBagDraft() {
             </Paper>
             <Paper withBorder p="lg" radius="md">
               <Stack>
-                <Title order={2} size="h3">
-                  Players
-                </Title>
+                <Title order={2}>Players</Title>
                 <LobbyPlayerCount
                   description="Everyone joins through the same lobby link and sets their own name."
                   min={2}
@@ -281,9 +277,7 @@ export default function NewBagDraft() {
           )}
           <Paper withBorder p="lg" radius="md">
             <Stack>
-              <Title order={2} size="h3">
-                Components
-              </Title>
+              <Title order={2}>Components</Title>
               <Text size="sm" c="dimmed">
                 Base game and Prophecy of Kings components are included.
               </Text>
@@ -340,8 +334,9 @@ export default function NewBagDraft() {
               </SimpleGrid>
             </Stack>
           </Paper>
-          <BagDraftGuide rules={rules} variant={variant} />
-          <BagMapSetup rules={rules} playerCount={players.length} />
+          <BagDraftGuide rules={rules} variant={variant}>
+            <BagMapSetup rules={rules} playerCount={players.length} />
+          </BagDraftGuide>
           <Accordion variant="separated">
             <Accordion.Item value="limits">
               <Accordion.Control>
