@@ -5,7 +5,6 @@ import { PlanetStats } from "./PlanetStats";
 import { TechIcon } from "../icons/TechIcon";
 import { LegendaryIcon } from "../icons/LegendaryIcon";
 import { useSafeOutletContext } from "~/useSafeOutletContext";
-import { TradeStationIcon } from "~/components/icons/TradeStationIcon";
 import { TradeStation } from "../features/TradeStation";
 import { LegendaryPopover } from "./LegendaryPopover";
 
@@ -113,13 +112,24 @@ export function Planet({
       )}
       {planet.legendary && (
         <Box pos="absolute" bottom={-4} left={-14}>
-          <LegendaryIcon />
+          <LegendaryIcon showHelp={disablePopover} />
         </Box>
       )}
 
       {techSpecialty?.map((tech, index) => (
         <Box key={index} pos="absolute" top={-6} right={-2 + 20 * index}>
-          <TechIcon techSpecialty={tech} />
+          <TechIcon
+            techSpecialty={tech}
+            specialty
+            showHelp={
+              disablePopover ||
+              !(
+                planet.legendary ||
+                planet.legendaryTitle ||
+                planet.legendaryDescription
+              )
+            }
+          />
         </Box>
       ))}
     </Flex>

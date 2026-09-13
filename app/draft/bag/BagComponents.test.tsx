@@ -64,10 +64,10 @@ describe("bag component presentation", () => {
       const units = html.match(/<section\b[\s\S]*?<\/section>/g)!;
       expect(units).toHaveLength(2);
       expect(units[0]).toContain('aria-label="Flagship:');
-      expect(units[0]).toContain("/units/flagship.png");
+      expect(units[0]).toContain(`/units/kings/${color}_flagship.png`);
       expect(units[0]).toContain("Capacity");
       expect(units[1]).toContain('aria-label="Mech:');
-      expect(units[1]).toContain("/units/mech.png");
+      expect(units[1]).toContain(`/units/kings/${color}_mech.png`);
       expect(units[1]).not.toContain("Capacity");
       for (const unit of units) {
         expect(unit).toContain("Combat");

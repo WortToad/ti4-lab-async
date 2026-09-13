@@ -31,7 +31,7 @@ export function SystemFeatures({ systems }: { systems: System[] }) {
   return (
     <Group gap="sm" align="center">
       {specialties.map((tech, idx) => (
-        <TechIcon key={idx} techSpecialty={tech} />
+        <TechIcon key={idx} techSpecialty={tech} specialty />
       ))}
       {legendarySystems.map((s) => (
         <LegendaryIcon key={s.id} />

@@ -2,18 +2,20 @@ import { Badge, Box, Group, SimpleGrid, Stack, Text } from "@mantine/core";
 import { IconRocket } from "@tabler/icons-react";
 import { appPath } from "~/utils/appUrl";
 import type { BagDraftItem } from "./definitions";
-import { unitIconPath, unitLabel } from "./visuals";
+import { unitIconPath, unitLabel, type KingUnitColor } from "./visuals";
 import { BagItemDescription } from "./BagItemDescription";
 import classes from "./BagComponents.module.css";
 
 export function UnitSymbol({
   unit,
   size = 38,
+  color,
 }: {
   unit: string;
   size?: number;
+  color?: KingUnitColor;
 }) {
-  const path = unitIconPath(unit);
+  const path = unitIconPath(unit, color);
   return path ? (
     <img
       src={appPath(path)}
@@ -33,10 +35,12 @@ export function UnitDetails({
   unit,
   name,
   showText = true,
+  color,
 }: {
   unit: NonNullable<BagDraftItem["unit"]>;
   name?: string;
   showText?: boolean;
+  color?: KingUnitColor;
 }) {
   return (
     <Stack
@@ -47,7 +51,7 @@ export function UnitDetails({
       gap="sm"
     >
       <Group gap="sm" wrap="nowrap">
-        <UnitSymbol unit={unit.type} />
+        <UnitSymbol unit={unit.type} color={color} />
         <Stack gap={2} miw={0}>
           <Text
             size={name ? "xs" : "sm"}

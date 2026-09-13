@@ -68,6 +68,7 @@ export function MahactKingUnits({
         <Paper key={unit.type} withBorder radius="sm" p="sm">
           <UnitDetails
             name={unit.name}
+            color={reference.unitColor}
             unit={{
               type: unit.type.toLowerCase(),
               stats: unit.stats,

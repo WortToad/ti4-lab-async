@@ -1,5 +1,5 @@
 import { appPath } from "~/utils/appUrl";
-import { Box, Image, Text } from "@mantine/core";
+import { Box, Text } from "@mantine/core";
 
 type Props = {
   value: number;
@@ -17,12 +17,24 @@ export function ResourceIcon({ value, size = 20 }: Props) {
       aria-label={`${value} resources`}
       style={{ display: "inline-block", flexShrink: 0 }}
     >
-      <Image src={appPath("/pa_resources.png")} w={size} h={size} alt="Resources" />
+      <Box
+        component="span"
+        w={size}
+        h={size}
+        bg="var(--command-resources, #f1d22e)"
+        style={{
+          display: "block",
+          maskImage: `url("${appPath("/symbols/resources.png")}")`,
+          maskSize: "contain",
+          maskRepeat: "no-repeat",
+          maskPosition: "center",
+        }}
+      />
       <Text
         component="span"
         fz="sm"
         fw="bold"
-        c="white"
+        c="#071321"
         style={{
           position: "absolute",
           left: "50%",

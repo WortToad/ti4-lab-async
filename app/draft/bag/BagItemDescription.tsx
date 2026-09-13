@@ -68,7 +68,7 @@ export function BagItemDescription({
             ) : wormholePhrase || techPhrase ? (
               <>
                 {wormholePhrase ?? techPhrase}{" "}
-                <div aria-hidden className={classes.inlineSymbols}>
+                <span className={classes.inlineSymbols}>
                   {wormhole ? (
                     <Wormhole
                       wormhole={wormhole.toUpperCase() as WormholeType}
@@ -79,9 +79,10 @@ export function BagItemDescription({
                     <TechIcon
                       techSpecialty={tech.toUpperCase() as TechSpecialty}
                       size={18}
+                      specialty
                     />
                   )}
-                </div>
+                </span>
               </>
             ) : (
               match[0]

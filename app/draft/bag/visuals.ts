@@ -30,6 +30,18 @@ export function unitLabel(unit: string) {
   return unitLabels[unit] ?? unit;
 }
 
-export function unitIconPath(unit: string) {
+export type KingUnitColor =
+  | "red"
+  | "yellow"
+  | "blue"
+  | "orange"
+  | "purple"
+  | "pink"
+  | "black"
+  | "green";
+
+export function unitIconPath(unit: string, color?: KingUnitColor) {
+  if (color && (unit === "flagship" || unit === "mech"))
+    return `/units/kings/${color}_${unit}.png`;
   return Object.hasOwn(unitLabels, unit) ? `/units/${unit}.png` : undefined;
 }

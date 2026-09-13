@@ -1,5 +1,6 @@
 import { ResourceIcon } from "./ResourceIcon";
 import { SmallNumberHex } from "~/components/Hex/SmallNumberHex";
+import { SymbolHelp } from "~/components/SymbolHelp";
 
 /** Shared planet values for system search results and draft descriptions. */
 export function PlanetValueIcons({
@@ -14,11 +15,9 @@ export function PlanetValueIcons({
   const label = `${resources} resources, ${influence} influence`;
 
   return (
-    <span
-      role="img"
-      aria-label={label}
-      title={label}
-      style={{ display: "inline-flex", flexShrink: 0, verticalAlign: "middle" }}
+    <SymbolHelp
+      label={label}
+      description={`${label}. Yellow: resources. Blue: influence.`}
     >
       <span
         aria-hidden
@@ -27,6 +26,6 @@ export function PlanetValueIcons({
         <ResourceIcon value={resources} size={size} />
         <SmallNumberHex value={influence} size={size} />
       </span>
-    </span>
+    </SymbolHelp>
   );
 }

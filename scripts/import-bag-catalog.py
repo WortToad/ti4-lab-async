@@ -378,6 +378,10 @@ output = {"items": sorted(catalog.values(), key=lambda value: value["id"]), "fac
 for unit in ["carrier", "cruiser", "destroyer", "dreadnought", "fighter", "flagship", "infantry", "mech", "pds", "spacedock", "warsun", "monument"]:
     filename = "Monument.png" if unit == "monument" else f"{unit}.png"
     copy_asset(resources / "emojis/units" / filename, f"units/{unit}.png")
+for color, alias in {"red": "red", "yellow": "ylw", "blue": "blu", "orange": "org", "purple": "ppl", "pink": "pnk", "black": "blk", "green": "grn"}.items():
+    for unit, unit_alias in {"flagship": "fs", "mech": "mf"}.items():
+        copy_asset(resources / "units" / f"{alias}_{unit_alias}.png", f"units/kings/{color}_{unit}.png")
+copy_asset(resources / "general/Ressourcesbg.png", "symbols/resources.png")
 destination.parent.mkdir(parents=True, exist_ok=True)
 destination.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n")
 print(f"Imported {len(catalog)} components from {len(legal_factions)} factions to {destination}")

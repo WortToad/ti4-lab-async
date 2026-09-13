@@ -21,6 +21,7 @@ import {
 import { FactionIcon } from "~/components/icons/FactionIcon";
 import { TechIcon } from "~/components/icons/TechIcon";
 import { SystemTileCard } from "~/components/SystemTileCard";
+import { TileLegend } from "~/components/TileLegend";
 import { factions } from "~/data/factionData";
 import { mahactKingReferences } from "~/data/mahactKingReferences";
 import {
@@ -168,47 +169,49 @@ export function BagItemCard({
       data-disabled={disabled || undefined}
       style={king ? { borderTop: `3px solid ${king.accent}` } : undefined}
     >
-      <Group gap="sm" wrap="nowrap" align="center" className={classes.header}>
+      <Box className={classes.header}>
         <Box className={classes.icon}>
           <ComponentIcon item={item} />
         </Box>
-        <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
-          <Group gap={6}>
-            <Text size="xs" c="dimmed" tt="uppercase" fw={600} lts="0.04em">
-              {bagCategoryLabel(item.category, variant)}
-            </Text>
-            {item.technologyTypes?.map((type) =>
-              techTypes[type.toLowerCase()] ? (
-                <TechIcon
-                  key={type}
-                  techSpecialty={techTypes[type.toLowerCase()]}
-                  size={16}
-                />
-              ) : null,
-            )}
-          </Group>
-          {onSelect ? (
-            <Checkbox
-              color="sky"
-              checked={selected ?? false}
-              disabled={disabled}
-              onChange={(event) => onSelect(event.currentTarget.checked)}
-              label={item.name}
-              classNames={{ label: classes.name }}
-              styles={{
-                label: { cursor: disabled ? "not-allowed" : "pointer" },
-              }}
-            />
-          ) : (
-            <Text className={classes.name}>{item.name}</Text>
+        <Group gap={6} className={classes.category}>
+          <Text size="xs" c="dimmed" tt="uppercase" fw={600} lts="0.04em">
+            {bagCategoryLabel(item.category, variant)}
+          </Text>
+          {item.technologyTypes?.map((type) =>
+            techTypes[type.toLowerCase()] ? (
+              <TechIcon
+                key={type}
+                techSpecialty={techTypes[type.toLowerCase()]}
+                size={16}
+              />
+            ) : null,
           )}
-          {item.factionName && item.factionName !== item.name && (
-            <Text size="xs" c="dimmed">
-              {item.factionName}
-            </Text>
-          )}
-        </Stack>
-      </Group>
+        </Group>
+        {onSelect ? (
+          <Checkbox
+            color="sky"
+            checked={selected ?? false}
+            disabled={disabled}
+            onChange={(event) => onSelect(event.currentTarget.checked)}
+            label={item.name}
+            classNames={{ label: classes.name }}
+            styles={{
+              body: { alignItems: "center" },
+              label: { cursor: disabled ? "not-allowed" : "pointer" },
+            }}
+            className={classes.selection}
+          />
+        ) : (
+          <Text className={`${classes.name} ${classes.selection}`}>
+            {item.name}
+          </Text>
+        )}
+        {item.factionName && item.factionName !== item.name && (
+          <Text size="xs" c="dimmed" className={classes.factionName}>
+            {item.factionName}
+          </Text>
+        )}
+      </Box>
       <Stack gap="sm" p="md" className={classes.body}>
         {item.systemId && (
           <SystemTileCard
@@ -271,21 +274,24 @@ export function BagItemCard({
         <Text size="xs" c="dimmed">
           {sourceNames[item.source] ?? item.source.replaceAll("_", " ")}
         </Text>
-        {(imagePath || king) && (
-          <Button
-            size="compact-xs"
-            variant="subtle"
-            color="gray"
-            leftSection={<IconEye size={14} />}
-            onClick={open}
-          >
-            {king
-              ? "King reference"
-              : item.systemId
-                ? "Original tile"
-                : "Original card"}
-          </Button>
-        )}
+        <Group gap={4}>
+          {item.systemId && <TileLegend />}
+          {(imagePath || king) && (
+            <Button
+              size="compact-xs"
+              variant="subtle"
+              color="gray"
+              leftSection={<IconEye size={14} />}
+              onClick={open}
+            >
+              {king
+                ? "King reference"
+                : item.systemId
+                  ? "Original tile"
+                  : "Original card"}
+            </Button>
+          )}
+        </Group>
       </Group>
       <Modal
         opened={opened}

@@ -1,9 +1,10 @@
-import { Group, Stack, Text, Tooltip } from "@mantine/core";
+import { Group, Stack, Text } from "@mantine/core";
 import { IconInfoCircleFilled } from "@tabler/icons-react";
 import { PlanetStatsPill } from "~/components/Slice/PlanetStatsPill";
 import { SystemFeatures } from "~/components/Slice/SliceFeatures";
 import { calculateSliceValue } from "~/stats";
 import type { System } from "~/types";
+import { SymbolHelp } from "~/components/SymbolHelp";
 
 /** Tile values use the same scoring as slices, before a map position is known. */
 export function SystemTileStats({ system }: { system: System }) {
@@ -13,11 +14,9 @@ export function SystemTileStats({ system }: { system: System }) {
 
   return (
     <Stack gap={6} align="center" w="100%" mt={4}>
-      <Tooltip
-        label="System value uses standard slice scoring, before any shared-position or path-to-Mecatol adjustments."
-        multiline
-        w={250}
-        withArrow
+      <SymbolHelp
+        label={`System value ${value}`}
+        description="System value uses standard slice scoring, before any shared-position or path-to-Mecatol adjustments."
       >
         <Group gap={5} aria-label={`System value ${value}`}>
           <Text size="xs" c="dimmed" fw={600} tt="uppercase">
@@ -28,12 +27,10 @@ export function SystemTileStats({ system }: { system: System }) {
           </Text>
           <IconInfoCircleFilled size={14} color="var(--mantine-color-dimmed)" />
         </Group>
-      </Tooltip>
-      <Tooltip
-        label="Optimal spend: resources / influence / flex. Flex can be spent as either resources or influence."
-        multiline
-        w={250}
-        withArrow
+      </SymbolHelp>
+      <SymbolHelp
+        label={`Optimal spend: ${optimal.resources} resources, ${optimal.influence} influence, ${optimal.flex} flex; ${total} total`}
+        description="Optimal spend: resources / influence / flex. Flex can be spent as either resources or influence."
       >
         <Group
           gap={4}
@@ -48,7 +45,7 @@ export function SystemTileStats({ system }: { system: System }) {
             ({total})
           </Text>
         </Group>
-      </Tooltip>
+      </SymbolHelp>
       <SystemFeatures systems={[system]} />
     </Stack>
   );

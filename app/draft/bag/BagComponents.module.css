@@ -18,11 +18,18 @@
 }
 
 .header {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--mantine-spacing-sm);
+  row-gap: 4px;
   padding: var(--mantine-spacing-md);
   border-bottom: 1px solid var(--mantine-color-default-border);
 }
 
 .icon {
+  grid-column: 1;
+  grid-row: 2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -30,6 +37,21 @@
   min-height: 42px;
   flex-shrink: 0;
   color: var(--command-info);
+}
+
+.category {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.selection {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.factionName {
+  grid-column: 2;
+  grid-row: 3;
 }
 
 .name {

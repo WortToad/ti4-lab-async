@@ -1,4 +1,5 @@
 import { FactionId } from "~/types";
+import type { KingUnitColor } from "~/draft/bag/visuals";
 
 export type MahactKingUnitReference = {
   type: "Flagship" | "Mech";
@@ -10,6 +11,7 @@ export type MahactKingUnitReference = {
 
 export type MahactKingReference = {
   accent: string;
+  unitColor: KingUnitColor;
   commodities: number;
   units: [MahactKingUnitReference, MahactKingUnitReference];
 };
@@ -18,6 +20,7 @@ export const mahactKingReferences: Partial<
   Record<FactionId, MahactKingReference>
 > = {
   redKing: {
+    unitColor: "red",
     accent: "#c92f32",
     commodities: 2,
     units: [
@@ -48,6 +51,7 @@ export const mahactKingReferences: Partial<
     ],
   },
   yellowKing: {
+    unitColor: "yellow",
     accent: "#e5b72f",
     commodities: 6,
     units: [
@@ -78,6 +82,7 @@ export const mahactKingReferences: Partial<
     ],
   },
   blueKing: {
+    unitColor: "blue",
     accent: "#228be6",
     commodities: 3,
     units: [
@@ -108,6 +113,7 @@ export const mahactKingReferences: Partial<
     ],
   },
   orangeKing: {
+    unitColor: "orange",
     accent: "#f08c2e",
     commodities: 4,
     units: [
@@ -138,6 +144,7 @@ export const mahactKingReferences: Partial<
     ],
   },
   purpleKing: {
+    unitColor: "purple",
     accent: "#7950c8",
     commodities: 4,
     units: [
@@ -168,6 +175,7 @@ export const mahactKingReferences: Partial<
     ],
   },
   pinkKing: {
+    unitColor: "pink",
     accent: "#d6338c",
     commodities: 3,
     units: [
@@ -198,6 +206,7 @@ export const mahactKingReferences: Partial<
     ],
   },
   blackKing: {
+    unitColor: "black",
     accent: "#5c5f66",
     commodities: 2,
     units: [
@@ -228,6 +237,7 @@ export const mahactKingReferences: Partial<
     ],
   },
   greenKing: {
+    unitColor: "green",
     accent: "#2f9e44",
     commodities: 3,
     units: [

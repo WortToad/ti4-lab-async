@@ -20,7 +20,7 @@ describe("component description symbols", () => {
     expect(html).toContain('aria-label="1 resources, 2 influence"');
     expect(html).toContain('aria-label="2 resources, 0 influence"');
     expect(html).toContain('aria-label="3 resources, 1 influence"');
-    expect(html).toContain("/pa_resources.png");
+    expect(html).toContain("/symbols/resources.png");
     expect(html).not.toContain("(1/2)");
     expect(html).toContain("\n");
   });
@@ -29,7 +29,7 @@ describe("component description symbols", () => {
     const html = renderDescription(
       "Beta wormhole\nPropulsion technology specialty; Epsilon wormhole",
     );
-    expect(html).toMatch(/Beta wormhole <div[^>]*aria-hidden="true"/);
+    expect(html).toMatch(/Beta wormhole <span[^>]*>/);
     expect(html).toContain('aria-label="Beta wormhole"');
     expect(html).toContain("Propulsion technology specialty ");
     expect(html).toContain("/propulsion.webp");

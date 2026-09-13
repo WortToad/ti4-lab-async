@@ -1,5 +1,6 @@
 import { Text } from "@mantine/core";
 import { Wormhole as TWormhole } from "~/types";
+import { SymbolHelp } from "~/components/SymbolHelp";
 
 const wormholeColor: Record<TWormhole, string> = {
   ALPHA: "var(--mantine-color-orange-5)",
@@ -21,9 +22,19 @@ type Props = {
   wormhole: TWormhole;
   size?: number;
   fontSize?: number;
+  showHelp?: boolean;
 };
 
-export function Wormhole({ wormhole, size = 60, fontSize = 18 }: Props) {
+export function Wormhole({ showHelp = true, ...props }: Props) {
+  const label = `${props.wormhole[0]}${props.wormhole.slice(1).toLowerCase()} wormhole`;
+  return (
+    <SymbolHelp label={label} disabled={!showHelp}>
+      <WormholeSymbol {...props} />
+    </SymbolHelp>
+  );
+}
+
+function WormholeSymbol({ wormhole, size = 60, fontSize = 18 }: Props) {
   const swirlColor = wormholeColor[wormhole];
   const label = `${wormhole[0]}${wormhole.slice(1).toLowerCase()} wormhole`;
   if (size < 30) {
@@ -31,7 +42,6 @@ export function Wormhole({ wormhole, size = 60, fontSize = 18 }: Props) {
       <div
         role="img"
         aria-label={label}
-        title={label}
         style={{
           borderRadius: 99,
           height: size,
@@ -63,7 +73,6 @@ export function Wormhole({ wormhole, size = 60, fontSize = 18 }: Props) {
     <div
       role="img"
       aria-label={label}
-      title={label}
       style={{
         borderRadius: 99,
         height: size,

@@ -25,7 +25,9 @@ describe("draft system descriptions", () => {
     expect(planets).toContain('alt="WARFARE"');
     expect(planets).toContain('alt="Legendary"');
     expect(planets).toContain("— Aurex Mechanica: You may exhaust this card");
-    expect(planets).not.toContain("technology specialty");
+    expect(planets.replace(/<[^>]+>/g, "")).not.toContain(
+      "technology specialty",
+    );
     expect(planets).not.toContain("Asteroid field");
     expect(html.slice(html.indexOf("</ul>"))).toContain("Asteroid field");
   });
@@ -83,6 +85,6 @@ describe("draft system descriptions", () => {
     expect(html).toContain(
       "— Special ability: Gain 1 token; then draw a card.",
     );
-    expect(html).not.toContain("technology specialty");
+    expect(html.replace(/<[^>]+>/g, "")).not.toContain("technology specialty");
   });
 });
