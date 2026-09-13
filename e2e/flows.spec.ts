@@ -240,15 +240,20 @@ for (const mode of ["base", "texas", "bag", "raw", "mantis"] as const) {
       await expect(
         page.getByRole("button", { name: "Manage lobby", exact: true }),
       ).toHaveCount(0);
+      const adminControls = page.getByRole("button", {
+        name: "Admin controls",
+        exact: true,
+      });
+      await expect(adminControls).toBeVisible();
+      await expect(adminControls).toHaveAttribute("aria-expanded", "false");
       await expect(
-        page.getByRole("heading", { name: "Admin controls", exact: true }),
-      ).toBeVisible();
-      await expect(
-        recovered.getByRole("heading", { name: "Admin controls", exact: true }),
+        recovered.getByRole("button", { name: "Admin controls", exact: true }),
       ).toHaveCount(0);
       await expect(
         recovered.getByRole("button", { name: "Pause draft", exact: true }),
       ).toHaveCount(0);
+      await adminControls.click();
+      await expect(adminControls).toHaveAttribute("aria-expanded", "true");
       await page
         .getByRole("button", { name: "Pause draft", exact: true })
         .click();
@@ -263,6 +268,11 @@ for (const mode of ["base", "texas", "bag", "raw", "mantis"] as const) {
       await expect(
         page.getByRole("button", { name: "Pause draft", exact: true }),
       ).toBeVisible();
+      await adminControls.click();
+      await expect(adminControls).toHaveAttribute("aria-expanded", "false");
+      await expect(
+        page.getByRole("button", { name: "Pause draft", exact: true }),
+      ).toBeHidden();
     } finally {
       await Promise.all(contexts.map((context) => context.close()));
     }

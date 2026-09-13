@@ -559,347 +559,375 @@ export function LobbyPanel({
                     </Button>
                   </div>
                 )}
-                <Paper
-                  component="section"
-                  withBorder
-                  p="md"
-                  radius="md"
+                <Accordion
+                  variant="contained"
                   className="command-admin-controls"
                 >
-                  <Stack gap="md">
-                    <Group gap="sm">
-                      <IconShield size={24} aria-hidden="true" />
-                      <Title order={3} size="h4">
-                        Admin controls
-                      </Title>
-                    </Group>
-                    <Text size="sm">
-                      Manage the lobby and repair mistakes here. These controls
-                      do not reveal private hands or unrevealed picks.
-                      {ownPlayerId === undefined &&
-                        " Join above if you are also playing."}
-                    </Text>
-                    {lobby.started && (
-                      <Stack gap="md" className="command-admin-section">
-                        <Title
-                          order={3}
-                          className="command-admin-section-title"
-                        >
-                          Draft controls
-                        </Title>
-                        <Group>
-                          <Button
-                            variant={lobby.paused ? "filled" : "outline"}
-                            color={lobby.paused ? "imperial" : "orange.3"}
-                            leftSection={
-                              lobby.paused ? (
-                                <IconPlayerPlay size={20} aria-hidden="true" />
-                              ) : (
-                                <IconPlayerPause size={20} aria-hidden="true" />
-                              )
-                            }
-                            disabled={busy || (lobby.paused && !allJoined)}
-                            onClick={() =>
-                              onOperation({
-                                type: lobby.paused ? "resume" : "pause",
-                              })
-                            }
-                          >
-                            {lobby.paused ? "Resume draft" : "Pause draft"}
-                          </Button>
-                          <Button
-                            variant="default"
-                            leftSection={
-                              <IconDeviceFloppy size={20} aria-hidden="true" />
-                            }
-                            disabled={busy}
-                            onClick={() => onOperation({ type: "checkpoint" })}
-                          >
-                            Save checkpoint
-                          </Button>
-                          <Button
-                            color="orange.3"
-                            leftSection={
-                              <IconArrowBackUp size={20} aria-hidden="true" />
-                            }
-                            variant="outline"
-                            disabled={busy || !lobby.checkpoints?.length}
-                            onClick={() =>
-                              confirm(
-                                "Undo the latest action?",
-                                "The draft returns to the state before its most recent action. Let players know so they can make their picks again.",
-                                { type: "undo" },
-                              )
-                            }
-                          >
-                            Undo latest action
-                          </Button>
-                        </Group>
-                        <Text size="sm" c="dimmed">
-                          Checkpoints are also saved during play. Restore an
-                          earlier point to repeat a turn or round. Picks already
-                          seen by players cannot be made secret again.
+                  <Accordion.Item value="admin">
+                    <Accordion.Control
+                      icon={<IconShield size={24} aria-hidden="true" />}
+                    >
+                      Admin controls
+                    </Accordion.Control>
+                    <Accordion.Panel>
+                      <Stack gap="md">
+                        <Text size="sm">
+                          Manage the lobby and repair mistakes here. These
+                          controls do not reveal private hands or unrevealed
+                          picks.
+                          {ownPlayerId === undefined &&
+                            " Join above if you are also playing."}
                         </Text>
-                        <Group align="end">
-                          <Select
-                            label="Saved checkpoint"
-                            placeholder="Choose a previous state"
-                            data={(lobby.checkpoints ?? []).map((c) => ({
-                              value: c.id,
-                              label: `${c.label} · ${c.createdAt}`,
-                            }))}
-                            value={checkpointId}
-                            onChange={setCheckpointId}
-                            searchable
-                            style={{ flex: "1 1 240px" }}
-                          />
-                          <Button
-                            variant="outline"
-                            color="orange.3"
-                            leftSection={
-                              <IconRestore size={20} aria-hidden="true" />
-                            }
-                            disabled={busy || !checkpointId}
-                            onClick={() =>
-                              checkpointId &&
-                              confirm(
-                                "Restore this checkpoint?",
-                                "The current draft will be replaced and paused for review. A recovery checkpoint is kept before the change.",
-                                { type: "restore", checkpointId },
-                              )
-                            }
+                        {lobby.started && (
+                          <Stack gap="md" className="command-admin-section">
+                            <Title
+                              order={3}
+                              className="command-admin-section-title"
+                            >
+                              Draft controls
+                            </Title>
+                            <Group>
+                              <Button
+                                variant={lobby.paused ? "filled" : "outline"}
+                                color={lobby.paused ? "imperial" : "orange.3"}
+                                leftSection={
+                                  lobby.paused ? (
+                                    <IconPlayerPlay
+                                      size={20}
+                                      aria-hidden="true"
+                                    />
+                                  ) : (
+                                    <IconPlayerPause
+                                      size={20}
+                                      aria-hidden="true"
+                                    />
+                                  )
+                                }
+                                disabled={busy || (lobby.paused && !allJoined)}
+                                onClick={() =>
+                                  onOperation({
+                                    type: lobby.paused ? "resume" : "pause",
+                                  })
+                                }
+                              >
+                                {lobby.paused ? "Resume draft" : "Pause draft"}
+                              </Button>
+                              <Button
+                                variant="default"
+                                leftSection={
+                                  <IconDeviceFloppy
+                                    size={20}
+                                    aria-hidden="true"
+                                  />
+                                }
+                                disabled={busy}
+                                onClick={() =>
+                                  onOperation({ type: "checkpoint" })
+                                }
+                              >
+                                Save checkpoint
+                              </Button>
+                              <Button
+                                color="orange.3"
+                                leftSection={
+                                  <IconArrowBackUp
+                                    size={20}
+                                    aria-hidden="true"
+                                  />
+                                }
+                                variant="outline"
+                                disabled={busy || !lobby.checkpoints?.length}
+                                onClick={() =>
+                                  confirm(
+                                    "Undo the latest action?",
+                                    "The draft returns to the state before its most recent action. Let players know so they can make their picks again.",
+                                    { type: "undo" },
+                                  )
+                                }
+                              >
+                                Undo latest action
+                              </Button>
+                            </Group>
+                            <Text size="sm" c="dimmed">
+                              Checkpoints are also saved during play. Restore an
+                              earlier point to repeat a turn or round. Picks
+                              already seen by players cannot be made secret
+                              again.
+                            </Text>
+                            <Group align="end">
+                              <Select
+                                label="Saved checkpoint"
+                                placeholder="Choose a previous state"
+                                data={(lobby.checkpoints ?? []).map((c) => ({
+                                  value: c.id,
+                                  label: `${c.label} · ${c.createdAt}`,
+                                }))}
+                                value={checkpointId}
+                                onChange={setCheckpointId}
+                                searchable
+                                style={{ flex: "1 1 240px" }}
+                              />
+                              <Button
+                                variant="outline"
+                                color="orange.3"
+                                leftSection={
+                                  <IconRestore size={20} aria-hidden="true" />
+                                }
+                                disabled={busy || !checkpointId}
+                                onClick={() =>
+                                  checkpointId &&
+                                  confirm(
+                                    "Restore this checkpoint?",
+                                    "The current draft will be replaced and paused for review. A recovery checkpoint is kept before the change.",
+                                    { type: "restore", checkpointId },
+                                  )
+                                }
+                              >
+                                Restore checkpoint
+                              </Button>
+                            </Group>
+                          </Stack>
+                        )}
+                        <Stack gap="md" className="command-admin-section">
+                          <Title
+                            order={3}
+                            className="command-admin-section-title"
                           >
-                            Restore checkpoint
-                          </Button>
-                        </Group>
-                      </Stack>
-                    )}
-                    <Stack gap="md" className="command-admin-section">
-                      <Title order={3} className="command-admin-section-title">
-                        Players & recovery
-                      </Title>
-                      <Text size="sm" c="dimmed">
-                        Give each player only their own recovery code. Replacing
-                        a code invalidates their old one; they will need the
-                        replacement to rejoin.
-                      </Text>
-                      {lobby.slots
-                        .filter((s) => s.claimed)
-                        .map((s) => (
-                          <Paper key={s.id} withBorder p="sm">
-                            <Stack gap="xs">
-                              <Text fw={600}>{s.name}</Text>
-                              {s.uuid && (
-                                <Group gap="xs">
-                                  <Text
-                                    size="sm"
-                                    style={{
-                                      overflowWrap: "anywhere",
-                                      fontFamily: "monospace",
-                                      flex: "1 1 240px",
-                                    }}
-                                  >
-                                    {s.uuid}
-                                  </Text>
-                                  <CopyButton value={s.uuid}>
-                                    {({ copied, copy }) => (
-                                      <Button
+                            Players & recovery
+                          </Title>
+                          <Text size="sm" c="dimmed">
+                            Give each player only their own recovery code.
+                            Replacing a code invalidates their old one; they
+                            will need the replacement to rejoin.
+                          </Text>
+                          {lobby.slots
+                            .filter((s) => s.claimed)
+                            .map((s) => (
+                              <Paper key={s.id} withBorder p="sm">
+                                <Stack gap="xs">
+                                  <Text fw={600}>{s.name}</Text>
+                                  {s.uuid && (
+                                    <Group gap="xs">
+                                      <Text
                                         size="sm"
-                                        variant="default"
+                                        style={{
+                                          overflowWrap: "anywhere",
+                                          fontFamily: "monospace",
+                                          flex: "1 1 240px",
+                                        }}
+                                      >
+                                        {s.uuid}
+                                      </Text>
+                                      <CopyButton value={s.uuid}>
+                                        {({ copied, copy }) => (
+                                          <Button
+                                            size="sm"
+                                            variant="default"
+                                            leftSection={
+                                              <IconKey
+                                                size={20}
+                                                aria-hidden="true"
+                                              />
+                                            }
+                                            onClick={copy}
+                                          >
+                                            {copied
+                                              ? "Copied"
+                                              : "Copy recovery code"}
+                                          </Button>
+                                        )}
+                                      </CopyButton>
+                                    </Group>
+                                  )}
+                                  <Group gap="xs">
+                                    <Button
+                                      variant="outline"
+                                      color="orange.3"
+                                      leftSection={
+                                        <IconKey size={20} aria-hidden="true" />
+                                      }
+                                      size="sm"
+                                      disabled={busy}
+                                      onClick={() =>
+                                        confirm(
+                                          "Replace player recovery code?",
+                                          `${s.name} will need their new recovery code to rejoin. Their picks are preserved.`,
+                                          { type: "rotate", playerId: s.id },
+                                        )
+                                      }
+                                    >
+                                      Replace recovery code
+                                    </Button>
+                                    {
+                                      <Button
+                                        variant="outline"
+                                        color="red.3"
                                         leftSection={
-                                          <IconKey
+                                          <IconUserMinus
                                             size={20}
                                             aria-hidden="true"
                                           />
                                         }
-                                        onClick={copy}
+                                        size="sm"
+                                        disabled={busy}
+                                        onClick={() =>
+                                          confirm(
+                                            "Replace this player?",
+                                            `${s.name}'s recovery code will stop working and another player can join in their place. Their picks are preserved. An active draft pauses until the replacement is ready.`,
+                                            { type: "release", playerId: s.id },
+                                          )
+                                        }
                                       >
-                                        {copied
-                                          ? "Copied"
-                                          : "Copy recovery code"}
+                                        Replace player
                                       </Button>
-                                    )}
-                                  </CopyButton>
-                                </Group>
-                              )}
-                              <Group gap="xs">
-                                <Button
-                                  variant="outline"
-                                  color="orange.3"
-                                  leftSection={
-                                    <IconKey size={20} aria-hidden="true" />
-                                  }
-                                  size="sm"
-                                  disabled={busy}
-                                  onClick={() =>
-                                    confirm(
-                                      "Replace player recovery code?",
-                                      `${s.name} will need their new recovery code to rejoin. Their picks are preserved.`,
-                                      { type: "rotate", playerId: s.id },
-                                    )
-                                  }
-                                >
-                                  Replace recovery code
-                                </Button>
-                                {
-                                  <Button
-                                    variant="outline"
-                                    color="red.3"
-                                    leftSection={
-                                      <IconUserMinus
-                                        size={20}
-                                        aria-hidden="true"
-                                      />
                                     }
-                                    size="sm"
-                                    disabled={busy}
-                                    onClick={() =>
-                                      confirm(
-                                        "Replace this player?",
-                                        `${s.name}'s recovery code will stop working and another player can join in their place. Their picks are preserved. An active draft pauses until the replacement is ready.`,
-                                        { type: "release", playerId: s.id },
-                                      )
-                                    }
-                                  >
-                                    Replace player
-                                  </Button>
-                                }
-                              </Group>
-                            </Stack>
-                          </Paper>
-                        ))}
-                      <form
-                        onSubmit={(event) => {
-                          event.preventDefault();
-                          if (!busy && renameId !== null && renameName.trim())
-                            onOperation({
-                              type: "rename",
-                              playerId: Number(renameId),
-                              name: renameName.trim(),
-                            });
-                        }}
-                      >
-                        <Group align="end">
-                          <Select
-                            label="Rename player"
-                            value={renameId}
-                            onChange={(value) => {
-                              setRenameId(value);
-                              setRenameName(
-                                lobby.slots.find(
-                                  (slot) => String(slot.id) === value,
-                                )?.name ?? "",
-                              );
+                                  </Group>
+                                </Stack>
+                              </Paper>
+                            ))}
+                          <form
+                            onSubmit={(event) => {
+                              event.preventDefault();
+                              if (
+                                !busy &&
+                                renameId !== null &&
+                                renameName.trim()
+                              )
+                                onOperation({
+                                  type: "rename",
+                                  playerId: Number(renameId),
+                                  name: renameName.trim(),
+                                });
                             }}
-                            disabled={busy}
-                            data={lobby.slots
-                              .filter((s) => s.claimed)
-                              .map((s) => ({
-                                value: String(s.id),
-                                label: s.name,
-                              }))}
-                            style={{ flex: "1 1 160px" }}
-                          />
-                          <TextInput
-                            label="New name"
-                            value={renameName}
-                            onChange={(event) =>
-                              setRenameName(event.currentTarget.value)
-                            }
-                            maxLength={60}
-                            disabled={busy || renameId === null}
-                            style={{ flex: "1 1 160px" }}
-                          />
-                          <Button
-                            type="submit"
-                            variant="default"
-                            disabled={
-                              busy || renameId === null || !renameName.trim()
-                            }
                           >
-                            Rename
-                          </Button>
-                        </Group>
-                      </form>
-                    </Stack>
-                    <Stack gap="md" className="command-admin-section">
-                      <Title order={3} className="command-admin-section-title">
-                        Save files
-                      </Title>
-                      <Text size="sm">
-                        Exports are encrypted to keep private hands hidden.
-                        Import them back into this same lobby to recover a saved
-                        state. Keep a downloaded copy before making major
-                        changes.
-                      </Text>
-                      <Group>
-                        <Button
-                          variant="default"
-                          leftSection={
-                            <IconDownload size={20} aria-hidden="true" />
-                          }
-                          disabled={busy}
-                          onClick={() => onOperation({ type: "export" })}
-                        >
-                          Export current state
-                        </Button>
-                        {checkpointId && (
-                          <Button
-                            variant="default"
-                            disabled={busy}
-                            onClick={() =>
-                              onOperation({ type: "export", checkpointId })
-                            }
+                            <Group align="end">
+                              <Select
+                                label="Rename player"
+                                value={renameId}
+                                onChange={(value) => {
+                                  setRenameId(value);
+                                  setRenameName(
+                                    lobby.slots.find(
+                                      (slot) => String(slot.id) === value,
+                                    )?.name ?? "",
+                                  );
+                                }}
+                                disabled={busy}
+                                data={lobby.slots
+                                  .filter((s) => s.claimed)
+                                  .map((s) => ({
+                                    value: String(s.id),
+                                    label: s.name,
+                                  }))}
+                                style={{ flex: "1 1 160px" }}
+                              />
+                              <TextInput
+                                label="New name"
+                                value={renameName}
+                                onChange={(event) =>
+                                  setRenameName(event.currentTarget.value)
+                                }
+                                maxLength={60}
+                                disabled={busy || renameId === null}
+                                style={{ flex: "1 1 160px" }}
+                              />
+                              <Button
+                                type="submit"
+                                variant="default"
+                                disabled={
+                                  busy ||
+                                  renameId === null ||
+                                  !renameName.trim()
+                                }
+                              >
+                                Rename
+                              </Button>
+                            </Group>
+                          </form>
+                        </Stack>
+                        <Stack gap="md" className="command-admin-section">
+                          <Title
+                            order={3}
+                            className="command-admin-section-title"
                           >
-                            Export selected checkpoint
-                          </Button>
-                        )}
-                      </Group>
-                      <FileInput
-                        label="Import a saved state"
-                        placeholder="Choose a .ti4-state.json file"
-                        accept=".json,application/json,text/plain"
-                        disabled={busy || readingFile}
-                        description={
-                          readingFile ? "Reading save file…" : undefined
-                        }
-                        value={null}
-                        resetRef={resetImportFile}
-                        onChange={async (file) => {
-                          resetImportFile.current?.();
-                          setFileError(null);
-                          if (!file) return;
-                          if (file.size > 8 * 1024 * 1024) {
-                            setFileError(
-                              "Choose a save file smaller than 8 MB.",
-                            );
-                            return;
-                          }
-                          setReadingFile(true);
-                          try {
-                            const state = await file.text();
-                            confirm(
-                              "Import this saved state?",
-                              `Restore ${file.name} in this lobby, paused for review. A recovery checkpoint is kept before the change.`,
-                              { type: "import", state },
-                            );
-                          } catch {
-                            setFileError(
-                              "The save file could not be read. Try selecting it again.",
-                            );
-                          } finally {
-                            setReadingFile(false);
-                          }
-                        }}
-                      />
-                      {fileError && (
-                        <Alert color="red.3" title="Import failed">
-                          {fileError}
-                        </Alert>
-                      )}
-                    </Stack>
-                  </Stack>
-                </Paper>
+                            Save files
+                          </Title>
+                          <Text size="sm">
+                            Exports are encrypted to keep private hands hidden.
+                            Import them back into this same lobby to recover a
+                            saved state. Keep a downloaded copy before making
+                            major changes.
+                          </Text>
+                          <Group>
+                            <Button
+                              variant="default"
+                              leftSection={
+                                <IconDownload size={20} aria-hidden="true" />
+                              }
+                              disabled={busy}
+                              onClick={() => onOperation({ type: "export" })}
+                            >
+                              Export current state
+                            </Button>
+                            {checkpointId && (
+                              <Button
+                                variant="default"
+                                disabled={busy}
+                                onClick={() =>
+                                  onOperation({ type: "export", checkpointId })
+                                }
+                              >
+                                Export selected checkpoint
+                              </Button>
+                            )}
+                          </Group>
+                          <FileInput
+                            label="Import a saved state"
+                            placeholder="Choose a .ti4-state.json file"
+                            accept=".json,application/json,text/plain"
+                            disabled={busy || readingFile}
+                            description={
+                              readingFile ? "Reading save file…" : undefined
+                            }
+                            value={null}
+                            resetRef={resetImportFile}
+                            onChange={async (file) => {
+                              resetImportFile.current?.();
+                              setFileError(null);
+                              if (!file) return;
+                              if (file.size > 8 * 1024 * 1024) {
+                                setFileError(
+                                  "Choose a save file smaller than 8 MB.",
+                                );
+                                return;
+                              }
+                              setReadingFile(true);
+                              try {
+                                const state = await file.text();
+                                confirm(
+                                  "Import this saved state?",
+                                  `Restore ${file.name} in this lobby, paused for review. A recovery checkpoint is kept before the change.`,
+                                  { type: "import", state },
+                                );
+                              } catch {
+                                setFileError(
+                                  "The save file could not be read. Try selecting it again.",
+                                );
+                              } finally {
+                                setReadingFile(false);
+                              }
+                            }}
+                          />
+                          {fileError && (
+                            <Alert color="red.3" title="Import failed">
+                              {fileError}
+                            </Alert>
+                          )}
+                        </Stack>
+                      </Stack>
+                    </Accordion.Panel>
+                  </Accordion.Item>
+                </Accordion>
               </>
             )}
           </Stack>

@@ -535,6 +535,23 @@ a {
   border-radius: var(--mantine-radius-sm);
   overflow: hidden;
 }
+.command-admin-controls .mantine-Accordion-control {
+  background: #172f43;
+  color: var(--command-text-strong);
+}
+.command-admin-controls .mantine-Accordion-control:hover {
+  background: #213e55;
+}
+.command-admin-controls .mantine-Accordion-icon {
+  color: var(--command-accent);
+}
+.command-admin-controls .mantine-Accordion-label {
+  font-size: var(--command-font-card-title);
+  font-weight: 700;
+}
+.command-admin-controls .mantine-Accordion-content {
+  padding-top: 20px;
+}
 .command-admin-section {
   padding-block: 20px 4px;
   border-top: 1px solid var(--command-border);
