@@ -124,10 +124,6 @@
   min-width: 76px;
 }
 
-.planetDetails {
-  min-width: 0;
-}
-
 .filterChip:not([data-disabled]) {
   color: var(--chip-color);
   border: 1px solid color-mix(in srgb, var(--chip-color) 55%, transparent);
@@ -138,27 +134,6 @@
 .filterChip:not([data-disabled])[data-checked] {
   border-color: var(--chip-color);
   background: color-mix(in srgb, var(--chip-color) 16%, var(--command-ink));
-}
-
-/* Trait dot */
-.traitDot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.traitDot.cultural {
-  background: var(--mantine-color-blue-5);
-}
-.traitDot.hazardous {
-  background: var(--mantine-color-red-5);
-}
-.traitDot.industrial {
-  background: var(--mantine-color-green-5);
-}
-.traitDot.neutral {
-  background: var(--mantine-color-gray-5);
 }
 
 /* Planet divider */

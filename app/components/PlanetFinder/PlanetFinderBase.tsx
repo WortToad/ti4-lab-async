@@ -16,13 +16,10 @@ import {
   systemData,
   systemGameSetLabels,
 } from "~/data/systemData";
-import { PlanetValueIcons } from "~/components/Planet/PlanetValueIcons";
+import { PlanetSummary } from "~/components/Planet/PlanetSummary";
 import { Wormhole } from "~/components/features/Wormhole";
-import { LegendaryIcon } from "~/components/icons/LegendaryIcon";
-import { TradeStationIcon } from "~/components/icons/TradeStationIcon";
 import { FactionId, System, SystemId } from "~/types";
 import { useArrowFocus } from "~/hooks/useArrowFocus";
-import { TechIcon } from "~/components/icons/TechIcon";
 import { factions } from "~/data/factionData";
 import { useUsedSystemIds } from "~/hooks/useUsedSystemIds";
 import { FILTER_CATEGORIES } from "./filterCategories";
@@ -343,35 +340,7 @@ export function PlanetFinderBase({
                     {system.planets.map((planet, pIdx) => (
                       <Fragment key={planet.name}>
                         {pIdx > 0 && <span className={styles.planetDivider} />}
-                        <Group
-                          gap={6}
-                          wrap="wrap"
-                          className={styles.planetDetails}
-                        >
-                          <span
-                            className={`${styles.traitDot} ${
-                              planet.trait?.[0]
-                                ? styles[planet.trait[0].toLowerCase()]
-                                : styles.neutral
-                            }`}
-                          />
-                          <Text size="sm" fw={600}>
-                            {planet.name}
-                          </Text>
-                          <PlanetValueIcons
-                            resources={planet.resources}
-                            influence={planet.influence}
-                          />
-                          {planet.tech?.map((tech) => (
-                            <TechIcon
-                              key={tech}
-                              techSpecialty={tech}
-                              size={20}
-                            />
-                          ))}
-                          {planet.legendary && <LegendaryIcon />}
-                          {planet.tradeStation && <TradeStationIcon />}
-                        </Group>
+                        <PlanetSummary planet={planet} />
                       </Fragment>
                     ))}
 

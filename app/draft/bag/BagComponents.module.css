@@ -49,6 +49,31 @@
   line-height: 1.6;
 }
 
+.planetList {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.planetRow {
+  padding: 8px 0;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.planetRow + .planetRow {
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.planetExplanation {
+  color: var(--command-text-body);
+}
+
+.systemFeatures {
+  padding-top: 10px;
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
 .inlineStats,
 .inlineSymbols {
   display: inline-flex;

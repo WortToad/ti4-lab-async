@@ -1,5 +1,4 @@
 import {
-  Badge,
   Box,
   Button,
   Checkbox,
@@ -24,7 +23,10 @@ import { TechIcon } from "~/components/icons/TechIcon";
 import { SystemTileCard } from "~/components/SystemTileCard";
 import { factions } from "~/data/factionData";
 import { mahactKingReferences } from "~/data/mahactKingReferences";
-import { MahactKingReference } from "~/routes/draft.$id/components/MahactKingReference";
+import {
+  MahactKingReference,
+  MahactKingUnits,
+} from "~/routes/draft.$id/components/MahactKingReference";
 import type { TechSpecialty } from "~/types";
 import { Surface } from "~/ui";
 import { useSafeOutletContext } from "~/useSafeOutletContext";
@@ -35,8 +37,10 @@ import {
   type BagItemCategory,
 } from "./definitions";
 import type { BagVariant } from "./types";
-import { getBagFaction, unitIconPath, unitLabel } from "./visuals";
+import { getBagFaction, unitLabel } from "./visuals";
 import { BagItemDescription } from "./BagItemDescription";
+import { BagSystemDescription } from "./BagSystemDescription";
+import { UnitDetails, UnitSymbol } from "./UnitDetails";
 import classes from "./BagComponents.module.css";
 
 const sourceNames: Record<string, string> = {
@@ -103,23 +107,6 @@ function ComponentIcon({ item }: { item: BagDraftItem }) {
   return <Icon size={30} stroke={1.5} aria-hidden />;
 }
 
-function UnitSymbol({ unit, size = 38 }: { unit: string; size?: number }) {
-  const path = unitIconPath(unit);
-  return path ? (
-    <img
-      src={appPath(path)}
-      alt=""
-      aria-hidden
-      width={size}
-      height={size}
-      style={{ objectFit: "contain" }}
-      loading="lazy"
-    />
-  ) : (
-    <IconRocket size={size} stroke={1.5} aria-hidden />
-  );
-}
-
 function Fleet({ fleet }: { fleet: NonNullable<BagDraftItem["fleet"]> }) {
   return (
     <SimpleGrid type="container" cols={{ base: 2, "30rem": 3 }} spacing="xs">
@@ -137,54 +124,6 @@ function Fleet({ fleet }: { fleet: NonNullable<BagDraftItem["fleet"]> }) {
         </Group>
       ))}
     </SimpleGrid>
-  );
-}
-
-function UnitDetails({
-  unit,
-  showText = true,
-}: {
-  unit: NonNullable<BagDraftItem["unit"]>;
-  showText?: boolean;
-}) {
-  return (
-    <Stack gap="sm">
-      <Group gap="sm">
-        <UnitSymbol unit={unit.type} />
-        <Text size="sm" fw={600}>
-          {unitLabel(unit.type)}
-        </Text>
-      </Group>
-      {unit.stats.length > 0 && (
-        <SimpleGrid cols={unit.stats.length > 2 ? 4 : 2} spacing={6}>
-          {unit.stats.map((stat) => (
-            <Box key={stat.label} className={classes.stat}>
-              <Text fw={700} size="lg" lh={1.2}>
-                {stat.value}
-              </Text>
-              <Text size="xs" c="dimmed">
-                {stat.label}
-              </Text>
-            </Box>
-          ))}
-        </SimpleGrid>
-      )}
-      {unit.abilities.length > 0 && (
-        <Group gap={6}>
-          {unit.abilities.map((ability) => (
-            <Badge
-              key={ability}
-              variant="light"
-              color="gray"
-              className={classes.trait}
-            >
-              {ability}
-            </Badge>
-          ))}
-        </Group>
-      )}
-      {showText && unit.text && <BagItemDescription description={unit.text} />}
-    </Stack>
   );
 }
 
@@ -300,7 +239,19 @@ export function BagItemCard({
           </Text>
         )}
         {item.fleet && <Fleet fleet={item.fleet} />}
-        {item.unit && !item.originalDescription ? (
+        {king ? (
+          <Stack gap="sm">
+            <Text size="sm" fw={600}>
+              {king.commodities} commodities
+            </Text>
+            <MahactKingUnits reference={king} />
+          </Stack>
+        ) : item.systemId ? (
+          <BagSystemDescription
+            systemId={item.systemId}
+            description={item.description}
+          />
+        ) : item.unit && !item.originalDescription ? (
           <>
             <UnitDetails unit={item.unit} showText={item.category !== "TECH"} />
             {item.category === "TECH" && (
@@ -308,10 +259,7 @@ export function BagItemCard({
             )}
           </>
         ) : item.description ? (
-          <BagItemDescription
-            description={item.description}
-            planetStats={Boolean(item.systemId)}
-          />
+          <BagItemDescription description={item.description} />
         ) : null}
         {note && (
           <Text size="sm" className={classes.note}>

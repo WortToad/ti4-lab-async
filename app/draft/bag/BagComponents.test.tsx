@@ -47,4 +47,34 @@ describe("bag component presentation", () => {
     expect(html).toContain("Enigmatic Genome");
     expect(html).toContain("Original card");
   });
+
+  it.each([
+    "black",
+    "blue",
+    "green",
+    "orange",
+    "pink",
+    "purple",
+    "red",
+    "yellow",
+  ])(
+    "renders the %s Mahact king's two units with separate stats and abilities",
+    (color) => {
+      const html = renderItem(`MAHACTKING:${color}tf`, true);
+      const units = html.match(/<section\b[\s\S]*?<\/section>/g)!;
+      expect(units).toHaveLength(2);
+      expect(units[0]).toContain('aria-label="Flagship:');
+      expect(units[0]).toContain("/units/flagship.png");
+      expect(units[0]).toContain("Capacity");
+      expect(units[1]).toContain('aria-label="Mech:');
+      expect(units[1]).toContain("/units/mech.png");
+      expect(units[1]).not.toContain("Capacity");
+      for (const unit of units) {
+        expect(unit).toContain("Combat");
+        expect(unit).toContain("Sustain Damage");
+        expect(unit).not.toContain("Cost:");
+      }
+      expect(html).toContain("commodities");
+    },
+  );
 });

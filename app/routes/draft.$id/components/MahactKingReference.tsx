@@ -1,15 +1,8 @@
 import { appPath } from "~/utils/appUrl";
-import {
-  Badge,
-  Box,
-  Group,
-  Paper,
-  SimpleGrid,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { Box, Group, Paper, Stack, Text } from "@mantine/core";
 import { MahactKingReference as MahactKingReferenceData } from "~/data/mahactKingReferences";
 import { Faction } from "~/types";
+import { UnitDetails } from "~/draft/bag/UnitDetails";
 
 type Props = {
   faction: Faction;
@@ -58,65 +51,32 @@ export function MahactKingReference({ faction, reference }: Props) {
           </Text>
         </Group>
 
-        {reference.units.map((unit) => (
-          <Paper
-            key={unit.type}
-            withBorder
-            radius="sm"
-            p={{ base: "sm", sm: "md" }}
-          >
-            <Stack gap="sm">
-              <Group gap="xs" align="center">
-                <Badge variant="light" color="gray" size="lg">
-                  {unit.type}
-                </Badge>
-                <Text fw={700} fz={{ base: "md", sm: "lg" }}>
-                  {unit.name}
-                </Text>
-              </Group>
-
-              <Text size="sm" lh={1.5}>
-                {unit.ability}
-              </Text>
-
-              <Group gap={6}>
-                {unit.traits.map((trait) => (
-                  <Badge key={trait} variant="light" color="gray" size="sm">
-                    {trait}
-                  </Badge>
-                ))}
-              </Group>
-
-              <SimpleGrid cols={{ base: 2, xs: 4 }} spacing="xs">
-                {unit.stats.map((stat) => (
-                  <Paper
-                    key={stat.label}
-                    withBorder
-                    radius="sm"
-                    py="xs"
-                    px="sm"
-                    ta="center"
-                    bg="var(--mantine-color-body)"
-                  >
-                    <Text fw={700} fz={{ base: "lg", sm: "xl" }} lh={1.1}>
-                      {stat.value}
-                    </Text>
-                    <Text
-                      size="xs"
-                      c="dimmed"
-                      tt="uppercase"
-                      fw={600}
-                      lts="0.04em"
-                    >
-                      {stat.label}
-                    </Text>
-                  </Paper>
-                ))}
-              </SimpleGrid>
-            </Stack>
-          </Paper>
-        ))}
+        <MahactKingUnits reference={reference} />
       </Stack>
     </Paper>
+  );
+}
+
+export function MahactKingUnits({
+  reference,
+}: {
+  reference: MahactKingReferenceData;
+}) {
+  return (
+    <Stack gap="sm">
+      {reference.units.map((unit) => (
+        <Paper key={unit.type} withBorder radius="sm" p="sm">
+          <UnitDetails
+            name={unit.name}
+            unit={{
+              type: unit.type.toLowerCase(),
+              stats: unit.stats,
+              abilities: unit.traits,
+              text: unit.ability,
+            }}
+          />
+        </Paper>
+      ))}
+    </Stack>
   );
 }

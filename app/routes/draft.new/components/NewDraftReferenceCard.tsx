@@ -2,7 +2,7 @@ import { Group, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import { FactionIcon } from "~/components/icons/FactionIcon";
 import { Faction } from "~/types";
 import { factionSystems } from "~/data/systemData";
-import { PlanetValueIcons } from "~/components/Planet/PlanetValueIcons";
+import { PlanetSummary } from "~/components/Planet/PlanetSummary";
 import styles from "./NewDraftReferenceCard.module.css";
 import { Surface } from "~/ui";
 import { StartingUnitsTable } from "~/components/StartingUnitsTable";
@@ -53,16 +53,8 @@ export function NewDraftReferenceCard({ faction }: Props) {
               </Text>
             </Group>
             <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xs">
-              {homeSystem?.planets.map((planet, idx) => (
-                <Group key={idx} gap="xs" align="center" wrap="nowrap">
-                  <PlanetValueIcons
-                    resources={planet.resources}
-                    influence={planet.influence}
-                  />
-                  <Text size="sm" lineClamp={1}>
-                    {planet.name}
-                  </Text>
-                </Group>
+              {homeSystem?.planets.map((planet) => (
+                <PlanetSummary key={planet.name} planet={planet} />
               ))}
             </SimpleGrid>
           </Stack>
