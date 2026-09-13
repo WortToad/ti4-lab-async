@@ -463,36 +463,28 @@ async function simultaneous(
 
 describe("complete simultaneous draft flows", () => {
   it.each(
-    (
-      [
-        {
-          name: "Milty",
-          type: "milty4p",
-          nucleusStyle: false,
-          draftSpeaker: false,
-        },
-        {
-          name: "Nucleus without speaker drafting",
-          type: "heisen4p",
-          nucleusStyle: true,
-          draftSpeaker: false,
-        },
-        {
-          name: "Nucleus with speaker drafting",
-          type: "heisen4p",
-          nucleusStyle: true,
-          draftSpeaker: true,
-        },
-      ] as const
-    ).map(({ name, ...settings }) => ({ name, settings })),
+    Object.values(draftConfig).flatMap(({ type, numPlayers }) =>
+      (type.startsWith("heisen") ? [false, true] : [false]).map(
+        (draftSpeaker) => ({
+          name: `${type}, ${numPlayers} players, speaker drafting ${draftSpeaker}`,
+          settings: {
+            type,
+            nucleusStyle: type.startsWith("heisen"),
+            draftSpeaker,
+          },
+        }),
+      ),
+    ),
   )(
     "finishes Twilight's Fall $name through priority and home reveal",
     async ({ settings }) => {
       const room = await create({
         ...generatorTestSettings,
-        numSlices: 4,
+        numSlices: draftConfig[settings.type].numPlayers,
         numFactions: 8,
         draftGameMode: "twilightsFall",
+        randomizeMap: true,
+        randomizeSlices: true,
         ...settings,
       });
       let draft = await sequentialPicks(room);
@@ -516,25 +508,23 @@ describe("complete simultaneous draft flows", () => {
       }
     },
   );
-  it.each([
-    "milty3p",
-    "milty4p",
-    "milty5p",
-    "milty",
-    "milty7p",
-    "milty8p",
-  ] as const)(
-    "finishes Texas %s through all hand passes and map placements",
+  it.each(Object.values(draftConfig).map(({ type }) => type))(
+    "validates Texas %s and completes every supported layout through map placement",
     async (type) => {
       const count = draftConfig[type].numPlayers;
-      const room = await create({
+      const settings: DraftSettings = {
         ...generatorTestSettings,
         type,
         numSlices: count,
         numFactions: count * 2,
         draftGameMode: "texasStyle",
         texasAllowFactionRedraw: true,
-      });
+      };
+      if (["std4p", "miltyeq7plarge"].includes(type)) {
+        await expect(create(settings)).rejects.toThrow(/five tiles per player/);
+        return;
+      }
+      const room = await create(settings);
       let draft = await stored(room);
       const initialTiles = Object.values(
         draft.texasDraft!.initialTileHands!.blue,

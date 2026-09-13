@@ -133,17 +133,17 @@ export function Map({
           .filter((t) => !!t.position)
           .map((tile) => {
             const isTileModifiable = modifiableMapTiles.includes(tile.idx);
-            const canModifyTile =
-              isTileModifiable && (interactions.editable || interactions.droppable);
+            // Click/tap selection is independent of editing and drag-and-drop.
+            // Mantis enables legal placements while disabling both of those.
             const canSelectSystem =
               interactions.allowSystemSelect &&
               tile.type === "SYSTEM" &&
-              canModifyTile &&
+              isTileModifiable &&
               !!onSelectSystemTile;
             const canSelectOpen =
               interactions.allowOpenSelect &&
               tile.type === "OPEN" &&
-              canModifyTile &&
+              isTileModifiable &&
               !!onSelectSystemTile;
             const canSelectHome =
               interactions.allowHomeSelect &&
@@ -166,10 +166,11 @@ export function Map({
                         if (closeTileMode && onToggleTileClosed) {
                           onToggleTileClosed(tile.idx);
                         } else {
-                        if (tile.type === "SYSTEM") onSelectSystemTile?.(tile);
-                        if (tile.type === "OPEN" && canModifyTile)
-                          onSelectSystemTile?.(tile);
-                        if (tile.type === "HOME") onSelectHomeTile?.(tile);
+                          if (tile.type === "SYSTEM")
+                            onSelectSystemTile?.(tile);
+                          if (tile.type === "OPEN" && isTileModifiable)
+                            onSelectSystemTile?.(tile);
+                          if (tile.type === "HOME") onSelectHomeTile?.(tile);
                         }
                       }
                     : undefined
@@ -186,22 +187,30 @@ export function Map({
                 modifiable={interactions.editable && isTileModifiable}
                 droppable={interactions.droppable && isTileModifiable}
                 ringHighlight={ringHighlightTiles.includes(tile.idx)}
-                homeSelectable={interactions.allowHomeSelect && !!onSelectHomeTile}
+                homeSelectable={
+                  interactions.allowHomeSelect && !!onSelectHomeTile
+                }
                 hoverEffects={interactions.hoverEffects}
                 sliceValue={sliceValues[tile.idx]}
                 sliceStats={sliceStats[tile.idx]}
                 sliceBreakdown={sliceBreakdowns[tile.idx]}
                 coreSliceData={
-                  tile.type === "HOME" && tile.seat !== undefined && coreSliceData
+                  tile.type === "HOME" &&
+                  tile.seat !== undefined &&
+                  coreSliceData
                     ? coreSliceData[tile.seat]
                     : undefined
                 }
                 tileContribution={
-                  hoveredHomeIdx !== null && hoveredHomeIdx !== undefined && tileContributions
+                  hoveredHomeIdx !== null &&
+                  hoveredHomeIdx !== undefined &&
+                  tileContributions
                     ? tileContributions[hoveredHomeIdx]?.get(tile.idx)
                     : undefined
                 }
-                isHomeHovered={tile.type === "HOME" && tile.idx === hoveredHomeIdx}
+                isHomeHovered={
+                  tile.type === "HOME" && tile.idx === hoveredHomeIdx
+                }
                 hoveredHomeIdx={hoveredHomeIdx}
                 onHomeHover={tile.type === "HOME" ? onHomeHover : undefined}
                 closeTileMode={closeTileMode}

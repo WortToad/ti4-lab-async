@@ -8,6 +8,18 @@ import {
   keptBagItems,
   requiredBagPicks,
 } from "./engine";
+import { bagMapBuildError, bagToMantisState } from "./bagToMantis";
+import {
+  applyMantisAction,
+  mantisBuildTurn,
+  undoMantisAction,
+} from "../mantis/engine";
+import {
+  encodeAsyncMapString,
+  decodeAsyncMapString,
+  encodeTtpgMapString,
+  decodeTtpgMapString,
+} from "~/mapgen/utils/externalMapStringCodec";
 import { BAG_VARIANTS, getBagRules, isTwilightsFallBag } from "./rules";
 import type { BagDraftState, BagSeat, CreateBagDraftInput } from "./types";
 
@@ -220,6 +232,100 @@ describe("bag draft rules", () => {
         expect(keptBagItems(state, seat).length).toBeGreaterThan(0);
       expect(initial.phase).toBe("drafting");
       expect(initial.seats.every((seat) => seat.hand.length === 0)).toBe(true);
+    },
+  );
+
+  it.each(
+    BAG_VARIANTS.flatMap((variant) =>
+      [3, 4, 5, 6, 7, 8].map((count) => ({ ...variant, count })),
+    ),
+  )(
+    "finishes $name with $count players through its map handoff and export",
+    ({ id, count }) => {
+      let bag = finishDraft(
+        createBagState(
+          {
+            ...input,
+            variant: id,
+            players: Array.from(
+              { length: count },
+              (_, index) => `Player ${index + 1}`,
+            ),
+            // Large Franken pools need additional faction components.
+            includeDiscordantStars: true,
+          },
+          random,
+        ),
+      );
+      for (const seat of bag.seats) {
+        bag = applyBagAction(bag, seat.id, {
+          action: "assemble",
+          itemIds: finalPicks(bag, seat),
+        });
+      }
+      expect(bag.phase).toBe("complete");
+      if (id === "inaugural_splice") {
+        expect(bagMapBuildError(bag)).toMatch(/does not include map tiles/);
+        return;
+      }
+      expect(bagMapBuildError(bag)).toBeUndefined();
+      const savedBag = structuredClone(bag);
+      let map = bagToMantisState(bag, random);
+      const tiles = Object.values(map.hands).flat().sort();
+      expect(tiles).toHaveLength(count * 5);
+      const fixed = map.map.filter((tile) => tile.type !== "OPEN");
+      let turns = 0;
+      while (map.phase === "build") {
+        const turn = mantisBuildTurn(map)!;
+        expect(turn.positions.length).toBeGreaterThan(0);
+        const before = structuredClone(map);
+        map = applyMantisAction(
+          map,
+          turn.playerId,
+          { type: "place", mapIdx: turn.positions[0] },
+          random,
+        );
+        // Reload serialized state between every turn, as a persisted room does.
+        map = JSON.parse(JSON.stringify(map));
+        if (turns === 0) {
+          const restored = undoMantisAction(map);
+          expect(restored.map).toEqual(before.map);
+          expect(restored.hands).toEqual(before.hands);
+          expect(restored.drawnTile).toBe(before.drawnTile);
+        }
+        expect(++turns).toBeLessThanOrEqual(count * 5);
+      }
+      expect(map.phase).toBe("complete");
+      expect(Object.values(map.hands).flat()).toEqual([]);
+      expect(map.map.some((tile) => tile.type === "OPEN")).toBe(false);
+      for (const tile of fixed) expect(map.map[tile.idx]).toEqual(tile);
+      const placed = map.map.flatMap((tile) =>
+        tile.type === "SYSTEM" && tiles.includes(tile.systemId)
+          ? [tile.systemId]
+          : [],
+      );
+      expect(placed.sort()).toEqual(tiles);
+      for (const [encode, decode] of [
+        [encodeAsyncMapString, decodeAsyncMapString],
+        [encodeTtpgMapString, decodeTtpgMapString],
+      ] as const) {
+        const decoded = decode(encode(map.map));
+        expect(decoded).not.toBeNull();
+        // External formats encode closed spaces as -1 and homes as 0;
+        // verify system positions/rotations and stable external serialization.
+        expect(encode(decoded!.map)).toBe(encode(map.map));
+        for (const tile of map.map.filter((tile) => tile.type === "SYSTEM")) {
+          const restored = decoded!.map[tile.idx];
+          expect(restored).toMatchObject({
+            type: "SYSTEM",
+            systemId: tile.systemId,
+          });
+          expect(
+            restored.type === "SYSTEM" ? (restored.rotation ?? 0) : null,
+          ).toBe(tile.rotation ?? 0);
+        }
+      }
+      expect(bag).toEqual(savedBag);
     },
   );
 

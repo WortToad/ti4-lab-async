@@ -1,4 +1,5 @@
 import { test, expect, type Page, type BrowserContext } from "@playwright/test";
+import { BAG_VARIANTS } from "../app/draft/bag/rules";
 
 const prefix = "/ti4";
 async function miniPreview(page: Page) {
@@ -118,7 +119,33 @@ test("edited preview survives reload and failed creation, then clears after retr
   ).toBeDisabled();
 });
 
-for (const mode of ["base", "bag", "raw", "mantis"] as const) {
+for (const { id, name } of BAG_VARIANTS.filter(
+  ({ id }) => !["franken", "twilights_fall"].includes(id),
+)) {
+  test(`${name} variant setup displays its map-building requirements`, async ({
+    page,
+  }) => {
+    await page.goto(`${prefix}/draft/bag/new?variant=${id}&playerCount=3`);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(name);
+    await expect(
+      page.getByRole("radio", { name: "3", exact: true }),
+    ).toBeChecked();
+    await expect(
+      page.getByRole("heading", {
+        name:
+          id === "inaugural_splice"
+            ? "Map setup"
+            : "Build the map with your drafted tiles",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Create shared lobby", exact: true }),
+    ).toBeEnabled();
+  });
+}
+
+for (const mode of ["base", "texas", "bag", "raw", "mantis"] as const) {
   test(`${mode} players join, start, recover on a new device, and pause/resume`, async ({
     page,
     browser,
@@ -127,6 +154,10 @@ for (const mode of ["base", "bag", "raw", "mantis"] as const) {
     const count = mode === "mantis" ? 4 : 3;
     try {
       if (mode === "base") await miniPreview(page);
+      else if (mode === "texas")
+        await page.goto(
+          `${prefix}/draft/prechoice?format=texas&playerCount=${count}`,
+        );
       else await page.goto(`${prefix}/draft/${mode}/new?playerCount=${count}`);
       await page
         .getByRole("button", {

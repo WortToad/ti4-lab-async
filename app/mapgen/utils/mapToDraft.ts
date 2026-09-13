@@ -20,7 +20,10 @@ export type SeededMapData = {
  */
 export const mapConfigToCompatibleDraftTypes: Record<string, DraftType[]> = {
   milty6p: ["milty", "miltyeq", "heisen"],
-  milty4p: ["milty4p", "miltyeq4p"],
+  // The standard 4/5-player galaxies use different homes from the
+  // hyperlane slice layouts. They support drafting on a preset map only.
+  milty4p: [],
+  milty5p: [],
   hyperlane4p: ["milty4p", "miltyeq4p"],
   std4p: ["std4p"],
   hyperlane5p: ["milty5p", "miltyeq5p"],
@@ -85,10 +88,7 @@ export function extractSlicesFromMap(
  * @param sliceTileIndices - Set of indices that were extracted into slices
  * @returns The preset map with slice positions set to OPEN
  */
-export function buildPresetMap(
-  map: Map,
-  sliceTileIndices: Set<number>,
-): Map {
+export function buildPresetMap(map: Map, sliceTileIndices: Set<number>): Map {
   return map.map((tile, idx) => {
     if (sliceTileIndices.has(idx)) {
       // Convert extracted slice tiles to OPEN

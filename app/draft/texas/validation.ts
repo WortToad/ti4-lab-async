@@ -1,6 +1,8 @@
 import { systemData } from "~/data/systemData";
 import { getFactionPool } from "~/utils/factions";
 import { getSystemPool } from "~/utils/system";
+import { draftConfig } from "~/draft/draftConfig";
+import { generateEmptyMap } from "~/utils/map";
 import type { DraftSettings, FactionId, SystemId } from "~/types";
 
 export function getTexasFactionPool(
@@ -50,6 +52,17 @@ export function getTexasSetupErrors(
     getSystemPool(settings.tileGameSets),
     playerCount,
   );
+  const config = draftConfig[settings.type];
+  if (config) {
+    const openSpaces = generateEmptyMap(config).filter(
+      (tile) => tile.type === "OPEN",
+    ).length;
+    if (openSpaces !== config.numPlayers * 5) {
+      errors.push(
+        `This layout has ${openSpaces} map spaces. Texas deals five tiles per player and needs exactly ${config.numPlayers * 5} spaces. Choose another galaxy layout.`,
+      );
+    }
+  }
   const handSize = settings.texasFactionHandSize ?? 2;
   if (handSize !== 2 && handSize !== 3) {
     errors.push("Texas deals either 2 or 3 factions per player.");

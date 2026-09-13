@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { twilightsFallFactionIds } from "~/data/factionData";
 import { systemData } from "~/data/systemData";
 import {
@@ -15,6 +15,10 @@ import {
   type RawSettings,
   type RawState,
 } from "./engine";
+
+import { seedRandom } from "../common/generationTestUtils";
+
+beforeEach(() => seedRandom(913));
 
 const settings = (
   players = 3,
@@ -119,6 +123,19 @@ describe("official RAW galaxy layouts", () => {
           );
           const complete = buildGalaxy(initial);
           expect(complete.phase).toBe("complete");
+          expect(
+            complete.map
+              .flatMap((tile) =>
+                tile.type === "SYSTEM" && dealt.includes(tile.systemId)
+                  ? [tile.systemId]
+                  : [],
+              )
+              .sort(),
+          ).toEqual([...dealt].sort());
+          for (const tile of initial.map.filter(
+            (tile) => tile.type === "SYSTEM" || tile.type === "CLOSED",
+          ))
+            expect(complete.map[tile.idx]).toEqual(tile);
           expect(complete.map.some((tile) => tile.type === "OPEN")).toBe(false);
           expect(Object.values(complete.hands).flat()).toEqual([]);
           if (layout.id === "standard5p") {
@@ -279,11 +296,24 @@ describe("Twilight's Fall RAW starting draft", () => {
     expect(Object.keys(state.homes)).toHaveLength(0);
   });
 
-  it.each([false, true])(
-    "completes galaxy, clockwise homes, reverse kings, and the complete simultaneous splice (PoK %s)",
-    (pok) => {
+  it.each(
+    [false, true].flatMap((pok) =>
+      Array.from({ length: pok ? 6 : 4 }, (_, index) => index + 3).flatMap(
+        (count) =>
+          getRawLayouts(settings(count, { pok, te: true })).map((layout) => ({
+            pok,
+            count,
+            layout: layout.id,
+          })),
+      ),
+    ),
+  )(
+    "completes Twilight's Fall $layout ($count players, PoK $pok), homes, kings and splice",
+    ({ pok, count, layout }) => {
       let state = finishReferences(
-        createRawDraft(settings(3, { mode: "twilightsFall", te: true, pok })),
+        createRawDraft(
+          settings(count, { mode: "twilightsFall", te: true, pok, layout }),
+        ),
       );
       for (const id of state.order)
         state = applyRawAction(state, {
@@ -336,7 +366,7 @@ describe("Twilight's Fall RAW starting draft", () => {
           playerId: id,
           itemId: rawSpliceChoices(state, id)[0],
         });
-        expect(++actions).toBeLessThan(30);
+        expect(++actions).toBeLessThan(count * 7);
       }
       expect(state.phase).toBe("spliceKeep");
       for (const [index, id] of state.order.entries()) {

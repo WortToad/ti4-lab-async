@@ -1,5 +1,7 @@
 import { DraftSettings, GameSet, Map } from "~/types";
 import { mapConfigToCompatibleDraftTypes } from "./mapToDraft";
+import { mapConfigs } from "../mapConfigs";
+import { draftConfig } from "~/draft/draftConfig";
 
 type PresetDraftState = {
   settings: DraftSettings;
@@ -17,17 +19,23 @@ export function buildPresetDraftState(input: {
   playerCount: number;
 }): PresetDraftBuildResult {
   const compatibleTypes = mapConfigToCompatibleDraftTypes[input.mapConfigId];
-  if (!compatibleTypes || compatibleTypes.length === 0) {
-    return { ok: false, error: "This map type doesn't support draft creation" };
-  }
-
-  const selectedDraftType = compatibleTypes[0];
-  if (!selectedDraftType) {
+  if (!Object.hasOwn(mapConfigs, input.mapConfigId)) {
     return { ok: false, error: "This map type doesn't support draft creation" };
   }
 
   if (input.playerCount <= 0) {
     return { ok: false, error: "Add home systems before starting a draft" };
+  }
+
+  // Preset drafts retain the complete galaxy; they do not need a layout
+  // whose slice offsets match the editor's home positions.
+  const selectedDraftType =
+    compatibleTypes?.[0] ??
+    Object.values(draftConfig).find(
+      (config) => config.numPlayers === input.playerCount,
+    )?.type;
+  if (!selectedDraftType) {
+    return { ok: false, error: "This map type doesn't support draft creation" };
   }
 
   const settings: DraftSettings = {
