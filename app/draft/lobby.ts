@@ -1,6 +1,7 @@
 export type LobbyView = {
   started: boolean;
   paused: boolean;
+  adminPlayerId?: number;
   slots: { id: number; name: string; claimed: boolean; uuid?: string }[];
   ownUuid?: string;
   adminUuid?: string;

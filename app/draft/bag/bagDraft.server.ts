@@ -56,6 +56,7 @@ type Checkpoint = {
 type Credentials = {
   adminHash: string;
   adminUuid?: string;
+  adminPlayerId?: number;
   seatKeys: Record<number, string>;
   mapHostToken?: string;
   lobby?: {
@@ -127,7 +128,14 @@ function getRecord(id: string) {
 function loadBagDraft(id: string, key?: string, adminKey?: string) {
   const record = getRecord(id);
   const credentials = JSON.parse(record.credentials) as Credentials;
-  const needsMigration = !credentials.lobby;
+  const viewer = authenticate(credentials, key, adminKey);
+  // Older lobbies did not record which joined player also holds admin access.
+  const identifyAdmin =
+    credentials.adminPlayerId === undefined &&
+    viewer.isAdmin &&
+    viewer.playerId !== undefined;
+  const needsMigration = !credentials.lobby || identifyAdmin;
+  if (identifyAdmin) credentials.adminPlayerId = viewer.playerId;
   // Existing rooms keep their active state and their existing personal keys.
   credentials.lobby ??= {
     started: true,
@@ -139,7 +147,7 @@ function loadBagDraft(id: string, key?: string, adminKey?: string) {
   return {
     state: JSON.parse(record.data) as BagDraftState,
     credentials,
-    viewer: authenticate(credentials, key, adminKey),
+    viewer,
     needsMigration,
   };
 }
@@ -343,6 +351,10 @@ export async function getBagDraftView(
   view.lobby = {
     started: lobby.started,
     paused: lobby.paused,
+    ...(credentials.adminPlayerId !== undefined &&
+    credentials.seatKeys[credentials.adminPlayerId]
+      ? { adminPlayerId: credentials.adminPlayerId }
+      : {}),
     slots: [...state.seats]
       .sort((a, b) => a.id - b.id)
       .map((seat) => ({
@@ -384,10 +396,15 @@ export async function getBagDraftView(
   }
   return view;
 }
-export async function joinBagDraft(id: string, name: string, key?: string) {
+export async function joinBagDraft(
+  id: string,
+  name: string,
+  key?: string,
+  adminKey?: string,
+) {
   return db.transaction(
     () => {
-      const { state, credentials, viewer } = loadBagDraft(id, key);
+      const { state, credentials, viewer } = loadBagDraft(id, key, adminKey);
       if (viewer.playerId !== undefined)
         throw new Error(
           "You already have a slot in this lobby. Use your saved UUID to rejoin it.",
@@ -399,6 +416,7 @@ export async function joinBagDraft(id: string, name: string, key?: string) {
       seat.name = playerName(name);
       const uuid = randomUUID();
       credentials.seatKeys[seat.id] = uuid;
+      if (viewer.isAdmin) credentials.adminPlayerId = seat.id;
       for (const round of state.history)
         for (const player of round.seats)
           if (player.id === seat.id) player.name = seat.name;
@@ -609,6 +627,8 @@ export async function mutateBagDraft(
         if (action.action === "rename") seat.name = playerName(action.name);
         else if (action.action === "release") {
           delete credentials.seatKeys[seat.id];
+          if (credentials.adminPlayerId === seat.id)
+            delete credentials.adminPlayerId;
           if (lobby.started) lobby.paused = true;
         } else {
           if (!credentials.seatKeys[seat.id])
@@ -685,6 +705,8 @@ export function syncBagMapIdentity(
       if (identity.uuid) credentials.seatKeys[playerId] = identity.uuid;
       else {
         delete credentials.seatKeys[playerId];
+        if (credentials.adminPlayerId === playerId)
+          delete credentials.adminPlayerId;
         credentials.lobby!.paused = true;
       }
       seat.name = playerName(identity.name);

@@ -1,8 +1,8 @@
 .overview {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-block: 24px 8px;
+  gap: 12px;
+  padding-block: 18px 4px;
   border-top: 1px solid var(--command-border);
 }
 .heading {
@@ -15,9 +15,9 @@
 .summary {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 20px;
+  gap: 4px 14px;
   color: var(--command-text-muted);
-  font-size: var(--command-font-control);
+  font-size: var(--command-font-label);
   font-variant-numeric: tabular-nums;
 }
 .summary > span {
@@ -26,180 +26,163 @@
 .summary strong {
   color: var(--command-text-strong);
 }
-.players {
-  display: grid;
-  gap: 8px;
+.chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px 0;
   list-style: none;
   margin: 0;
   padding: 0;
 }
-.player {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 190px;
+.link {
+  display: flex;
   align-items: center;
-  gap: 24px;
   min-width: 0;
-  padding: 16px 20px;
-  border: 1px solid var(--command-border-subtle);
-  border-radius: var(--mantine-radius-sm);
+  max-width: 100%;
+}
+.chain:not([data-passing]) {
+  gap: 10px;
+}
+.player {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: stretch;
+  gap: 6px;
+  width: max-content;
+  min-width: 140px;
+  max-width: 220px;
+  padding: 10px 12px;
+  border: 1px solid var(--command-border);
+  border-radius: 8px;
   background: var(--command-ink);
 }
 .player[data-own] {
-  border-color: color-mix(
-    in srgb,
-    var(--command-info) 45%,
-    var(--command-border)
-  );
+  border-color: var(--command-info);
   box-shadow: inset 3px 0 var(--command-info);
-  background: color-mix(in srgb, var(--command-info) 7%, var(--command-ink));
+  background: var(--command-surface-active);
 }
 .player[data-open] {
   border-style: dashed;
 }
-.flow {
-  display: grid;
-  align-items: center;
-  gap: 16px;
-  min-width: 0;
-}
-.flow[data-passing] {
-  grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1.2fr) 20px minmax(
-      0,
-      1fr
-    );
-}
 .identity {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px 7px;
   min-width: 0;
 }
-.playerName {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 8px;
+.name {
   color: var(--command-text-strong);
-  font-size: var(--command-font-card-title);
+  font-size: var(--command-font-control);
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.3;
   overflow-wrap: anywhere;
 }
-.you {
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--command-info) 12%, transparent);
-  color: var(--command-info);
-  font-size: var(--command-font-label);
-  font-weight: 600;
-}
+.you,
 .admin {
   display: inline-flex;
-  margin-inline-start: 4px;
-  color: var(--command-accent);
+  align-items: center;
+  gap: 3px;
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
 }
-.joined {
+.you {
+  background: var(--command-info);
+  color: var(--command-ink);
+}
+.admin {
+  color: var(--command-accent);
+  background: color-mix(in srgb, var(--command-accent) 10%, transparent);
+}
+.status {
+  --status-color: var(--command-text-muted);
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-  color: var(--command-text-muted);
-  font-size: var(--command-font-label);
-}
-.joined[data-joined] {
-  color: var(--command-success);
-}
-.neighbor {
-  display: flex;
-  flex-direction: column;
   gap: 6px;
-  min-width: 0;
-}
-.label {
-  color: var(--command-text-muted);
+  color: var(--command-text-body);
   font-size: var(--command-font-label);
   line-height: 1.4;
 }
-.shortLabel {
+.status::before {
+  content: "";
+  flex: 0 0 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--status-color);
+}
+.status[data-tone="success"] {
+  --status-color: var(--command-success);
+}
+.status[data-tone="warning"] {
+  --status-color: var(--command-warning);
+}
+.connector {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 24px;
+  color: var(--command-info);
+}
+.connector[data-return] {
+  flex: 0 1 auto;
+  gap: 5px;
+  max-width: 132px;
+  padding-inline: 10px;
+  color: var(--command-text-muted);
+}
+.connector > svg {
+  flex-shrink: 0;
+}
+.downArrow {
   display: none;
 }
-.neighborName {
-  color: var(--command-text-body);
-  font-size: var(--command-font-control);
-  font-weight: 600;
+.returnLabel {
+  font-size: 12px;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
-.arrow {
-  color: var(--command-info);
-}
-.status {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  padding-inline-start: 20px;
-  border-inline-start: 1px solid var(--command-border-subtle);
-}
-.collected {
-  color: var(--command-text-muted);
-  font-size: var(--command-font-label);
-  font-variant-numeric: tabular-nums;
-}
-.collected strong {
-  color: var(--command-text-body);
-}
-@media (max-width: 52em) {
-  .player {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
-    padding: 16px;
+@media (max-width: 36em) {
+  .chain {
+    flex-direction: column;
+    gap: 0;
   }
-  .status {
+  .link {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .player {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px 12px;
-    padding-block-start: 12px;
-    padding-inline-start: 0;
-    border-inline-start: 0;
-    border-block-start: 1px solid var(--command-border-subtle);
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    padding: 10px 12px;
+    min-height: 58px;
   }
-}
-@media (max-width: 36em) {
-  .admin {
-    position: absolute;
-    inset-block-start: 10px;
-    inset-inline-end: 10px;
-    margin: 0;
+  .status {
+    flex-shrink: 0;
+    max-width: 110px;
   }
-  .joined {
-    flex-wrap: nowrap;
-    gap: 3px;
-    font-size: 12px;
-    white-space: nowrap;
+  .connector {
+    flex-basis: 22px;
   }
-  .fullLabel {
+  .connector[data-return] {
+    align-self: center;
+    max-width: 100%;
+    padding-block-start: 6px;
+  }
+  .rightArrow {
     display: none;
   }
-  .shortLabel {
-    display: inline;
-  }
-  .flow {
-    gap: 8px;
-  }
-  .flow[data-passing] {
-    grid-template-columns: minmax(0, 1fr) 16px minmax(0, 1.2fr) 16px minmax(
-        0,
-        1fr
-      );
-  }
-  .arrow {
-    width: 16px;
-  }
-  .playerName {
-    font-size: var(--command-font-control);
+  .downArrow {
+    display: block;
   }
 }

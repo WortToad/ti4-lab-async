@@ -162,7 +162,7 @@ export async function action({ params, request }: ActionFunctionArgs) {
       | { action: "recover"; uuid: string }
       | { action: "exportState"; checkpointId?: string };
     if (input.action === "join") {
-      const { uuid } = await joinBagDraft(id, input.name, key);
+      const { uuid } = await joinBagDraft(id, input.name, key, adminKey);
       headers.append("Set-Cookie", await bagCookie(id).serialize(uuid));
     } else if (input.action === "recover") {
       const uuid = input.uuid.trim().toLowerCase();

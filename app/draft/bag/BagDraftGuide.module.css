@@ -1,0 +1,92 @@
+.stages {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stage {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: span 2;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--command-border);
+  border-radius: var(--mantine-radius-md);
+  background: var(--command-ink);
+}
+
+.stage[data-state="current"] {
+  border-color: var(--command-info);
+  background: color-mix(in srgb, var(--command-info) 8%, var(--command-ink));
+}
+
+.stageHeader {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.number {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--command-border);
+  border-radius: 50%;
+  background: var(--command-surface-raised);
+  color: var(--command-text-strong);
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.stage[data-state="current"] .number {
+  border-color: var(--command-info);
+  background: var(--command-info);
+  color: var(--command-ink);
+}
+
+.stage[data-state="complete"] .number {
+  border-color: color-mix(
+    in srgb,
+    var(--command-success) 55%,
+    var(--command-border)
+  );
+  background: color-mix(
+    in srgb,
+    var(--command-success) 10%,
+    var(--command-ink)
+  );
+  color: var(--command-success);
+}
+
+.stageTitle {
+  padding-block-start: 7px;
+  color: var(--command-text-strong);
+  font-size: 18px;
+  line-height: 26px;
+  overflow-wrap: anywhere;
+}
+
+.description {
+  color: var(--command-text-body);
+  line-height: 1.6;
+}
+
+@media (max-width: 75em) {
+  .stages {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 48em) {
+  .stages {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

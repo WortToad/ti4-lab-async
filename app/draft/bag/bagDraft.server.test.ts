@@ -149,6 +149,122 @@ describe("persistent private bag drafts", () => {
     ).rejects.toMatchObject({ status: 403 });
   });
 
+  it("publishes the admin's joined seat to everyone without granting player keys admin access", async () => {
+    const room = await service.createBagDraft({
+      variant: "inaugural_splice",
+      players: ["Slot 1", "Slot 2"],
+      shufflePlayers: false,
+    });
+    const guest = await service.joinBagDraft(room.id, "Bob");
+    const route = await import("~/routes/draft.bag.$id");
+    const result = await route.action({
+      request: new Request(`http://localhost/draft/bag/${room.id}`, {
+        method: "POST",
+        headers: {
+          Cookie: (
+            await service.bagCookie(room.id, "admin").serialize(room.adminToken)
+          ).split(";")[0],
+        },
+        body: new URLSearchParams({
+          operation: JSON.stringify({ action: "join", name: "Kyle" }),
+        }),
+      }),
+      params: { id: room.id },
+      context: {},
+      unstable_pattern: "/draft/bag/:id",
+    });
+    expect(result.data.error).toBeNull();
+    const cookie = new Headers(result.init?.headers).get("Set-Cookie")!;
+    const hostPlayerKey = await service.readBagToken(
+      room.id,
+      new Request("http://localhost", {
+        headers: { Cookie: cookie.split(";")[0] },
+      }),
+    );
+    for (const key of [undefined, guest.uuid, hostPlayerKey]) {
+      const view = await service.getBagDraftView(room.id, key);
+      expect(view.lobby.adminPlayerId).toBe(1);
+      expect(view.viewer.isAdmin).toBe(false);
+      expect(view.lobby.slots.every((slot) => !slot.uuid)).toBe(true);
+      expect(view.lobby.adminUuid).toBeUndefined();
+      expect(JSON.stringify(view)).not.toContain(room.adminToken);
+    }
+    const view = await service.getBagDraftView(room.id);
+    await expect(
+      service.mutateBagDraft(room.id, hostPlayerKey, {
+        action: "start",
+        revision: view.revision,
+      }),
+    ).rejects.toMatchObject({ status: 403 });
+    const started = await service.mutateBagDraft(
+      room.id,
+      hostPlayerKey,
+      {
+        action: "start",
+        revision: view.revision,
+      },
+      room.adminToken,
+    );
+    await service.mutateBagDraft(room.id, hostPlayerKey, {
+      action: "pick",
+      round: started.round,
+      itemIds: [started.privateSeat!.draftableItemIds[0]],
+    });
+    expect(
+      (await service.getBagDraftView(room.id)).players.find(
+        (player) => player.id === 1,
+      )?.ready,
+    ).toBe(true);
+  });
+
+  it("identifies an existing admin only from both roles and removes the badge when their seat is released", async () => {
+    const room = await startedFixture();
+    expect(
+      (await service.getBagDraftView(room.id, room.adminToken)).lobby
+        .adminPlayerId,
+    ).toBeUndefined();
+    expect(
+      (await service.getBagDraftView(room.id, room.keys[0], "wrong-key")).lobby
+        .adminPlayerId,
+    ).toBeUndefined();
+    const identified = await service.getBagDraftView(
+      room.id,
+      room.keys[0],
+      room.adminToken,
+    );
+    expect(identified.lobby.adminPlayerId).toBe(0);
+    expect(
+      (await service.getBagDraftView(room.id, room.keys[1])).lobby
+        .adminPlayerId,
+    ).toBe(0);
+    const rotated = await service.mutateBagDraft(
+      room.id,
+      undefined,
+      {
+        action: "rotate",
+        playerId: 0,
+        revision: identified.revision,
+      },
+      room.adminToken,
+    );
+    expect(rotated.lobby.adminPlayerId).toBe(0);
+    const released = await service.mutateBagDraft(
+      room.id,
+      undefined,
+      {
+        action: "release",
+        playerId: 0,
+        revision: rotated.revision,
+      },
+      room.adminToken,
+    );
+    expect(released.lobby.adminPlayerId).toBeUndefined();
+    const replacement = await service.joinBagDraft(room.id, "Carol");
+    const view = await service.getBagDraftView(room.id, replacement.uuid);
+    expect(view.lobby.adminPlayerId).toBeUndefined();
+    expect(view.viewer.isAdmin).toBe(false);
+  });
+
   it("assigns concurrent joins to different seats, exchanges recovery UUIDs into role cookies, and clears revoked access", async () => {
     const room = await service.createBagDraft({
       variant: "inaugural_splice",

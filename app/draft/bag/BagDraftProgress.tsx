@@ -1,14 +1,13 @@
-import { Group, Progress, Text, Title } from "@mantine/core";
+import { Group, Text, Title, VisuallyHidden } from "@mantine/core";
 import { useId } from "react";
 import {
   IconArrowRight,
-  IconCheck,
-  IconClock,
+  IconArrowDown,
+  IconCornerUpLeft,
   IconShield,
 } from "@tabler/icons-react";
 import type { BagDraftView } from "./types";
 import classes from "./BagDraftProgress.module.css";
-import { StatusPill } from "~/ui/StatusPill";
 
 export function BagDraftProgress({ view }: { view: BagDraftView }) {
   const headingId = useId();
@@ -21,71 +20,55 @@ export function BagDraftProgress({ view }: { view: BagDraftView }) {
       slots.get(player.id)?.claimed &&
       (drafting ? player.ready : player.finished),
   ).length;
-  const progress = waiting ? joined : donePlayers;
-  const total = view.players.length;
+  // Bags go to the previous seat. Keep the first seat as a shared starting point.
+  const players = waiting
+    ? view.players
+    : [...view.players.slice(0, 1), ...view.players.slice(1).reverse()];
   const playerName = (player: BagDraftView["players"][number]) =>
     slots.get(player.id)?.claimed ? player.name : `Open seat ${player.id + 1}`;
 
   return (
     <section className={classes.overview} aria-labelledby={headingId}>
-      <Group justify="space-between" align="flex-start" gap="sm">
-        <div>
+      <Group justify="space-between" align="center" gap="xs">
+        <Group gap="sm">
           <Title id={headingId} order={3} size="h3" className={classes.heading}>
-            {drafting ? "Players & passing" : "Players"}
+            {drafting ? "Passing order" : "Players"}
           </Title>
           {!waiting && (
-            <Text size="sm" className={classes.phase} mt={4}>
+            <Text size="sm" className={classes.phase}>
               {drafting
-                ? `Collect components · Round ${view.round + 1}`
+                ? `Round ${view.round + 1}`
                 : view.phase === "assembling"
                   ? "Final faction choices"
                   : "Draft complete"}
             </Text>
           )}
-        </div>
+        </Group>
         <div className={classes.summary} aria-live="polite" aria-atomic="true">
           <span>
-            <strong>{joined}</strong> / {total} joined
+            <strong>{joined}</strong> / {players.length} joined
           </span>
           {!waiting && (
             <span>
-              <strong>{donePlayers}</strong> / {total}{" "}
-              {drafting ? "ready to pass" : "finished"}
+              <strong>{donePlayers}</strong> / {players.length}{" "}
+              {drafting ? "ready" : "finished"}
             </span>
           )}
         </div>
       </Group>
-      <Progress
-        color={progress === total ? "success.4" : "sky.4"}
-        size={4}
-        value={total ? (progress / total) * 100 : 0}
-        aria-label={
-          waiting
-            ? "Players joined"
-            : drafting
-              ? "Players ready to pass"
-              : "Players finished"
-        }
-      />
-      {(waiting || drafting) && (
-        <Text size="sm" c="dimmed">
-          {waiting
-            ? "Everyone’s join status appears here. Passing order is set when the draft starts."
-            : "Read each row left to right: incoming bag → player → next recipient. Bags pass together when everyone is ready."}
-        </Text>
-      )}
-      <ul className={classes.players}>
-        {view.players.map((player, index) => {
+      <ol
+        className={classes.chain}
+        aria-label={drafting ? "Bag passing order" : "Players"}
+        data-passing={drafting || undefined}
+      >
+        {players.map((player, index) => {
           const claimed = !!slots.get(player.id)?.claimed;
           const ownSeat = player.id === view.viewer.playerId;
           const done = drafting ? player.ready : player.finished;
-          // The engine gives each seat the next seat's bag on every pass.
-          const receivingFrom = view.players[(index + 1) % total];
-          const passingTo = view.players[(index - 1 + total) % total];
           const status = !claimed
-            ? "Waiting for player"
+            ? "Not joined"
             : waiting
-              ? "Waiting to start"
+              ? "Joined"
               : done
                 ? drafting
                   ? "Ready to pass"
@@ -95,108 +78,71 @@ export function BagDraftProgress({ view }: { view: BagDraftView }) {
                   : drafting
                     ? "Choosing picks"
                     : "Building faction";
+          const tone = !claimed
+            ? "neutral"
+            : waiting || done
+              ? "success"
+              : "warning";
+          const last = index === players.length - 1;
+          const recipient = players[(index + 1) % players.length];
 
           return (
-            <li
-              key={player.id}
-              className={classes.player}
-              data-own={ownSeat || undefined}
-              data-open={!claimed || undefined}
-              aria-label={`${playerName(player)}${ownSeat ? " (you)" : ""} draft progress`}
-            >
+            <li key={player.id} className={classes.link}>
               <div
-                className={classes.flow}
-                data-passing={drafting || undefined}
+                className={classes.player}
+                data-own={ownSeat || undefined}
+                data-open={!claimed || undefined}
               >
-                {drafting && (
-                  <>
-                    <div className={classes.neighbor}>
-                      <span className={classes.label}>
-                        <span className={classes.fullLabel}>Receives from</span>
-                        <span className={classes.shortLabel}>From</span>
-                      </span>
-                      <span className={classes.neighborName}>
-                        {playerName(receivingFrom)}
-                      </span>
-                    </div>
-                    <IconArrowRight
-                      className={classes.arrow}
-                      size={20}
-                      aria-hidden="true"
-                    />
-                  </>
-                )}
                 <div className={classes.identity}>
-                  <div className={classes.playerName}>
-                    {playerName(player)}
-                    {ownSeat && <span className={classes.you}>You</span>}
-                  </div>
-                  <span
-                    className={classes.joined}
-                    data-joined={claimed || undefined}
-                  >
-                    {claimed && <IconCheck size={14} aria-hidden="true" />}
-                    {claimed ? "Joined" : "Not joined"}
-                    {ownSeat && view.viewer.isAdmin && (
-                      <span
-                        role="img"
-                        aria-label="Admin"
-                        title="Admin"
-                        className={classes.admin}
-                      >
-                        <IconShield size={16} aria-hidden="true" />
-                      </span>
-                    )}
-                  </span>
+                  <span className={classes.name}>{playerName(player)}</span>
+                  {claimed && view.lobby.adminPlayerId === player.id && (
+                    <span className={classes.admin}>
+                      <IconShield size={14} aria-hidden="true" /> Admin
+                    </span>
+                  )}
+                  {ownSeat && <span className={classes.you}>You</span>}
                 </div>
-                {drafting && (
-                  <>
-                    <IconArrowRight
-                      className={classes.arrow}
-                      size={20}
-                      aria-hidden="true"
-                    />
-                    <div className={classes.neighbor}>
-                      <span className={classes.label}>
-                        <span className={classes.fullLabel}>Passes to</span>
-                        <span className={classes.shortLabel}>To</span>
-                      </span>
-                      <span className={classes.neighborName}>
-                        {playerName(passingTo)}
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className={classes.status}>
-                <StatusPill
-                  tone={
-                    !claimed || waiting
-                      ? "neutral"
-                      : done
-                        ? "success"
-                        : "warning"
-                  }
-                  icon={
-                    claimed && !waiting && done ? (
-                      <IconCheck size={18} />
-                    ) : (
-                      <IconClock size={18} />
-                    )
-                  }
-                >
+                <span className={classes.status} data-tone={tone}>
                   {status}
-                </StatusPill>
-                {!waiting && (
-                  <span className={classes.collected}>
-                    <strong>{player.draftedCount}</strong> collected
-                  </span>
-                )}
+                </span>
               </div>
+              {drafting && (
+                <span
+                  className={classes.connector}
+                  data-return={last || undefined}
+                  title={`${playerName(player)} passes ${last ? "back " : ""}to ${playerName(recipient)}`}
+                >
+                  <VisuallyHidden>
+                    {playerName(player)} passes {last ? "back " : ""}to{" "}
+                    {playerName(recipient)}.
+                  </VisuallyHidden>
+                  {last ? (
+                    <IconCornerUpLeft size={22} aria-hidden="true" />
+                  ) : (
+                    <>
+                      <IconArrowRight
+                        className={classes.rightArrow}
+                        size={20}
+                        aria-hidden="true"
+                      />
+                      <IconArrowDown
+                        className={classes.downArrow}
+                        size={18}
+                        aria-hidden="true"
+                      />
+                    </>
+                  )}
+                  {last && (
+                    <span className={classes.returnLabel}>
+                      Back to {playerName(recipient)}
+                    </span>
+                  )}
+                </span>
+              )}
             </li>
           );
         })}
-      </ul>
+      </ol>
     </section>
   );
 }

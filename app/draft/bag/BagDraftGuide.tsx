@@ -1,20 +1,19 @@
 import {
   Accordion,
-  Badge,
   Divider,
-  Group,
   Paper,
-  SimpleGrid,
   Stack,
   Table,
   Text,
   Title,
+  VisuallyHidden,
 } from "@mantine/core";
 import type { ReactNode } from "react";
 import { bagCategoryLabel } from "./BagComponents";
 import { isTwilightsFallBag } from "./rules";
 import type { BagItemCategory } from "./catalog";
 import type { BagDraftView, BagRules, BagVariant } from "./types";
+import classes from "./BagDraftGuide.module.css";
 
 export function BagDraftGuide({
   rules,
@@ -65,35 +64,36 @@ export function BagDraftGuide({
   ] as BagItemCategory[];
   const content = (
     <Stack gap="lg">
-      <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="sm">
+      <ol className={classes.stages} aria-label="Draft stages">
         {stages.map((stage, index) => (
-          <Paper
+          <li
             key={stage.title}
-            withBorder
-            p="sm"
-            radius="md"
-            className={index === active ? "command-state-panel" : undefined}
+            className={classes.stage}
+            data-state={
+              index < active
+                ? "complete"
+                : index === active
+                  ? "current"
+                  : "upcoming"
+            }
             aria-current={index === active ? "step" : undefined}
           >
-            <Stack gap="xs">
-              <Group gap="xs" wrap="nowrap" align="flex-start">
-                <Badge
-                  color="sky"
-                  variant={index === active ? "filled" : "light"}
-                  mt={2}
-                  style={{ flexShrink: 0 }}
-                >
-                  {index + 1}
-                </Badge>
-                <Title order={3} size="h4">
-                  {stage.title}
-                </Title>
-              </Group>
-              <Text size="sm">{stage.text}</Text>
-            </Stack>
-          </Paper>
+            <div className={classes.stageHeader}>
+              <span className={classes.number}>
+                <VisuallyHidden>Step </VisuallyHidden>
+                {index + 1}
+                {index < active && <VisuallyHidden>, completed</VisuallyHidden>}
+              </span>
+              <Title order={3} size="h4" className={classes.stageTitle}>
+                {stage.title}
+              </Title>
+            </div>
+            <Text size="sm" className={classes.description}>
+              {stage.text}
+            </Text>
+          </li>
         ))}
-      </SimpleGrid>
+      </ol>
       <Accordion variant="contained">
         <Accordion.Item value="rules">
           <Accordion.Control>
