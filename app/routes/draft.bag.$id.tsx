@@ -73,7 +73,7 @@ export function headers() {
 
 export function meta() {
   return [
-    { title: "Bag draft · TI4 Draft Command" },
+    { title: "Bag draft · TI4 Foundry" },
     { name: "robots", content: "noindex, nofollow" },
     { name: "referrer", content: "no-referrer" },
   ];

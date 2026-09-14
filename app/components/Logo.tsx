@@ -5,7 +5,7 @@ export function Logo() {
   return (
     <span className={classes.logo}>
       <img
-        src={appPath("/brand/ti4-draft-command-gold.png")}
+        src={appPath("/brand/ti4-foundry-gold.png")}
         width={52}
         height={52}
         alt=""
@@ -15,7 +15,7 @@ export function Logo() {
           Twilight Imperium · Fourth Edition
         </span>
         <span className={classes.name}>
-          TI4 <span>Draft Command</span>
+          TI4 <span>Foundry</span>
         </span>
       </span>
     </span>

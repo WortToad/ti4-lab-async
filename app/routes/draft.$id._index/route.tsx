@@ -721,7 +721,7 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData: data }) => {
   const typed = data as LoaderData | undefined;
   if (!typed?.data)
     return [
-      { title: "Draft lobby · TI4 Draft Command" },
+      { title: "Draft lobby · TI4 Foundry" },
       { name: "robots", content: "noindex, nofollow" },
     ];
 
@@ -731,8 +731,8 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData: data }) => {
   const draftType = draft.settings?.type || "Unknown";
   const playerCount = draft.players?.length || 0;
   const draftTypeDisplay = formatDraftType(draftType, playerCount);
-  const title = `${draftId} - TI4 Draft Command`;
-  const description = `${draftTypeDisplay} on TI4 Draft Command`;
+  const title = `${draftId} - TI4 Foundry`;
+  const description = `${draftTypeDisplay} on TI4 Foundry`;
 
   return [
     { title },

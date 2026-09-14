@@ -58,7 +58,7 @@ export function MainAppShell({ children }: Props) {
           <Link
             to="/"
             className={classes.brand}
-            aria-label="TI4 Draft Command home"
+            aria-label="TI4 Foundry home"
           >
             <Logo />
           </Link>
@@ -90,7 +90,7 @@ export function MainAppShell({ children }: Props) {
         onClose={() => setOpened(false)}
         position="right"
         size="sm"
-        title="Draft Command"
+        title="TI4 Foundry"
         id="mobile-drawer"
       >
         <Stack gap="lg">
@@ -113,7 +113,7 @@ export function MainAppShell({ children }: Props) {
       <footer className={classes.footer}>
         <div className={classes.footerInner}>
           <div>
-            <span className={classes.footerBrand}>TI4 Draft Command</span>
+            <span className={classes.footerBrand}>TI4 Foundry</span>
             <p>Fleets gather. Treaties falter. Mecatol Rex waits.</p>
           </div>
           <Group gap="xl">

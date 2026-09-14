@@ -34,10 +34,10 @@ export default function Draft() {
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "TI4 Draft Command Draft" },
+    { title: "TI4 Foundry Draft" },
     {
       name: "description",
-      content: "TI4 Draft Command, for drafting and map creation.",
+      content: "TI4 Foundry, for drafting and map creation.",
     },
   ];
 };

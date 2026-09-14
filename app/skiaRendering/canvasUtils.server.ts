@@ -137,8 +137,9 @@ export function drawBranding(
     ctx.fillStyle = "#E8BC58";
     ctx.textBaseline = "middle";
     ctx.textAlign = "left";
+    const brandName = "TI4 Foundry";
     ctx.fillText(
-      "TI4 Draft Command",
+      brandName,
       logoX + logoSize + 12,
       logoY + logoSize / 2,
     );
@@ -146,7 +147,7 @@ export function drawBranding(
     // Draw URL inline with logo (for slices view)
     if (urlText && urlPosition === "inline") {
       // Draw vertical separator
-      const separatorX = logoX + logoSize + 345;
+      const separatorX = logoX + logoSize + ctx.measureText(brandName).width + 36;
       ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
       ctx.lineWidth = 1;
       ctx.beginPath();

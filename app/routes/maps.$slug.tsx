@@ -157,7 +157,7 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData: data }) => {
   if (!typed) return [];
 
   const { preset } = typed;
-  const title = `${preset.name} - TI4 Draft Command`;
+  const title = `${preset.name} - TI4 Foundry`;
   const description = preset.description
     ? `${preset.description} — by ${preset.author}`
     : `Map by ${preset.author}`;

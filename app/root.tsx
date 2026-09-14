@@ -36,13 +36,13 @@ import { commandTheme } from "./theme";
 import { SEARCH_ROBOTS } from "./utils/searchIndexing";
 
 export const meta = () => [
-  { title: "TI4 Draft Command" },
+  { title: "TI4 Foundry" },
   {
     name: "description",
     content:
-      "TI4 Draft Command — Twilight Imperium 4 drafting and map building.",
+      "TI4 Foundry — Twilight Imperium 4 drafting and map building.",
   },
-  { property: "og:title", content: "TI4 Draft Command" },
+  { property: "og:title", content: "TI4 Foundry" },
   {
     property: "og:description",
     content: "Twilight Imperium 4 drafting and map building.",
@@ -90,40 +90,40 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* Keep this outside route metadata so child routes cannot replace it. */}
         <meta name="robots" content={SEARCH_ROBOTS} />
-        <meta name="application-name" content="TI4 Draft Command" />
+        <meta name="application-name" content="TI4 Foundry" />
         <link
           rel="icon"
           type="image/png"
           sizes="any"
-          href={appPath("/brand/ti4-draft-command-gold.png")}
+          href={appPath("/brand/ti4-foundry-gold.png")}
         />
         <link
           rel="apple-touch-icon"
-          href={appPath("/brand/ti4-draft-command-gold.png")}
+          href={appPath("/brand/ti4-foundry-gold.png")}
         />
-        <link rel="manifest" href={appPath("/site.webmanifest?v=5")} />
+        <link rel="manifest" href={appPath("/site.webmanifest?v=7")} />
         <meta name="theme-color" content="#071321" />
         <meta name="msapplication-TileColor" content="#071321" />
-        <meta property="og:site_name" content="TI4 Draft Command" />
+        <meta property="og:site_name" content="TI4 Foundry" />
         <meta
           property="og:image"
-          content={appUrl("/brand/ti4-draft-command-gold.png")}
+          content={appUrl("/brand/ti4-foundry-gold.png")}
         />
         <meta property="og:image:type" content="image/png" />
         <meta property="og:image:width" content="1920" />
         <meta property="og:image:height" content="1920" />
         <meta
           property="og:image:alt"
-          content="TI4 Draft Command pixel-art crest"
+          content="TI4 Foundry pixel-art crest"
         />
         <meta name="twitter:card" content="summary" />
         <meta
           name="twitter:image"
-          content={appUrl("/brand/ti4-draft-command-gold.png")}
+          content={appUrl("/brand/ti4-foundry-gold.png")}
         />
         <meta
           name="twitter:image:alt"
-          content="TI4 Draft Command pixel-art crest"
+          content="TI4 Foundry pixel-art crest"
         />
         <Meta />
         <Links />

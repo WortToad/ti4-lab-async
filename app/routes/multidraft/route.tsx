@@ -97,10 +97,10 @@ export default function MultiDraft() {
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "TI4 Draft Command Multidraft" },
+    { title: "TI4 Foundry Multidraft" },
     {
       name: "description",
-      content: "TI4 Draft Command, for drafting and map creation.",
+      content: "TI4 Foundry, for drafting and map creation.",
     },
   ];
 };

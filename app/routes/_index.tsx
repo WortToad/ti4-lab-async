@@ -37,7 +37,7 @@ import { appPath } from "~/utils/appUrl";
 import classes from "~/components/Home.module.css";
 
 export const meta = () => [
-  { title: "TI4 Draft Command · Mecatol Rex awaits" },
+  { title: "TI4 Foundry · Mecatol Rex awaits" },
   {
     name: "description",
     content:

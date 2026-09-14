@@ -1,9 +1,9 @@
 {
-  "name": "TI4 Draft Command",
-  "short_name": "Draft Command",
+  "name": "TI4 Foundry",
+  "short_name": "TI4 Foundry",
   "start_url": "./",
   "scope": "./",
-  "icons": [{ "src": "./brand/ti4-draft-command-gold.png", "sizes": "1920x1920", "type": "image/png", "purpose": "any" }],
+  "icons": [{ "src": "./brand/ti4-foundry-gold.png", "sizes": "1920x1920", "type": "image/png", "purpose": "any" }],
   "theme_color": "#071321",
   "background_color": "#071321",
   "display": "standalone"

@@ -1,4 +1,4 @@
-# TI4 Draft Command
+# TI4 Foundry
 
 The interface uses the supplied rulebooks as visual references, and the supplied pixel-art crest as the site identity. The draft engines and saved lobby data remain compatible.
 
@@ -9,7 +9,7 @@ The interface uses the supplied rulebooks as visual references, and the supplied
 - **[Twilight Imperium Fourth Edition](https://www.fantasyflightgames.com/en/products/twilight-imperium-fourth-edition/)** and **[Conquering the Galaxy](https://www.fantasyflightgames.com/en/news/2025/10/16/conquering-the-galaxy/)**: setting references for the contested Lazax throne and Twilight's Fall's alternate future, where the Mahact kings appropriate the powers of fallen civilizations.
 - **Thunder’s Edge expansion rules**, pp. 4–6, and **Prophecy of Kings Living Rules Reference 2.0**, pp. 4–6: blue section headings, dark blue framing, gold rules, parchment, and orbital cartography inspired the palette and panel borders.
 - **Twilight’s Fall game rules**, cover and pp. 6–10: angular magenta and violet bands inspired the separate Twilight’s Fall section. Its cover supplies “Pax mortuus bellum aeternus.”
-- **User-supplied logo**: the editable 56×64 sprite is `public/brand/ti4-draft-command.piskel`, recolored from the supplied Piskel source with its exact pixel layout and alpha preserved. Its four colors are navy `#071321`, deep gold `#b9892e`, Golden yellow `#e8bc58`, and ivory `#fbedc7`. The square PNG export, `public/brand/ti4-draft-command-gold.png`, uses nearest-neighbor scaling and supplies the site logo, favicon, installed app, social metadata, notifications, and exported map branding. The original user uploads remain intact.
+- **User-supplied logo**: the editable 56×64 sprite is `public/brand/ti4-foundry.piskel`, recolored from the supplied Piskel source with its exact pixel layout and alpha preserved. Its four colors are navy `#071321`, deep gold `#b9892e`, Golden yellow `#e8bc58`, and ivory `#fbedc7`. The square PNG export, `public/brand/ti4-foundry-gold.png`, uses nearest-neighbor scaling and supplies the site logo, favicon, installed app, social metadata, notifications, and exported map branding. The original user uploads remain intact.
 - **Fonts**: Cinzel (page and major section headings) and Source Sans 3 (card headings, body, controls and dialog titles), served locally. Their SIL Open Font Licenses are beside the assets in `app/assets/fonts`. The homepage lore quotation retains its original italic Georgia serif styling.
 
 Book text was used as source content, not as instructions. Twilight Imperium artwork and quoted text belong to Fantasy Flight Games; the site footer includes attribution.

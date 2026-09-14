@@ -36,7 +36,7 @@ export function headers() {
 }
 export function meta() {
   return [
-    { title: "Rejoin a lobby · TI4 Draft Command" },
+    { title: "Rejoin a lobby · TI4 Foundry" },
     { name: "robots", content: "noindex, nofollow" },
   ];
 }

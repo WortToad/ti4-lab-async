@@ -19,12 +19,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   if (lobby && !lobby.started)
     return data(
       {
-        title: `${draftId} - TI4 Draft Command lobby`,
+        title: `${draftId} - TI4 Foundry lobby`,
         description: "Enter your name to join and wait for the admin to start.",
         url: appUrl(`/draft/${draftId}`),
         type: "website",
-        siteName: "TI4 Draft Command",
-        image: appUrl("/brand/ti4-draft-command-gold.png"),
+        siteName: "TI4 Foundry",
+        image: appUrl("/brand/ti4-foundry-gold.png"),
       },
       { headers: { "Cache-Control": "no-store" } },
     );
@@ -36,12 +36,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   const draftTypeDisplay = formatDraftType(draftType, playerCount);
 
   return data({
-    title: `${draftId} - TI4 Draft Command`,
-    description: `${draftTypeDisplay} on TI4 Draft Command`,
-    image: appUrl("/brand/ti4-draft-command-gold.png"),
+    title: `${draftId} - TI4 Foundry`,
+    description: `${draftTypeDisplay} on TI4 Foundry`,
+    image: appUrl("/brand/ti4-foundry-gold.png"),
     url: appUrl(`/draft/${draftId}`),
     type: "website",
-    siteName: "TI4 Draft Command",
+    siteName: "TI4 Foundry",
   });
 };
 

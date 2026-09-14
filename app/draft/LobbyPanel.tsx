@@ -244,7 +244,7 @@ export function LobbyPanel({
           storageKey={storageKey}
           onDownload={() =>
             downloadLobbyFile(
-              `TI4 Draft Command — player private key\nPlayer: ${ownSlot?.name || "Joined player"}\n\n${lobby.ownUuid}\n\nLobby: ${lobbyUrl}\nUse this key as your recovery code to rejoin your draft.\nKeep it private. Anyone with it can act as you in this lobby.\n`,
+              `TI4 Foundry — player private key\nPlayer: ${ownSlot?.name || "Joined player"}\n\n${lobby.ownUuid}\n\nLobby: ${lobbyUrl}\nUse this key as your recovery code to rejoin your draft.\nKeep it private. Anyone with it can act as you in this lobby.\n`,
               `ti4-${mode}-player-${lobbyId}.txt`,
             )
           }

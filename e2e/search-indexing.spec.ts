@@ -9,6 +9,7 @@ test("pages, assets, redirects and API responses exclude search indexing", async
     ["/ti4/map-generator", 200],
     ["/ti4/draft/prechoice", 200],
     ["/ti4/draft/rejoin", 200],
+    ["/ti4/brand/ti4-foundry-gold.png", 200],
     ["/ti4/brand/ti4-draft-command-gold.png", 200],
     ["/ti4/does-not-exist", 404],
   ] as const) {
