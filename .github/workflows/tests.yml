@@ -15,7 +15,7 @@ jobs:
           node-version-file: .nvmrc
           cache: yarn
       - run: yarn install --frozen-lockfile
-      - run: yarn playwright install --with-deps chromium
+      - run: yarn playwright install --with-deps chromium firefox webkit
       - run: yarn build
       - run: yarn typecheck
       - run: yarn lint

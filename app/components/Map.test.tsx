@@ -7,6 +7,27 @@ import { getPlaceableTileIndices } from "~/utils/texasMapBuild";
 import { Map, MAP_INTERACTIONS, type MapInteractions } from "./Map";
 
 describe("draft map placement controls", () => {
+  it("does not offer an occupied home seat to the next player", () => {
+    const map = generateEmptyMap(draftConfig.milty);
+    const homes = map.filter((tile) => tile.type === "HOME");
+    homes[0].playerId = 0;
+    const html = renderToStaticMarkup(
+      <MantineProvider>
+        <Map
+          id="seat-test"
+          map={map}
+          modifiableMapTiles={[]}
+          interactions={{ ...MAP_INTERACTIONS.readonly, allowHomeSelect: true }}
+          onSelectHomeTile={() => undefined}
+        />
+      </MantineProvider>,
+    );
+    expect(html).not.toContain(
+      `aria-label="Choose seat ${homes[0].seat! + 1}"`,
+    );
+    for (const home of homes.slice(1))
+      expect(html).toContain(`aria-label="Choose seat ${home.seat! + 1}"`);
+  });
   it.each(Object.values(draftConfig))(
     "exposes only legal placements on $type, including when drag and drop is disabled",
     (config) => {

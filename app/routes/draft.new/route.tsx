@@ -27,6 +27,7 @@ import { ConnectedFactionSettingsModal } from "./components/ConnectedFactionSett
 import { createDraftOrder } from "~/utils/draftOrder.server";
 import { OriginalArtToggle } from "~/components/OriginalArtToggle";
 import { getDraftValidationErrors } from "~/utils/draftValidation";
+import { draftConfig } from "~/draft/draftConfig";
 
 export default function DraftNew() {
   const clearPreview = useDraftPreview();
@@ -173,36 +174,60 @@ export default function DraftNew() {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const body = (await request.json()) as DraftInput;
   const jsonResponse = request.headers.get("X-Draft-Response") === "json";
-  const errors = getDraftValidationErrors(body);
-  if (errors.length > 0) {
-    if (jsonResponse) return data({ error: errors.join(" ") }, { status: 400 });
-    throw new Response(errors.join("\n"), { status: 400 });
-  }
+  let draft: Draft;
+  let presetUrl: string | undefined;
+  try {
+    const body = (await request.json()) as DraftInput;
+    if (
+      !body ||
+      !body.settings ||
+      !Object.hasOwn(draftConfig, body.settings.type) ||
+      !Array.isArray(body.players) ||
+      body.players.length !== draftConfig[body.settings.type].numPlayers ||
+      body.players.some(
+        (player) =>
+          !player ||
+          !Number.isInteger(player.id) ||
+          typeof player.name !== "string",
+      ) ||
+      new Set(body.players.map((player) => player.id)).size !==
+        body.players.length
+    )
+      throw new Error(
+        "The draft preview is invalid. Regenerate the preview and try again.",
+      );
+    const errors = getDraftValidationErrors(body);
+    if (errors.length > 0) throw new Error(errors.join(" "));
 
-  const presetUrl = body.presetUrl;
-  delete body.presetUrl;
+    presetUrl = body.presetUrl;
+    delete body.presetUrl;
 
-  const draft: Draft = {
-    ...body,
-    ...createDraftOrder({
-      players: body.players,
-      settings: body.settings,
-      availableFactions: body.availableFactions,
-      presetMap: body.presetMap,
-      texasDraft: body.texasDraft,
-      slices: body.slices,
-      availableMinorFactions: body.availableMinorFactions,
-    }),
-  };
+    draft = {
+      ...body,
+      ...createDraftOrder({
+        players: body.players,
+        settings: body.settings,
+        availableFactions: body.availableFactions,
+        presetMap: body.presetMap,
+        texasDraft: body.texasDraft,
+        slices: body.slices,
+        availableMinorFactions: body.availableMinorFactions,
+      }),
+    };
 
-  // The generated private hands can be more restrictive than the source pool.
-  const dealtErrors = getDraftValidationErrors(draft);
-  if (dealtErrors.length > 0) {
-    if (jsonResponse)
-      return data({ error: dealtErrors.join(" ") }, { status: 400 });
-    throw new Response(dealtErrors.join("\n"), { status: 400 });
+    // The generated private hands can be more restrictive than the source pool.
+    const dealtErrors = getDraftValidationErrors(draft);
+    if (dealtErrors.length > 0) throw new Error(dealtErrors.join(" "));
+  } catch (error) {
+    const message =
+      error instanceof Error &&
+      !(error instanceof TypeError) &&
+      !(error instanceof SyntaxError)
+        ? error.message
+        : "The draft preview could not be read. Regenerate the preview and try again.";
+    if (jsonResponse) return data({ error: message }, { status: 400 });
+    throw new Response(message, { status: 400 });
   }
 
   const { prettyUrl, id, adminUuid } = await createDraft(draft, presetUrl);

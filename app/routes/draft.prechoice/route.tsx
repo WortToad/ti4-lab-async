@@ -30,7 +30,7 @@ import {
   Link,
 } from "react-router";
 import { IconFile, IconInfoCircle, IconPlayerPlay } from "@tabler/icons-react";
-import { useDisclosure } from "@mantine/hooks";
+import { useDisclosure, useMounted } from "@mantine/hooks";
 import {
   SliceSettingsModal,
   DEFAULT_SLICE_SETTINGS,
@@ -62,6 +62,7 @@ import {
 } from "~/draft/twilightsFall/pools";
 
 export default function DraftPrechoice() {
+  const mounted = useMounted();
   const location = useLocation();
   const navigate = useNavigate();
   const submit = useSubmit();
@@ -653,7 +654,7 @@ export default function DraftPrechoice() {
                 leftSection={<IconPlayerPlay />}
                 className={buttonClasses.primaryCta}
                 loading={navigation.state !== "idle"}
-                disabled={texasErrors.length > 0}
+                disabled={!mounted || texasErrors.length > 0}
               >
                 {draftMode === "texasStyle"
                   ? "Create shared lobby"

@@ -1,5 +1,6 @@
 import { test, expect, type Page, type BrowserContext } from "@playwright/test";
 import { BAG_VARIANTS } from "../app/draft/bag/rules";
+import { exerciseAdminControls } from "./admin-controls";
 
 const prefix = "/ti4";
 async function miniPreview(page: Page) {
@@ -30,7 +31,7 @@ for (const [name, path, heading] of [
   [
     "Twilight's Fall",
     "/draft/prechoice?format=twilight&playerCount=3",
-    "Milty",
+    "Twilight",
   ],
   ["Franken", "/draft/bag/new?variant=franken&playerCount=3", "Franken"],
   [
@@ -145,12 +146,37 @@ for (const { id, name } of BAG_VARIANTS.filter(
   });
 }
 
+test("draft setup waits for scripts before enabling preview", async ({ page }) => {
+  let releaseScripts!: () => void;
+  const scriptsReady = new Promise<void>((resolve) => { releaseScripts = resolve; });
+  await page.route("**/assets/*.js", async (route) => {
+    await scriptsReady;
+    await route.continue();
+  });
+  try {
+    await page.goto(`${prefix}/draft/prechoice?format=twilight&playerCount=3`, {
+      waitUntil: "commit",
+    });
+    const preview = page.getByRole("button", { name: "Preview draft", exact: true });
+    await expect(preview).toBeVisible();
+    await expect(preview).toBeDisabled();
+    releaseScripts();
+    await preview.click();
+    await expect(page.getByRole("heading", { name: "Review your draft", exact: true }))
+      .toBeVisible();
+  } finally {
+    releaseScripts();
+  }
+});
+
 for (const mode of ["base", "texas", "bag", "raw", "mantis"] as const) {
-  test(`${mode} players join, start, recover on a new device, and pause/resume`, async ({
+  test(`${mode} players join, recover, and use every lobby admin operation`, async ({
     page,
     browser,
-  }) => {
+  }, testInfo) => {
+    test.setTimeout(120_000);
     const contexts: BrowserContext[] = [];
+    const players: Page[] = [];
     const count = mode === "mantis" ? 4 : 3;
     try {
       if (mode === "base") await miniPreview(page);
@@ -178,9 +204,10 @@ for (const mode of ["base", "texas", "bag", "raw", "mantis"] as const) {
       const lobbyUrl = page.url();
       let recoveryCode = "";
       for (let index = 0; index < count; index++) {
-        const context = await browser.newContext();
+        const context = await browser.newContext(testInfo.project.use);
         contexts.push(context);
         const guest = await context.newPage();
+        players.push(guest);
         await guest.goto(lobbyUrl);
         await guest
           .getByRole("textbox", { name: "Your name", exact: true })
@@ -213,7 +240,7 @@ for (const mode of ["base", "texas", "bag", "raw", "mantis"] as const) {
         page.getByText("Draft started", { exact: true }),
       ).toBeVisible();
 
-      const recoveryContext = await browser.newContext();
+      const recoveryContext = await browser.newContext(testInfo.project.use);
       contexts.push(recoveryContext);
       const recovered = await recoveryContext.newPage();
       await recovered.goto(`${new URL(lobbyUrl).origin}${prefix}/draft/rejoin`);
@@ -273,6 +300,12 @@ for (const mode of ["base", "texas", "bag", "raw", "mantis"] as const) {
       await expect(
         page.getByRole("button", { name: "Pause draft", exact: true }),
       ).toBeHidden();
+      await exerciseAdminControls(
+        mode,
+        page,
+        [recovered, ...players.slice(1)],
+        recoveryCode,
+      );
     } finally {
       await Promise.all(contexts.map((context) => context.close()));
     }

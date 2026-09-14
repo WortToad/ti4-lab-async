@@ -31,7 +31,7 @@ const app = express();
 if (process.env.NODE_ENV === "production") app.set("trust proxy", 1);
 const basePath = normalizeBasePath(process.env.TI4_BASE_PATH);
 const buildDirectory = resolve(process.env.TI4_BUILD_DIRECTORY || "build");
-const httpServer = createServer(app);
+export const httpServer = createServer(app);
 
 // Apply before static files, redirects, API handlers and error responses.
 app.use((_req, res, next) => {

@@ -446,7 +446,12 @@ export async function actRawRoom({ request, params }: ActionFunctionArgs) {
             );
           } else if (intent === "undo" || intent === "undoAction") {
             checkpoint(room, "Recovery point before undo");
+            const names = new Map(
+              room.draft.players.map((p) => [p.id, p.name]),
+            );
             room.draft = undoRawAction(room.draft);
+            for (const player of room.draft.players)
+              player.name = names.get(player.id)!;
             room.lobby.paused = true;
           } else if (
             intent === "restoreCheckpoint" ||

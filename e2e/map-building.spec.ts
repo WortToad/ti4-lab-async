@@ -6,6 +6,7 @@ import {
   type Page,
 } from "@playwright/test";
 import { mapConfigs } from "../app/mapgen/mapConfigs";
+import { reloadSettledPage } from "./browser-navigation";
 
 const prefix = "/ti4";
 async function openMapTools(page: Page) {
@@ -28,6 +29,21 @@ async function menuItem(page: Page, menu: string, item: string) {
   await page.getByRole("button", { name: menu, exact: true }).click();
   await page.getByRole("menuitem", { name: item, exact: true }).click();
 }
+
+test("map warnings leave import dialog buttons usable on a small screen", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 664 });
+  const map = Array.from({ length: 36 }, (_, index) =>
+    index < 2 ? "83A" : index % 9 === 0 ? `H${index / 9}` : String(19 + index),
+  ).join(",");
+  await page.goto(`${prefix}/map-generator?map=${encodeURIComponent(map)}`);
+  await openMapTools(page);
+  await expect(page.getByRole("alert").filter({ hasText: "Duplicate hyperlanes detected" }))
+    .toBeVisible();
+  await menuItem(page, "Import & export", "Map strings");
+  const dialog = page.getByRole("dialog", { name: "Map String Import / Export", exact: true });
+  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(dialog).toBeHidden();
+});
 
 test("map spaces support keyboard editing, closing, resizing and redo", async ({
   page,
@@ -189,6 +205,10 @@ test("map imports reject invalid input, preserve edits on failure and recover af
     page.getByText("This is not a valid TTPG map string", { exact: true }),
   ).toBeVisible();
   expect(await savedMap(page)).toBe(original);
+  // On small viewports the notification can cover the retry button. Dismiss it
+  // through its visible close control before submitting the corrected value.
+  await page.getByRole("alert").filter({ hasText: "Invalid input" })
+    .getByRole("button").click();
   await dialog.getByPlaceholder("Paste a TTPG map string…").fill(exported);
   await dialog
     .getByRole("button", { name: "Import TTPG Map", exact: true })
@@ -239,7 +259,10 @@ test("map imports reject invalid input, preserve edits on failure and recover af
 async function submit(page: Page, button: Locator, confirm = false) {
   if (confirm) {
     await button.click();
-    const dialog = page.getByRole("dialog");
+    const dialog = page.getByRole("dialog", {
+      name: "Confirm choice",
+      exact: true,
+    });
     await expect(dialog).toBeVisible();
     button = dialog.getByRole("button", { name: "Confirm", exact: true });
   }
@@ -300,7 +323,7 @@ for (const mode of ["raw", "mantis"] as const) {
       ).toBeVisible();
       if (mode === "raw") {
         for (const [index, player] of players.entries()) {
-          await player.reload();
+          await reloadSettledPage(player);
           await submit(
             player,
             player.getByRole("button", {
@@ -319,7 +342,7 @@ for (const mode of ["raw", "mantis"] as const) {
       while (!complete && actions < 100) {
         let acted = false;
         for (const player of players) {
-          await player.reload();
+          await reloadSettledPage(player);
           if (
             await player
               .getByRole("textbox", { name: "Async map string", exact: true })
@@ -368,14 +391,14 @@ for (const mode of ["raw", "mantis"] as const) {
       }
       expect(complete).toBe(true);
       expect(actions).toBeGreaterThan(count * 4);
-      await page.reload();
+      await reloadSettledPage(page);
       const exported = await page
         .getByRole("textbox", { name: "Async map string", exact: true })
         .inputValue();
       expect(exported).not.toContain("undefined");
       expect(exported.split(/\s+/)).toHaveLength(36);
       for (const player of players) {
-        await player.reload();
+        await reloadSettledPage(player);
         await expect(
           player.getByRole("textbox", {
             name: "Async map string",

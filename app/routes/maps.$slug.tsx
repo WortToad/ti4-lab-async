@@ -9,6 +9,7 @@ import {
 import {
   presetMapBySlug,
   incrementPresetMapViews,
+  hasLikedPresetMap,
   TechSkipsData,
 } from "~/drizzle/presetMap.server";
 import {
@@ -19,7 +20,8 @@ import {
   IconSparkles,
   IconArrowLeft,
 } from "@tabler/icons-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { getRequestIp } from "~/utils/requestIp.server";
 import { decodeMapString } from "~/mapgen/utils/mapStringCodec";
 import { Map, MAP_INTERACTIONS } from "~/components/Map";
 import { buildPresetDraftState } from "~/mapgen/utils/presetDraft";
@@ -133,15 +135,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   // Increment views
   const views = await incrementPresetMapViews(preset.id);
 
-  // Get client IP for like status (simplified - in production use proper IP detection)
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("cf-connecting-ip") ??
-    "unknown";
-
   return {
     preset: { ...preset, views },
-    ip,
+    liked: hasLikedPresetMap(preset.id, getRequestIp(request)),
   };
 };
 
@@ -180,14 +176,19 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData: data }) => {
 };
 
 export default function MapDetail() {
-  const { preset } = useLoaderData<typeof loader>();
+  const { preset, liked } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
   const [stats, setStats] = useState({
     likes: preset.likes,
     views: preset.views,
-    liked: false,
+    liked,
   });
+  const likePending = useRef(false);
+  const [liking, setLiking] = useState(false);
+  useEffect(() => {
+    setStats({ likes: preset.likes, views: preset.views, liked });
+  }, [preset.id, preset.likes, preset.views, liked]);
 
   const decoded = useMemo(() => {
     return decodeMapString(preset.mapString);
@@ -222,20 +223,42 @@ export default function MapDetail() {
     [decoded],
   );
   const handleLike = async () => {
-    const response = await fetch(
-      appPath(`/api/preset-maps/${preset.id}/like`),
-      {
-        method: "POST",
-      },
-    );
-    const result = await response.json().catch(() => null);
-    if (!result?.success) return;
+    if (likePending.current || stats.liked) return;
+    likePending.current = true;
+    setLiking(true);
+    try {
+      const response = await fetch(
+        appPath(`/api/preset-maps/${preset.id}/like`),
+        {
+          method: "POST",
+        },
+      );
+      const result = await response.json().catch(() => null);
+      if (
+        !response.ok ||
+        !result?.success ||
+        !Number.isInteger(result.likes) ||
+        result.likes < 0 ||
+        result.liked !== true
+      )
+        throw new Error("Invalid like response");
 
-    setStats((prev) => ({
-      ...prev,
-      likes: result.likes ?? prev.likes,
-      liked: result.liked ?? prev.liked,
-    }));
+      setStats((prev) => ({
+        ...prev,
+        likes: result.likes,
+        liked: true,
+      }));
+    } catch {
+      notifications.show({
+        title: "Unable to like map",
+        message:
+          "Your like was not confirmed. Check your connection and try again.",
+        color: "red",
+      });
+    } finally {
+      likePending.current = false;
+      setLiking(false);
+    }
   };
 
   const handleStartDraft = () => {
@@ -382,6 +405,10 @@ export default function MapDetail() {
                 </div>
                 <div className={classes.statItem}>
                   <ActionIcon
+                    aria-label={stats.liked ? "Map liked" : "Like map"}
+                    aria-pressed={stats.liked}
+                    loading={liking}
+                    disabled={liking || stats.liked}
                     variant="subtle"
                     color={stats.liked ? "red" : "gray"}
                     className={classes.heartButton}

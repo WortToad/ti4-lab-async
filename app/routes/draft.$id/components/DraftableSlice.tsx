@@ -36,7 +36,14 @@ export function DraftableSlice({
 
   const selectionButton =
     !player && onSelect ? (
-      <Button lh={1} py={6} px={10} h="auto" onMouseDown={onSelect} variant="filled">
+      <Button
+        lh={1}
+        py={6}
+        px={10}
+        h="auto"
+        onClick={onSelect}
+        variant="filled"
+      >
         Select
       </Button>
     ) : null;
@@ -47,7 +54,8 @@ export function DraftableSlice({
         {onRandomizeSlice && (
           <Button
             size="xs"
-            onMouseDown={onRandomizeSlice}
+            onClick={onRandomizeSlice}
+            aria-label={`Regenerate ${slice.name}`}
             color="gray.7"
             variant="filled"
           >
@@ -55,7 +63,12 @@ export function DraftableSlice({
           </Button>
         )}
         {onClearSlice && (
-          <Button size="xs" onMouseDown={onClearSlice} variant="filled" color="red.9">
+          <Button
+            size="xs"
+            onClick={onClearSlice}
+            variant="filled"
+            color="red.9"
+          >
             Clear
           </Button>
         )}

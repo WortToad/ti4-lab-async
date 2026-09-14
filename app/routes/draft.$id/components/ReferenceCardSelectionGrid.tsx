@@ -89,7 +89,7 @@ export function ReferenceCardSelectionGrid({
                 >
                   <Button
                     size="compact-xs"
-                    onMouseDown={(e) => {
+                    onClick={(e) => {
                       e.stopPropagation();
                       onSelectCard(factionId);
                     }}

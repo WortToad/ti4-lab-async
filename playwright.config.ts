@@ -11,7 +11,8 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   reporter: process.env.CI ? "github" : "list",
   use: {
-    baseURL: `http://127.0.0.1:${port}`,
+    baseURL: `https://127.0.0.1:${port}`,
+    ignoreHTTPSErrors: true,
     serviceWorkers: "block",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
@@ -27,10 +28,23 @@ export default defineConfig({
         hasTouch: true,
       },
     },
+    {
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
+      testMatch:
+        /(?:flows|map-building|map-recovery|standard-completion)\.spec\.ts$/,
+    },
+    {
+      name: "webkit-mobile",
+      use: { ...devices["iPhone 13"] },
+      testMatch:
+        /(?:flows|map-building|map-recovery|standard-completion)\.spec\.ts$/,
+    },
   ],
   webServer: {
     command: "node --import tsx scripts/test-server.ts",
-    url: `http://127.0.0.1:${port}/health`,
+    url: `https://127.0.0.1:${port}/health`,
+    ignoreHTTPSErrors: true,
     reuseExistingServer: false,
     gracefulShutdown: { signal: "SIGTERM", timeout: 5000 },
     timeout: 120_000,

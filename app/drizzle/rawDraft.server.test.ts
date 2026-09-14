@@ -345,6 +345,68 @@ test("releasing and rotating a UUID revoke former device access and never undo i
   ).toContain("Another player");
 });
 
+test.each(["rename", "replace"] as const)(
+  "admin undo preserves the current player name after %s",
+  async (change) => {
+    const room = await started();
+    const oldUuid = (await view(room.id, room.cookies[0])).data.lobby.ownUuid!;
+    const manage = async (fields: Record<string, string>) => {
+      const result = await post(
+        room.id,
+        {
+          ...fields,
+          revision: String(service.getRawRoom(room.id).revision),
+        },
+        room.admin,
+      );
+      expect(result.data.error).toBeNull();
+    };
+    expect(
+      (
+        await post(
+          room.id,
+          {
+            intent: "pick",
+            revision: "5",
+            playerId: "0",
+            action: JSON.stringify({
+              type: "chooseFaction",
+              playerId: 0,
+              factionId: "sol",
+            }),
+          },
+          room.cookies[0],
+        )
+      ).data.error,
+    ).toBeNull();
+    if (change === "rename") {
+      await manage({ intent: "rename", playerId: "0", name: "New captain" });
+    } else {
+      await manage({ intent: "release", playerId: "0" });
+      expect(
+        (await post(room.id, { intent: "join", name: "New captain" })).data
+          .error,
+      ).toBeNull();
+    }
+    const currentUuid = (await view(room.id, room.admin)).data.lobby.slots[0]
+      .uuid;
+    await manage({ intent: "undoAction" });
+    const restored = (await view(room.id, room.admin)).data;
+    expect(restored.draft!.factions[0]).toBeUndefined();
+    expect(restored.lobby.paused).toBe(true);
+    expect(restored.lobby.slots[0]).toMatchObject({
+      name: "New captain",
+      uuid: currentUuid,
+    });
+    expect(restored.draft!.players[0].name).toBe("New captain");
+    expect(
+      service.getRawRoom(room.id).room.draft.settings.players[0].name,
+    ).toBe("New captain");
+    if (change === "replace")
+      expect(service.findRawRecovery(oldUuid)).toBeUndefined();
+  },
+);
+
 test("cookie scope covers data requests and atomic saves reject stale updates", async () => {
   const room = service.createRawRoom(settings);
   const cookie = await service

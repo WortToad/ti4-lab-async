@@ -156,6 +156,7 @@ export function Map({
             const canSelectHome =
               interactions.allowHomeSelect &&
               tile.type === "HOME" &&
+              tile.playerId === undefined &&
               !!onSelectHomeTile;
             const shouldProvideSelect =
               (closeTileMode && !!onToggleTileClosed) ||

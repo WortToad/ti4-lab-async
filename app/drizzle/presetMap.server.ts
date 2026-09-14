@@ -95,48 +95,51 @@ export async function createPresetMap(input: {
   mapConfigId: string;
 }): Promise<PresetMapRecord> {
   const id = uuidv4();
-  const baseSlug = generateSlug(input.name);
-
-  // Check if slug exists, append number if needed
-  let slug = baseSlug;
-  let counter = 1;
-  while (true) {
-    const existing = await db
-      .select({ id: presetMaps.id })
-      .from(presetMaps)
-      .where(eq(presetMaps.slug, slug))
-      .limit(1);
-
-    if (existing.length === 0) break;
-    slug = `${baseSlug}-${counter}`;
-    counter++;
-  }
-
-  // Compute map statistics
+  const baseSlug = generateSlug(input.name) || "map";
   const stats = computeMapStats(input.mapString);
 
-  await db.insert(presetMaps).values({
-    id,
-    slug,
-    name: input.name,
-    description: input.description,
-    author: input.author,
-    mapString: input.mapString,
-    mapConfigId: input.mapConfigId,
-    avgSliceValue: stats?.avgSliceValue ?? null,
-    totalResources: stats?.totalResources ?? null,
-    totalInfluence: stats?.totalInfluence ?? null,
-    legendaries: stats?.legendaries ?? null,
-    techSkips: stats?.techSkips ?? null,
+  // Reserve the slug and insert in one synchronous SQLite transaction, so
+  // simultaneous publishers cannot both claim the same available URL.
+  return db.transaction((tx) => {
+    let slug = baseSlug;
+    let counter = 1;
+    while (true) {
+      const existing = tx
+        .select({ id: presetMaps.id })
+        .from(presetMaps)
+        .where(eq(presetMaps.slug, slug))
+        .get();
+
+      if (!existing) break;
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    tx.insert(presetMaps)
+      .values({
+        id,
+        slug,
+        name: input.name,
+        description: input.description,
+        author: input.author,
+        mapString: input.mapString,
+        mapConfigId: input.mapConfigId,
+        avgSliceValue: stats?.avgSliceValue ?? null,
+        totalResources: stats?.totalResources ?? null,
+        totalInfluence: stats?.totalInfluence ?? null,
+        legendaries: stats?.legendaries ?? null,
+        techSkips: stats?.techSkips ?? null,
+      })
+      .run();
+
+    const result = tx
+      .select()
+      .from(presetMaps)
+      .where(eq(presetMaps.id, id))
+      .get();
+
+    return result as PresetMapRecord;
   });
-
-  const result = await db
-    .select()
-    .from(presetMaps)
-    .where(eq(presetMaps.id, id))
-    .limit(1);
-
-  return result[0] as PresetMapRecord;
 }
 
 export async function listPresetMaps(): Promise<PresetMapRecord[]> {
@@ -237,4 +240,12 @@ export async function likePresetMap(
 
     return { likes: current?.likes ?? 0, liked: true };
   });
+}
+
+export function hasLikedPresetMap(id: string, ip: string): boolean {
+  return !!db
+    .select({ id: presetMapLikes.id })
+    .from(presetMapLikes)
+    .where(and(eq(presetMapLikes.presetMapId, id), eq(presetMapLikes.ip, ip)))
+    .get();
 }

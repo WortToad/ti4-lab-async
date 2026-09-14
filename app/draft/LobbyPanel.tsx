@@ -35,6 +35,7 @@ import { LobbyPlayerKeyPrompt } from "./LobbyPlayerKeyPrompt";
 import { appUrl } from "~/utils/appUrl";
 import { StatusPill } from "~/ui/StatusPill";
 import classes from "./LobbyPanel.module.css";
+import { useMounted } from "@mantine/hooks";
 
 export type LobbyOperation =
   | { type: "join"; name: string; discordPlayerId?: number }
@@ -130,7 +131,7 @@ export function LobbyPanel({
   lobbyId,
   ownPlayerId,
   isAdmin,
-  busy = false,
+  busy: pending = false,
   error,
   exportState,
   playerOverview,
@@ -138,6 +139,10 @@ export function LobbyPanel({
   adminActions,
   onOperation,
 }: LobbyPanelProps) {
+  // Server-rendered controls must wait for their event handlers before accepting
+  // input; otherwise hydration can erase a name entered on a slow connection.
+  const mounted = useMounted();
+  const busy = pending || !mounted;
   const [name, setName] = useState("");
   const [discordPlayerId, setDiscordPlayerId] = useState<string | null>(null);
   const [uuid, setUuid] = useState("");

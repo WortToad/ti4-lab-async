@@ -91,6 +91,77 @@ describe("publish, discover and use a shared map", () => {
     expect((await service.presetMapBySlug(first.slug))?.id).toBe(first.id);
     expect((await service.presetMapBySlug(second.slug))?.id).toBe(second.id);
   });
+  it("publishes simultaneous submissions with the same title under distinct links", async () => {
+    const published = await Promise.all(
+      Array.from({ length: 8 }, () => create()),
+    );
+    expect(new Set(published.map((map) => map.slug)).size).toBe(8);
+    for (const map of published)
+      expect((await service.presetMapBySlug(map.slug))?.id).toBe(map.id);
+  });
+  it.each(["🌌", "星の銀河", "---"])(
+    "gives the title %s a usable nonempty share link",
+    async (name) => {
+      const response = await publish.action(
+        jsonRequest("/api/preset-maps", { ...input(), name }),
+      );
+      expect(response.data).toMatchObject({
+        success: true,
+        slug: expect.stringMatching(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+      });
+    },
+  );
+  it.each([
+    null,
+    [],
+    42,
+    "map",
+    { ...input(), name: 42 },
+    { ...input(), author: {} },
+  ])(
+    "rejects malformed publishing data %# without changing saved maps",
+    async (body) => {
+      const before = await service.listPresetMaps();
+      expect(
+        await publish.action(jsonRequest("/api/preset-maps", body)),
+      ).toMatchObject({
+        data: { success: false, error: expect.any(String) },
+        init: { status: 400 },
+      });
+      expect(await service.listPresetMaps()).toEqual(before);
+    },
+  );
+  it("rejects broken JSON with a recoverable validation response", async () => {
+    const args = jsonRequest("/api/preset-maps", {});
+    args.request = new Request(args.request.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{",
+    });
+    expect(await publish.action(args)).toMatchObject({
+      data: { success: false, error: expect.any(String) },
+      init: { status: 400 },
+    });
+  });
+  it.each([
+    { mapString: "invalid-map" },
+    { mapString: Array(36).fill("unknown-system").join(",") },
+    { mapString: Array(35).fill("19").join(",") },
+    { mapString: Array(36).fill("_").join(",") },
+    { mapConfigId: "unsupported" },
+    { mapConfigId: "toString" },
+  ])("rejects unusable map data %# before publication", async (invalid) => {
+    const before = await service.listPresetMaps();
+    expect(
+      await publish.action(
+        jsonRequest("/api/preset-maps", { ...input(), ...invalid }),
+      ),
+    ).toMatchObject({
+      data: { success: false, error: expect.any(String) },
+      init: { status: 400 },
+    });
+    expect(await service.listPresetMaps()).toEqual(before);
+  });
   it("counts views and deduplicates likes by visitor across proxy headers", async () => {
     const { id } = await create();
     for (let count = 1; count <= 2; count++) {
@@ -126,6 +197,25 @@ describe("publish, discover and use a shared map", () => {
     expect(await service.presetMapById(id)).toMatchObject({
       imageUrl: "/map.png",
     });
+  });
+  it("restores the visitor's liked status with the same proxy identity used for writes", async () => {
+    const { id, slug } = await create();
+    for (const header of ["x-forwarded-for", "x-real-ip", "cf-connecting-ip"]) {
+      const address = `visitor-${header}`;
+      const args = formRequest(`/maps/${slug}`, {}, "", { slug });
+      args.request.headers.set(header, address);
+      expect((await detail.loader(args)).liked).toBe(false);
+      const mutation = formRequest(`/api/preset-maps/${id}/like`, {}, "", {
+        id,
+      });
+      mutation.request.headers.set(header, address);
+      expect((await like.action(mutation)).data.success).toBe(true);
+      expect((await detail.loader(args)).liked).toBe(true);
+    }
+    expect(
+      (await detail.loader(formRequest(`/maps/${slug}`, {}, "", { slug })))
+        .liked,
+    ).toBe(false);
   });
   it.each([
     "name",

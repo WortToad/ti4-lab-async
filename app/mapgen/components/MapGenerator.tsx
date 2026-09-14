@@ -647,7 +647,7 @@ function MapGeneratorContent() {
             pos="fixed"
             bottom={12}
             right={12}
-            style={{ zIndex: 2000, maxWidth: 320 }}
+            style={{ zIndex: 10, maxWidth: 320 }}
           >
             <Alert color="yellow" variant="light" radius="md">
               <Text size="xs">

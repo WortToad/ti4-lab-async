@@ -37,7 +37,7 @@ export function PlayerSelectionScreen({ onDraftJoined }: Props) {
                   variant={selectedPlayer === player.id ? "filled" : "outline"}
                   size="xl"
                   color={playerColors[player.id]}
-                  onMouseDown={() => setSelectedPlayer(player.id)}
+                  onClick={() => setSelectedPlayer(player.id)}
                 >
                   {player.name}
                 </Button>
@@ -51,7 +51,7 @@ export function PlayerSelectionScreen({ onDraftJoined }: Props) {
               variant={selectedPlayer === SPECTATOR_ID ? "filled" : "outline"}
               size="xl"
               color="gray"
-              onMouseDown={() => setSelectedPlayer(SPECTATOR_ID)}
+              onClick={() => setSelectedPlayer(SPECTATOR_ID)}
               leftSection={<IconEye size={24} />}
             >
               Spectator
@@ -74,7 +74,7 @@ export function PlayerSelectionScreen({ onDraftJoined }: Props) {
           variant="filled"
           w="100%"
           disabled={selectedPlayer === undefined}
-          onMouseDown={() =>
+          onClick={() =>
             selectedPlayer !== undefined && onDraftJoined(selectedPlayer)
           }
         >
@@ -88,7 +88,7 @@ export function PlayerSelectionScreen({ onDraftJoined }: Props) {
         maw="1200px"
         mt="xl"
         disabled={selectedPlayer === undefined}
-        onMouseDown={() =>
+        onClick={() =>
           selectedPlayer !== undefined && onDraftJoined(selectedPlayer)
         }
         visibleFrom="xs"

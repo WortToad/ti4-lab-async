@@ -709,6 +709,17 @@ describe("live draft rejection and public recovery flows", () => {
     });
     expect(await stored(room)).toEqual(updated);
   });
+  it.each(["unknown-draft", "00000000-0000-4000-8000-000000000000"])(
+    "returns 404 for the missing draft and replay %s",
+    async (id) => {
+      await expect(
+        route.loader(formRequest(`/draft/${id}`, {}, "", { id })),
+      ).rejects.toMatchObject({ status: 404 });
+      await expect(replay.loader({ params: { id } })).rejects.toMatchObject({
+        status: 404,
+      });
+    },
+  );
   it("prevents replay and JSON export before the lobby starts", async () => {
     const created = await drafts.createDraft(
       prepareMultidraftDraft(settings, makeLobbyPlayers(4)),

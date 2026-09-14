@@ -37,7 +37,7 @@ export function PlayerInputSection({
               variant="subtle"
               color="gray"
               disabled={players.length <= minPlayers}
-              onMouseDown={onDecreasePlayers}
+              onClick={onDecreasePlayers}
             >
               -
             </Button>
@@ -49,7 +49,7 @@ export function PlayerInputSection({
               variant="subtle"
               color="gray"
               disabled={players.length >= maxPlayers}
-              onMouseDown={onIncreasePlayers}
+              onClick={onIncreasePlayers}
             >
               +
             </Button>

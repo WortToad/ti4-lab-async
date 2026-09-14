@@ -107,6 +107,7 @@ export const loader = async ({ params }: { params: { id: string } }) => {
   if (validateUUID(draftId)) {
     console.log("UUID url detected, generating pretty url");
     const draft = await draftById(draftId);
+    if (!draft) throw new Response("Draft not found", { status: 404 });
     if (draft.urlName) {
       console.log(`redirecting to pretty url ${draft.urlName}`);
       return redirect(`/draft/${draft.urlName}/replay`);

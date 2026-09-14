@@ -261,6 +261,42 @@ describe("create and recover shared lobbies through their routes", () => {
 });
 
 describe("setup and recovery failures", () => {
+  it.each([
+    null,
+    [],
+    {},
+    { settings: null },
+    { settings: { type: "unknown" } },
+  ])(
+    "rejects malformed base draft JSON %# without creating a lobby",
+    async (body) => {
+      const { db } = await import("~/drizzle/config.server");
+      const { drafts: table } = await import("~/drizzle/schema.server");
+      const before = db.select().from(table).all().length;
+      const args = jsonRequest("/api/draft/create", body);
+      args.request.headers.set("X-Draft-Response", "json");
+      expect(await createBase.action(args)).toMatchObject({
+        data: { error: expect.any(String) },
+        init: { status: 400 },
+      });
+      expect(db.select().from(table).all()).toHaveLength(before);
+    },
+  );
+  it("rejects broken JSON when creating a base draft", async () => {
+    const args = jsonRequest("/api/draft/create", {});
+    args.request = new Request(args.request.url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Draft-Response": "json",
+      },
+      body: "{",
+    });
+    expect(await createBase.action(args)).toMatchObject({
+      data: { error: expect.any(String) },
+      init: { status: 400 },
+    });
+  });
   it.each(["0", "2", "9", "4.5", "NaN"])(
     "rejects RAW player count %s",
     async (playerCount) => {
