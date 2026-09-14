@@ -25,6 +25,10 @@ initEnv();
 startEventLoopLagMonitor();
 
 const app = express();
+// Production traffic arrives through the hosting edge, which terminates TLS.
+// Preserve its public protocol/host for React Router's action origin checks.
+// Trust only the immediate proxy; local development uses the direct connection.
+if (process.env.NODE_ENV === "production") app.set("trust proxy", 1);
 const basePath = normalizeBasePath(process.env.TI4_BASE_PATH);
 const buildDirectory = resolve(process.env.TI4_BUILD_DIRECTORY || "build");
 const httpServer = createServer(app);

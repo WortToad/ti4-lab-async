@@ -47,3 +47,8 @@ The map suites guard against previously uncovered failures: Mantis losing its cl
 `appearance.spec.ts` compares eleven pages on desktop and mobile against reviewed screenshots of the current interface, using Playwright 1.63.0 on Linux. A fixed preview fixture removes random draft generation from the comparison. Up to five isolated antialiasing pixels are allowed; layout and text changes still fail. Keep browser and OS versions consistent, inspect differences, and only replace baselines for intended design changes. These checks also reject browser console errors. See [upgrade notes](dependency-upgrade.md) for package compatibility limits.
 
 `bag-submission.spec.ts` creates a lobby for every bag variant, joins three players, starts the draft, restores pending selections after reload, confirms and undoes picks, and submits a full round. It checks successful POST responses and the resulting next-round state in desktop and mobile Chromium.
+
+`proxy-actions.spec.ts` simulates HTTPS requests forwarded by the hosting edge to
+the HTTP server. It verifies six-player Twilight's Fall lobby creation, admin
+access after the redirect, client submission validation, and rejection of
+submissions from a different host or protocol.

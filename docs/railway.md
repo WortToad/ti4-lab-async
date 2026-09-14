@@ -87,6 +87,13 @@ The two public URL variables are used during the build. Rebuild after changing
 Shared links use the configured public origin even while you test using the
 Railway-generated hostname.
 
+In production, Express trusts the immediate hosting proxy so React Router sees
+the public HTTPS protocol and host when checking form submissions. Keep the app
+behind the Railway edge, which must set the forwarded headers. Without this
+configuration, lobby creation can return HTTP 400 and “We couldn't load this
+page” because the browser's HTTPS origin is compared with an internal HTTP URL.
+See [Express proxy configuration](https://expressjs.com/en/guide/behind-proxies/).
+
 Railway documentation: [Dockerfile deployment and build variables](https://docs.railway.com/builds/dockerfiles),
 [persistent volumes](https://docs.railway.com/volumes).
 
