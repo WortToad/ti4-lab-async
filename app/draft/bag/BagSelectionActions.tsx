@@ -13,7 +13,7 @@ export function BagSelectionActions({
   return (
     <Paper
       withBorder
-      p="sm"
+      p="md"
       radius="md"
       shadow="sm"
       className="command-state-panel"

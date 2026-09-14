@@ -1,6 +1,8 @@
 import express from "express";
 import { createRequestHandler } from "@react-router/express";
 import { createServer } from "http";
+import { resolve, join } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { ServerBuild } from "react-router";
 import { Server } from "socket.io";
 import "dotenv/config";
@@ -24,6 +26,7 @@ startEventLoopLagMonitor();
 
 const app = express();
 const basePath = normalizeBasePath(process.env.TI4_BASE_PATH);
+const buildDirectory = resolve(process.env.TI4_BUILD_DIRECTORY || "build");
 const httpServer = createServer(app);
 
 // Apply before static files, redirects, API handlers and error responses.
@@ -72,14 +75,14 @@ if (viteDevServer) {
 } else {
   app.use(
     appPath("/assets"),
-    express.static("build/client/assets", {
+    express.static(join(buildDirectory, "client/assets"), {
       immutable: true,
       maxAge: "1y",
     }),
   );
   app.use(
     basePath || "/",
-    express.static("build/client", {
+    express.static(join(buildDirectory, "client"), {
       maxAge: "1h",
       setHeaders(res, filePath) {
         if (filePath.endsWith("/sw.js") || filePath.endsWith(".webmanifest")) {
@@ -104,7 +107,7 @@ const build: ServerBuild | (() => Promise<ServerBuild>) = viteDevServer
       );
     }
   : ((await import(
-      /* @vite-ignore */ new URL("./build/server/index.js", import.meta.url)
+      /* @vite-ignore */ pathToFileURL(join(buildDirectory, "server/index.js"))
         .href
     )) as ServerBuild);
 

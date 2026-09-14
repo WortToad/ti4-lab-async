@@ -7,14 +7,14 @@ yarn test:run                         # All unit and integration tests
 yarn test app/routes/baseDraftFlows.test.ts --run  # One flow suite
 yarn playwright install --with-deps chromium      # Once per machine
 yarn test:e2e                        # Desktop and mobile Chromium
-yarn test:visual                     # Original-version desktop/mobile screenshots
+yarn test:visual                     # Current desktop/mobile appearance baselines
 yarn test:e2e --project=desktop      # Desktop only
 yarn build && yarn typecheck && yarn lint
 ```
 
 `yarn test` retains Vitest's watch mode. The separate Vitest configuration limits concurrency to four workers and only discovers application tests; generated React Router types are not test suites. Route discovery excludes test files so they cannot become public endpoints. CI runs the production build, type checking, lint, all unit/integration tests, and browser tests, with focused tests prohibited.
 
-Browser tests build the production application with the `/ti4` base path, then start an isolated server on port 3187. Set `TI4_E2E_PORT` to choose another port. The test runner does not reuse a running application. It creates a temporary SQLite database, disables Discord/R2/analytics, and removes the database when the server exits. The browser build replaces the ignored `build/` directory; run `yarn build` again before starting a deployment with a different base path. No configured development or production database is used.
+Browser tests build the production application with the `/ti4` base path, then start an isolated server on port 3187. Set `TI4_E2E_PORT` to choose another port. Each run creates a unique directory under `.cache/browser-tests-*` for both its SQLite database and compiled application, disables Discord/R2/analytics, and removes the directory when the server exits. The test runner does not reuse a running application or modify its `build/` directory or database. `TI4_BUILD_DIRECTORY` selects the same output directory in React Router and the server, so test builds cannot replace the assets being served by a running preview.
 
 Failed browser tests retain screenshots and Playwright traces in `test-results/`; CI uploads them as an artifact. Open a trace with `yarn playwright show-trace test-results/<test>/trace.zip`. Tests use locator assertions and controlled promises rather than fixed sleeps or retries.
 
@@ -44,4 +44,6 @@ When adding a flow, cover a successful journey and its meaningful rejection/reco
 
 The map suites guard against previously uncovered failures: Mantis losing its clickable placement targets when drag-and-drop is disabled, Standard 4p offering incompatible slice extraction, Standard 5p failing to prepare a preset faction draft, and Texas accepting layouts with incompatible tile counts. Standard 4p/5p can draft factions on their complete maps; slice drafting requires a compatible layout. External map strings preserve system positions and rotations, but encode home placeholders without seat identity and use the same empty marker for open and closed spaces; the native share format preserves that editor information.
 
-`appearance.spec.ts` compares eleven pages on desktop and mobile against screenshots captured before the dependency upgrade, using Playwright 1.63.0 on Linux. A fixed preview fixture removes random draft generation from the comparison. Up to five isolated antialiasing pixels are allowed; layout and text changes still fail. Keep browser and OS versions consistent, inspect differences, and only replace baselines for intended design changes. These checks also reject browser console errors. See [upgrade notes](dependency-upgrade.md) for package compatibility limits.
+`appearance.spec.ts` compares eleven pages on desktop and mobile against reviewed screenshots of the current interface, using Playwright 1.63.0 on Linux. A fixed preview fixture removes random draft generation from the comparison. Up to five isolated antialiasing pixels are allowed; layout and text changes still fail. Keep browser and OS versions consistent, inspect differences, and only replace baselines for intended design changes. These checks also reject browser console errors. See [upgrade notes](dependency-upgrade.md) for package compatibility limits.
+
+`bag-submission.spec.ts` creates a lobby for every bag variant, joins three players, starts the draft, restores pending selections after reload, confirms and undoes picks, and submits a full round. It checks successful POST responses and the resulting next-round state in desktop and mobile Chromium.

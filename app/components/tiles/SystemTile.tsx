@@ -22,7 +22,13 @@ type RawProps = {
   disablePopover?: boolean;
 };
 
-export function RawSystemTile({ mapId, tile, hideValues = false, radius, disablePopover = false }: RawProps) {
+export function RawSystemTile({
+  mapId,
+  tile,
+  hideValues = false,
+  radius,
+  disablePopover = false,
+}: RawProps) {
   const scale = calcScale(radius);
   const system = systemData[tile.systemId];
 
@@ -39,6 +45,7 @@ export function RawSystemTile({ mapId, tile, hideValues = false, radius, disable
 
   return (
     <div
+      className={classes.simplified}
       style={{
         transform: tile.rotation ? `rotate(${tile.rotation}deg)` : undefined,
       }}
@@ -78,7 +85,7 @@ export function RawSystemTile({ mapId, tile, hideValues = false, radius, disable
           ))}
           {system.anomalies.includes("GRAVITY_RIFT") && <GravityRift />}
           {system.wormholes.map((wormhole) => (
-            <Wormhole key={wormhole} wormhole={wormhole} />
+            <Wormhole key={wormhole} wormhole={wormhole} tile />
           ))}
         </Group>
       </Hex>
@@ -86,9 +93,27 @@ export function RawSystemTile({ mapId, tile, hideValues = false, radius, disable
   );
 }
 
-type Props = { mapId: string; tile: SystemTile; hideValues?: boolean; disablePopover?: boolean };
+type Props = {
+  mapId: string;
+  tile: SystemTile;
+  hideValues?: boolean;
+  disablePopover?: boolean;
+};
 
-export function SystemTile({ mapId, tile, hideValues = false, disablePopover = false }: Props) {
+export function SystemTile({
+  mapId,
+  tile,
+  hideValues = false,
+  disablePopover = false,
+}: Props) {
   const { radius } = useContext(MapContext);
-  return <RawSystemTile mapId={mapId} tile={tile} hideValues={hideValues} radius={radius} disablePopover={disablePopover} />;
+  return (
+    <RawSystemTile
+      mapId={mapId}
+      tile={tile}
+      hideValues={hideValues}
+      radius={radius}
+      disablePopover={disablePopover}
+    />
+  );
 }

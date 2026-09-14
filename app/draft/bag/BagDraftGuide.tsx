@@ -1,14 +1,13 @@
 import {
   Accordion,
   Divider,
-  Paper,
   Stack,
   Table,
   Text,
-  Title,
   VisuallyHidden,
 } from "@mantine/core";
 import type { ReactNode } from "react";
+import { LobbyDraftGuide } from "~/draft/LobbyDraftGuide";
 import { bagCategoryLabel } from "./BagComponents";
 import { isTwilightsFallBag } from "./rules";
 import type { BagItemCategory } from "./catalog";
@@ -19,11 +18,13 @@ export function BagDraftGuide({
   rules,
   variant,
   phase = "lobby",
+  currentStep,
   children,
 }: {
   rules: BagRules;
   variant: BagVariant;
   phase?: BagDraftView["phase"];
+  currentStep?: ReactNode;
   children: ReactNode;
 }) {
   const hasTiles =
@@ -64,6 +65,7 @@ export function BagDraftGuide({
   ] as BagItemCategory[];
   const content = (
     <Stack gap="lg">
+      {currentStep}
       <ol className={classes.stages} aria-label="Draft stages">
         {stages.map((stage, index) => (
           <li
@@ -84,9 +86,9 @@ export function BagDraftGuide({
                 {index + 1}
                 {index < active && <VisuallyHidden>, completed</VisuallyHidden>}
               </span>
-              <Title order={3} size="h4" className={classes.stageTitle}>
+              <Text fw={700} className={classes.stageTitle}>
                 {stage.title}
-              </Title>
+              </Text>
             </div>
             <Text size="sm" className={classes.description}>
               {stage.text}
@@ -184,29 +186,13 @@ export function BagDraftGuide({
     </Stack>
   );
 
-  if (phase !== "lobby") {
-    return (
-      <Accordion variant="separated" radius="md" order={2}>
-        <Accordion.Item value="guide">
-          <Accordion.Control>
-            <Title component="span" order={2} size="h3">
-              How this draft works
-            </Title>
-          </Accordion.Control>
-          <Accordion.Panel>{content}</Accordion.Panel>
-        </Accordion.Item>
-      </Accordion>
-    );
-  }
-
   return (
-    <Paper withBorder p="lg" radius="md">
-      <Stack gap="lg">
-        <Title order={2} size="h3">
-          How this draft works
-        </Title>
-        {content}
-      </Stack>
-    </Paper>
+    <LobbyDraftGuide
+      key={phase === "lobby" ? "lobby" : "active"}
+      order={3}
+      initiallyExpanded={phase === "lobby"}
+    >
+      {content}
+    </LobbyDraftGuide>
   );
 }

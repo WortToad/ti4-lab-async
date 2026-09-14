@@ -18,6 +18,9 @@ import {
   Radio,
   SegmentedControl,
   Switch,
+  Stack,
+  Group,
+  SimpleGrid,
   Tabs,
   Title,
   Tooltip,
@@ -33,6 +36,7 @@ export const commandTheme = createTheme({
   white: "#f4f7fb",
   defaultRadius: "sm",
   radius: { xs: "4px", sm: "8px", md: "12px", lg: "16px", xl: "24px" },
+  spacing: { xs: "8px", sm: "12px", md: "16px", lg: "24px", xl: "32px" },
   cursorType: "pointer",
   respectReducedMotion: true,
   variantColorResolver: (input) => {
@@ -233,6 +237,11 @@ export const commandTheme = createTheme({
     ],
   },
   components: {
+    Stack: Stack.extend({ defaultProps: { gap: "lg" } }),
+    Group: Group.extend({ defaultProps: { gap: "md" } }),
+    SimpleGrid: SimpleGrid.extend({
+      defaultProps: { spacing: "lg", verticalSpacing: "lg" },
+    }),
     Title: Title.extend({
       styles: (_theme, { order = 1, size }) => {
         // Visual size determines the font; order describes the document outline.

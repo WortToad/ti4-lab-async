@@ -1,4 +1,4 @@
-import { Text } from "@mantine/core";
+import { DEFAULT_THEME, Text } from "@mantine/core";
 import { Wormhole as TWormhole } from "~/types";
 import { SymbolHelp } from "~/components/SymbolHelp";
 
@@ -18,11 +18,20 @@ const wormholeSymbol: Record<TWormhole, string> = {
   EPSILON: "ε",
 };
 
+const tileWormholeColor: Record<TWormhole, string> = {
+  ALPHA: DEFAULT_THEME.colors.orange[6],
+  BETA: DEFAULT_THEME.colors.green[8],
+  DELTA: DEFAULT_THEME.colors.blue[8],
+  GAMMA: "#451eac",
+  EPSILON: DEFAULT_THEME.colors.red[8],
+};
+
 type Props = {
   wormhole: TWormhole;
   size?: number;
   fontSize?: number;
   showHelp?: boolean;
+  tile?: boolean;
 };
 
 export function Wormhole({ showHelp = true, ...props }: Props) {
@@ -34,8 +43,15 @@ export function Wormhole({ showHelp = true, ...props }: Props) {
   );
 }
 
-function WormholeSymbol({ wormhole, size = 60, fontSize = 18 }: Props) {
-  const swirlColor = wormholeColor[wormhole];
+function WormholeSymbol({
+  wormhole,
+  size = 60,
+  fontSize = 18,
+  tile = false,
+}: Props) {
+  const swirlColor = tile
+    ? tileWormholeColor[wormhole]
+    : wormholeColor[wormhole];
   const label = `${wormhole[0]}${wormhole.slice(1).toLowerCase()} wormhole`;
   if (size < 30) {
     return (
@@ -91,7 +107,7 @@ function WormholeSymbol({ wormhole, size = 60, fontSize = 18 }: Props) {
           borderRadius: 99,
           height: size * 0.5,
           width: size * 0.5,
-          background: "var(--command-ink)",
+          background: tile ? swirlColor : "var(--command-ink)",
         }}
       />
       <svg viewBox="15 25 150 200" style={{ zIndex: 1 }}>

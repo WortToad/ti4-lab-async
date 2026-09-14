@@ -1,7 +1,7 @@
 .grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 32px;
+  gap: var(--mantine-spacing-lg);
   max-width: 1360px;
   margin: 32px auto 0;
 }
@@ -16,7 +16,7 @@
 .colLeft {
   border: 1px solid var(--command-border);
   border-radius: var(--command-radius);
-  padding: 24px;
+  padding: var(--mantine-spacing-lg);
   align-self: start;
   background: var(--command-surface);
   box-shadow: var(--command-shadow);
@@ -28,14 +28,14 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
-  gap: 36px;
+  gap: var(--mantine-spacing-lg);
   border-color: var(--command-border);
   background: linear-gradient(110deg, #142b40, var(--command-surface));
 }
 .twoColGrid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
+  gap: var(--mantine-spacing-md);
 }
 .hiddenFromXs {
   display: none;
@@ -61,11 +61,11 @@
 @media (max-width: 62em) {
   .grid {
     grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
+    gap: var(--mantine-spacing-lg);
   }
   .playerPanel {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: var(--mantine-spacing-lg);
   }
   .twoColGrid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -76,7 +76,7 @@
     min-height: 58px;
   }
   .colLeft {
-    padding: 16px;
+    padding: var(--mantine-spacing-md);
   }
   .grid {
     margin-top: 24px;

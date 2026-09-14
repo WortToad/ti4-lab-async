@@ -1,4 +1,18 @@
 @font-face {
+  font-family: "Quantico";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../public/Quantico-Regular.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Quantico";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../public/Quantico-Bold.ttf") format("truetype");
+}
+@font-face {
   font-family: "Cinzel";
   font-style: normal;
   font-weight: 400;
@@ -522,8 +536,6 @@ a {
   height: 20px;
 }
 .command-lobby {
-  margin-block: 20px;
-  padding: clamp(16px, 2vw, 28px);
   border: 1px solid var(--command-border);
   border-radius: var(--command-radius);
   background: linear-gradient(135deg, #132a3e, #0d1f31 65%);
@@ -574,10 +586,10 @@ a {
   font-weight: 700;
 }
 .command-admin-controls .mantine-Accordion-content {
-  padding-top: 20px;
+  padding-top: var(--mantine-spacing-md);
 }
 .command-admin-section {
-  padding-block: 20px 4px;
+  padding-block: var(--mantine-spacing-md) 0;
   border-top: 1px solid var(--command-border);
 }
 .command-admin-section-title {

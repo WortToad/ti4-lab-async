@@ -22,8 +22,9 @@ export function SystemId({
 
   return (
     <Text
-      size="xs"
-      lh={1.1}
+      size={radius >= 53 ? "10px" : "8px"}
+      lh={1.55}
+      ff="Quantico, sans-serif"
       c="white"
       pos="absolute"
       top={15 * scale}

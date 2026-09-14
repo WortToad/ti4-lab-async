@@ -48,6 +48,7 @@ import {
 import { NewDraftReferenceCard } from "~/routes/draft.new/components/NewDraftReferenceCard";
 import type { FactionId } from "~/types";
 import { LobbyPanel, type LobbyOperation } from "~/draft/LobbyPanel";
+import { LobbyDraftGuide } from "~/draft/LobbyDraftGuide";
 import { DraftTurnStatus } from "~/draft/DraftTurnStatus";
 import { useLobbyRefresh } from "~/hooks/useLobbyRefresh";
 import { createOrderedLoader } from "~/hooks/orderedLoader";
@@ -120,6 +121,16 @@ const phases: Record<RawPhase, { title: string; instructions: string }> = {
   },
 };
 
+function rawPhaseDetails(draft: NonNullable<RawRoomData["draft"]>) {
+  return draft.phase === "homes" && draft.settings.mode === "base"
+    ? {
+        title: "Choose the Keleres home system",
+        instructions:
+          "Choose an available unplayed home system for the Council Keleres.",
+      }
+    : phases[draft.phase];
+}
+
 const spliceCards = rawSplicePool();
 const spliceById = new Map(spliceCards.map((item) => [item.id, item]));
 const spliceLimits: Record<string, number> = { TECH: 3, AGENT: 2, UNIT: 2 };
@@ -154,8 +165,8 @@ export default function RawRoom() {
     );
   };
   return (
-    <Stack gap="lg">
-      <Container size="xl" w="100%" py="lg" className="ph-no-capture">
+    <Stack gap="lg" py="lg">
+      <Container size="xl" w="100%" className="ph-no-capture">
         <LobbyPanel
           lobby={room.lobby}
           mode="raw"
@@ -166,7 +177,18 @@ export default function RawRoom() {
           error={fetcher.data?.error}
           exportState={fetcher.data?.backup ?? undefined}
           onOperation={operation}
-        />
+        >
+          {room.draft && (
+            <LobbyDraftGuide>
+              <Stack gap="sm">
+                <Title order={3} size="h4">
+                  {rawPhaseDetails(room.draft).title}
+                </Title>
+                <Text>{rawPhaseDetails(room.draft).instructions}</Text>
+              </Stack>
+            </LobbyDraftGuide>
+          )}
+        </LobbyPanel>
       </Container>
       {room.draft && <RawGame room={{ ...room, draft: room.draft }} />}
     </Stack>
@@ -213,14 +235,7 @@ function RawGame({
       ? rawLegalPositions(draft, playerId, tile)
       : [];
   const mapPhase = draft.phase === "map" || draft.phase === "mapPreplace";
-  const details =
-    draft.phase === "homes" && draft.settings.mode === "base"
-      ? {
-          title: "Choose the Keleres home system",
-          instructions:
-            "Choose an available unplayed home system for the Council Keleres.",
-        }
-      : phases[draft.phase];
+  const details = rawPhaseDetails(draft);
   const referenceOptions =
     draft.phase === "homes" && playerId !== undefined
       ? rawHomeChoices(draft, playerId)
@@ -277,7 +292,7 @@ function RawGame({
     ) && kept.length === 4;
 
   return (
-    <Container size="xl" w="100%" miw={0} py="lg" className="ph-no-capture">
+    <Container size="xl" w="100%" miw={0} className="ph-no-capture">
       <Stack gap="lg">
         {playerId !== undefined && (
           <DraftTurnStatus
@@ -326,25 +341,6 @@ function RawGame({
           </Group>
         </Group>
         {fetcher.data?.error && <Alert color="red">{fetcher.data.error}</Alert>}
-        <Paper withBorder p="lg" radius="md">
-          <Stack gap="sm">
-            <Title order={2} size="h3">
-              {details.title}
-            </Title>
-            <Text size="sm">{details.instructions}</Text>
-            {activeId !== undefined && (
-              <Text fw={600} style={{ overflowWrap: "anywhere" }}>
-                {draft.players.find((entry) => entry.id === activeId)?.name}’s
-                turn
-              </Text>
-            )}
-            {controlled && ready && (
-              <Text c="teal" size="sm">
-                Your choice is submitted.
-              </Text>
-            )}
-          </Stack>
-        </Paper>
         {!controlled && draft.phase !== "complete" && (
           <Text size="sm" c="dimmed">
             Join the lobby above, or use your recovery code, to see your private

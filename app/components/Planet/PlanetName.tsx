@@ -1,4 +1,4 @@
-import { Box, Text, useMantineTheme } from "@mantine/core";
+import { Box, Text, DEFAULT_THEME } from "@mantine/core";
 import { PlanetTrait } from "~/types";
 
 type Props = {
@@ -36,7 +36,7 @@ export function PlanetName({
   trait,
   legendary = false,
 }: Props) {
-  const theme = useMantineTheme();
+  const theme = DEFAULT_THEME;
 
   const traitColor: Record<PlanetTrait, string> = {
     CULTURAL: theme.colors.blue[9],
@@ -68,19 +68,18 @@ export function PlanetName({
     <Box
       pos="absolute"
       top={size - 10}
-      right={-6}
-      left={-6}
+      right={0}
+      left={0}
       bg={legendary ? bgColor : "rgba(0, 0, 0, 0.7)"}
       p={2}
       style={borderStyle}
     >
       <Text
-        size="xs"
+        size="10px"
         c="white"
         fw="bolder"
         ta="center"
-        lh={1.1}
-        truncate
+        lh={0.9}
         title={children}
       >
         {children}

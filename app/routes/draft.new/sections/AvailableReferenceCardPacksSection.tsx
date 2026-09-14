@@ -34,7 +34,7 @@ export function AvailableReferenceCardPacksSection() {
         </Button>
       </SectionTitle>
 
-      <SimpleGrid cols={{ base: 1, xl: 2 }} spacing="xl">
+      <SimpleGrid cols={{ base: 1, xl: 2 }} spacing="lg">
         {referenceCardPacks.map((pack, packIdx) => (
           <ReferenceCardPack key={packIdx} pack={pack} packIdx={packIdx} />
         ))}

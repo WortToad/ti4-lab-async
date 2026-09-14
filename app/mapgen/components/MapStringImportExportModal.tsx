@@ -74,7 +74,7 @@ export function MapStringImportExportModal({
         </Group>
       }
     >
-      <Stack gap="xl">
+      <Stack gap="lg">
         <Box>
           <Group justify="space-between" align="end" mb="sm">
             <Group gap="xs">

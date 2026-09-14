@@ -56,6 +56,8 @@ export type LobbyPanelProps = {
   error?: string | null;
   exportState?: string | null;
   playerOverview?: ReactNode;
+  children?: ReactNode;
+  adminActions?: ReactNode;
   onOperation: (operation: LobbyOperation) => void;
 };
 
@@ -132,6 +134,8 @@ export function LobbyPanel({
   error,
   exportState,
   playerOverview,
+  children,
+  adminActions,
   onOperation,
 }: LobbyPanelProps) {
   const [name, setName] = useState("");
@@ -241,7 +245,7 @@ export function LobbyPanel({
           }
         />
       )}
-      <Stack gap="md">
+      <Stack gap="lg">
         <div className={classes.header}>
           <Stack gap="xs" align="flex-start" className={classes.heading}>
             <Title order={mode === "bag" ? 2 : 1} size="h2">
@@ -404,7 +408,7 @@ export function LobbyPanel({
           </section>
         )}
         <Collapse expanded={showDetails} id={detailsId}>
-          <Stack gap="md">
+          <Stack gap="lg">
             {ownPlayerId === undefined && !allJoined && (
               <form
                 onSubmit={(event) => {
@@ -589,6 +593,7 @@ export function LobbyPanel({
                               Draft controls
                             </Title>
                             <Group>
+                              {adminActions}
                               <Button
                                 variant={lobby.paused ? "filled" : "outline"}
                                 color={lobby.paused ? "imperial" : "orange.3"}
@@ -934,6 +939,7 @@ export function LobbyPanel({
             )}
           </Stack>
         </Collapse>
+        {children}
       </Stack>
       <Modal
         opened={confirmation !== null}

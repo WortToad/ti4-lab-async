@@ -9,7 +9,7 @@ export function RawDraftComplete() {
 
   return (
     <RawDraftProvider players={players}>
-      <Stack mt="lg" gap={30} align="center">
+      <Stack mt="lg" gap="lg" align="center">
         <Title>Draft complete!</Title>
 
         {/* Map */}

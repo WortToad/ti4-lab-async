@@ -406,11 +406,11 @@ function DraftBoard({
       )}
 
       <PlanetFinder onSystemSelected={syncDraft} />
-      <Stack gap="sm" mb="xl" mt="lg">
+      <Stack gap="sm" mb="lg">
         <CurrentPickBanner />
       </Stack>
 
-      <Grid gap="xl">
+      <Grid gap="lg">
         <Grid.Col span={12} order={{ base: 0 }}>
           <Text size="md" ta="right" c="dimmed">
             {appUrl(`/draft/${result.urlName}`)}

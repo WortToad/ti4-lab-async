@@ -28,7 +28,7 @@ export function RawDraftPlayerSelectionScreen({ onDraftJoined }: Props) {
       <Box />
       <Stack align="center" w="100%">
         <Title mb="xl">Identify Yourself</Title>
-        <Grid w="75vw" maw="1200px" gap="xl">
+        <Grid w="75vw" maw="1200px" gap="lg">
           {players.map((player) => {
             return (
               <Grid.Col key={player.id} span={{ base: 12, sm: 6 }}>

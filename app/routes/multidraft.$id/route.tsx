@@ -51,7 +51,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 export default function MultidraftRoute() {
   const { drafts } = useLoaderData<typeof loader>();
   return (
-    <Stack p="lg" gap={50}>
+    <Stack p="lg" gap="lg">
       <Title order={1}>Your draft lobbies</Title>
       {drafts.map(({ draft, urlName }) => {
         if (!draft) return null;

@@ -90,7 +90,7 @@ export function FinalizedDraft() {
   const homePending = !!keleres && !keleres.chosen;
 
   return (
-    <Stack mt="lg" gap="xl">
+    <Stack gap="lg">
       <PlanetFinder onSystemSelected={syncDraft} />
 
       {/* Header */}
@@ -153,7 +153,7 @@ export function FinalizedDraft() {
         style={{ gap: 30 }}
         mb={20}
       >
-        <Stack flex={1} gap="xl">
+        <Stack flex={1} gap="lg">
           <Section>
             <SectionTitle title="Draft Summary" />
             <Stack mt="lg" gap="md" hiddenFrom="sm">

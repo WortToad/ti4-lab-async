@@ -32,6 +32,7 @@ export default defineConfig({
     command: "node --import tsx scripts/test-server.ts",
     url: `http://127.0.0.1:${port}/health`,
     reuseExistingServer: false,
+    gracefulShutdown: { signal: "SIGTERM", timeout: 5000 },
     timeout: 120_000,
     env: { TI4_E2E_PORT: port },
   },

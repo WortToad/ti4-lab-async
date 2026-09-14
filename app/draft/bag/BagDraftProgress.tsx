@@ -83,7 +83,6 @@ export function BagDraftProgress({ view }: { view: BagDraftView }) {
             : waiting || done
               ? "success"
               : "warning";
-          const last = index === players.length - 1;
           const recipient = players[(index + 1) % players.length];
 
           return (
@@ -110,44 +109,41 @@ export function BagDraftProgress({ view }: { view: BagDraftView }) {
               {drafting && (
                 <span
                   className={classes.connector}
-                  data-return={last || undefined}
-                  title={`${playerName(player)} passes ${last ? "back " : ""}to ${playerName(recipient)}`}
+                  title={`${playerName(player)} passes to ${playerName(recipient)}`}
                 >
                   <VisuallyHidden>
-                    {playerName(player)} passes {last ? "back " : ""}to{" "}
-                    {playerName(recipient)}.
+                    {playerName(player)} passes to {playerName(recipient)}.
                   </VisuallyHidden>
-                  {last ? (
-                    <span className={classes.returnIcon} aria-hidden="true">
-                      <IconCornerUpLeft size={26} />
-                    </span>
-                  ) : (
-                    <>
-                      <IconArrowRight
-                        className={classes.rightArrow}
-                        size={30}
-                        aria-hidden="true"
-                      />
-                      <IconArrowDown
-                        className={classes.downArrow}
-                        size={28}
-                        aria-hidden="true"
-                      />
-                    </>
-                  )}
-                  {last && (
-                    <span className={classes.returnLabel} aria-hidden="true">
-                      <span className={classes.returnCaption}>Back to</span>
-                      <span className={classes.returnName}>
-                        {playerName(recipient)}
-                      </span>
-                    </span>
-                  )}
+                  <IconArrowRight
+                    className={classes.rightArrow}
+                    size={24}
+                    aria-hidden="true"
+                  />
+                  <IconArrowDown
+                    className={classes.downArrow}
+                    size={24}
+                    aria-hidden="true"
+                  />
                 </span>
               )}
             </li>
           );
         })}
+        {drafting && players.length > 0 && (
+          <li className={classes.link}>
+            <div className={`${classes.player} ${classes.returnCard}`}>
+              <span className={classes.returnIcon} aria-hidden="true">
+                <IconCornerUpLeft size={26} />
+              </span>
+              <span className={classes.returnLabel}>
+                <span className={classes.returnCaption}>Back to</span>
+                <span className={classes.returnName}>
+                  {playerName(players[0])}
+                </span>
+              </span>
+            </div>
+          </li>
+        )}
       </ol>
     </section>
   );

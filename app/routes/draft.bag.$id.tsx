@@ -32,6 +32,7 @@ import { GameTerms } from "~/components/GameTerm";
 import { bagKingUnitColor } from "~/draft/bag/visuals";
 import { BagMapSetup } from "~/draft/bag/BagMapSetup";
 import { BagDraftGuide } from "~/draft/bag/BagDraftGuide";
+import { BagDraftInstructions } from "~/draft/bag/BagDraftInstructions";
 import { BagDraftProgress } from "~/draft/bag/BagDraftProgress";
 import { BagSelectionConfirmation } from "~/draft/bag/BagSelectionConfirmation";
 import { BagSelectionActions } from "~/draft/bag/BagSelectionActions";
@@ -278,78 +279,28 @@ function DraftPicking({
   );
   return (
     <Stack gap="lg">
-      <Paper withBorder p="lg" radius="md">
-        <Stack gap="sm">
-          <Group justify="space-between">
-            <Title order={3} size="h4">
-              {seat.ready ? "Your bag is ready" : "Choose from your bag"}
-            </Title>
-            <Badge variant="light">
-              {seat.bag.length} components in your bag
-            </Badge>
-          </Group>
-          {seat.ready ? (
-            <>
-              <Text>
-                {seat.roundPicks.length > 0
-                  ? "Your picks have been added to your collection. The bags will pass when everyone is ready."
-                  : "You have no available picks from this bag. It will pass automatically when everyone is ready."}
-              </Text>
-              <Text size="sm" c="dimmed" role="status">
-                Waiting for:{" "}
-                {view.players
-                  .filter((player) => !player.ready)
-                  .map((player) => player.name)
-                  .join(", ") || "the next bag"}
-                .
-              </Text>
-              {seat.roundPicks.length > 0 && (
-                <Text size="sm" c="dimmed">
-                  This round:{" "}
-                  {seat.hand
-                    .filter((item) => seat.roundPicks.includes(item.id))
-                    .map((item) => item.name)
-                    .join(", ")}
-                </Text>
-              )}
-              {seat.canUndo && (
-                <Button
-                  variant="outline"
-                  color="orange.3"
-                  onClick={() => submit({ action: "undo", round: view.round })}
-                  disabled={busy}
-                  style={{ alignSelf: "flex-start" }}
-                >
-                  Undo this round’s picks
-                </Button>
-              )}
-            </>
-          ) : (
-            <>
-              <Text>
-                Choose {seat.picksRequired}{" "}
-                {seat.picksRequired === 1 ? "component" : "components"} in total
-                from this bag. Take at most one per category on this pass
-                {view.settings.variant === "frankendraz"
-                  ? ", with multiple faction packages allowed"
-                  : ""}
-                .
-              </Text>
-              <Text size="sm" c="dimmed">
-                Submit your picks to review and confirm your selection. The
-                remaining components pass to the next player when everyone is
-                ready.
-              </Text>
-            </>
+      {seat.ready && (
+        <BagSelectionActions
+          status="Ready to pass"
+          detail={
+            seat.hand
+              .filter((item) => seat.roundPicks.includes(item.id))
+              .map((item) => item.name)
+              .join(" · ") || "No available picks from this bag."
+          }
+        >
+          {seat.canUndo && (
+            <Button
+              variant="outline"
+              color="orange.3"
+              onClick={() => submit({ action: "undo", round: view.round })}
+              disabled={busy}
+            >
+              Undo this round’s picks
+            </Button>
           )}
-          <Text size="sm" c="dimmed">
-            The collection maximum applies across all bags. Once you reach it,
-            you cannot collect more of that category. After drafting ends, you
-            choose which collected components to keep for your final faction and
-            any tiles for the map.
-          </Text>
-        </Stack>
-      </Paper>
+        </BagSelectionActions>
+      )}
       {!seat.ready && (
         <BagSelectionActions
           status={`Selected ${selectedIds.length} of ${seat.picksRequired} picks for this bag`}
@@ -581,62 +532,34 @@ function FactionAssembly({
   if (seat.finished) {
     return (
       <Stack>
-        <Alert color="green" title="Your faction is ready">
-          Your final components have been submitted. Waiting for the other
-          players to finish.
-        </Alert>
-        <Button
-          variant="light"
-          onClick={() => submit({ action: "reopen" })}
-          disabled={busy}
-          style={{ alignSelf: "flex-start" }}
+        <BagSelectionActions
+          status="Your faction is ready"
+          detail="Waiting for the other players to finish."
         >
-          Revise your faction
-        </Button>
+          <Button
+            variant="default"
+            onClick={() => submit({ action: "reopen" })}
+            disabled={busy}
+          >
+            Revise your faction
+          </Button>
+        </BagSelectionActions>
         <CollectedItems items={finalItems} view={view} />
       </Stack>
     );
   }
   return (
     <Stack gap="lg">
-      <Paper withBorder p="lg" radius="md">
-        <Stack gap="sm">
-          <Title order={2}>Build your final faction</Title>
-          <Text>
-            Collection is complete. Choose which components to keep for your
-            final faction and the tiles to use for the map. Keep the required
-            count in each category, or all available choices if you have fewer.
-            Categories with nothing to discard are already selected.
-          </Text>
-          <Text size="sm" c="dimmed">
-            Your completed faction becomes public when everyone has finished.
-          </Text>
-          {!twilightsFall && (
-            <Text size="sm" c="dimmed">
-              Some components grant optional replacements. Keep the granting
-              component to use its replacement; required companion components
-              are included automatically in the final faction.
-            </Text>
-          )}
-          {!complete && (
-            <Text size="sm" c="dimmed">
-              {twilightsFall
-                ? "Fill each category’s keep limit, or replace open ability, genome, or unit upgrade slots with generic technologies."
-                : "Fill each category’s keep limit to finalize."}
-            </Text>
-          )}
-          {unavailableSelections.length > 0 && (
-            <Alert
-              color="orange"
-              title="A replacement needs its granting component"
-            >
-              Keep the component that grants{" "}
-              {unavailableSelections.map((item) => item.name).join(", ")}, or
-              deselect the replacement before finalizing.
-            </Alert>
-          )}
-        </Stack>
-      </Paper>
+      {unavailableSelections.length > 0 && (
+        <Alert
+          color="orange"
+          title="A replacement needs its granting component"
+        >
+          Keep the component that grants{" "}
+          {unavailableSelections.map((item) => item.name).join(", ")}, or
+          deselect the replacement before finalizing.
+        </Alert>
+      )}
       <BagSelectionActions
         status={`${selectedIds.length} components selected${complete ? " · Ready to finalize" : ""}`}
         detail={
@@ -915,7 +838,35 @@ export default function BagDraftPage() {
         exportState={fetcher.data?.backup}
         playerOverview={<BagDraftProgress view={view} />}
         onOperation={lobbyOperation}
-      />
+        adminActions={
+          view.canUndoRound && (
+            <Button
+              color="orange.3"
+              variant="outline"
+              onClick={() => setConfirmUndo(true)}
+              disabled={busy}
+            >
+              Rewind draft round
+            </Button>
+          )
+        }
+      >
+        <BagDraftGuide
+          rules={view.rules}
+          variant={view.settings.variant}
+          phase={view.phase}
+          currentStep={<BagDraftInstructions view={view} />}
+        >
+          <BagMapSetup
+            rules={view.rules}
+            playerCount={view.players.length}
+            phase={view.phase}
+            mapRoomId={view.mapRoomId}
+            mapBuildError={view.mapBuildError}
+            mapPath={`${publicPath}?map=1`}
+          />
+        </BagDraftGuide>
+      </LobbyPanel>
       {view.phase !== "lobby" && view.viewer.playerId !== undefined && (
         <DraftTurnStatus
           roomKey={`bag:${view.id}`}
@@ -925,20 +876,6 @@ export default function BagDraftPage() {
           complete={view.phase === "complete"}
         />
       )}
-      <BagDraftGuide
-        rules={view.rules}
-        variant={view.settings.variant}
-        phase={view.phase}
-      >
-        <BagMapSetup
-          rules={view.rules}
-          playerCount={view.players.length}
-          phase={view.phase}
-          mapRoomId={view.mapRoomId}
-          mapBuildError={view.mapBuildError}
-          mapPath={`${publicPath}?map=1`}
-        />
-      </BagDraftGuide>
       {view.phase !== "lobby" && (
         <>
           {seat && view.phase === "drafting" && (
@@ -951,17 +888,6 @@ export default function BagDraftPage() {
               selectedIds={selectedIds}
               setSelectedIds={setSelectedIds}
             />
-          )}
-          {view.viewer.isAdmin && view.canUndoRound && (
-            <Button
-              color="orange"
-              variant="light"
-              onClick={() => setConfirmUndo(true)}
-              disabled={busy}
-              style={{ alignSelf: "flex-start" }}
-            >
-              Rewind draft round
-            </Button>
           )}
           {seat && view.phase === "assembling" && (
             <FactionAssembly

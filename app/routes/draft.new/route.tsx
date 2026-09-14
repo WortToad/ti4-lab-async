@@ -152,7 +152,7 @@ export default function DraftNew() {
           span={{ base: 12, lg: 6 }}
           order={showFullMap ? { base: 2, lg: 1 } : undefined}
         >
-          <Stack gap="xl" w="100%">
+          <Stack gap="lg" w="100%">
             <Stack gap="xs">
               <SectionTitle title="Slices Summary" />
               <SlicesTable slices={draft.slices} />

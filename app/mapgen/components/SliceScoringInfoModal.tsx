@@ -13,7 +13,7 @@ export function SliceScoringInfoModal({ opened, onClose }: Props) {
       title="Slice Scoring & Balance"
       size="lg"
     >
-      <Stack gap="xl">
+      <Stack gap="lg">
         <Box>
           <Title order={3} size="h4" mb="md">
             How Slice Scoring Works

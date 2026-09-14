@@ -1,6 +1,5 @@
 .section {
-  padding: 16px 0;
-  margin-bottom: 4px;
+  padding: var(--mantine-spacing-md) 0;
   border-bottom: 1px solid var(--command-border-subtle);
   position: relative;
 }

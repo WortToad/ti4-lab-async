@@ -1,4 +1,4 @@
-import { Box, Group, Text } from "@mantine/core";
+import { Box, Group, Text, DEFAULT_THEME } from "@mantine/core";
 
 type Props = {
   legendary?: boolean;
@@ -8,10 +8,43 @@ type Props = {
 };
 
 export function PlanetStats({
+  legendary,
   resources,
   influence,
   fontSize = "25px",
 }: Props) {
+  if (legendary) {
+    return (
+      <Group
+        gap={3}
+        wrap="nowrap"
+        role="img"
+        aria-label={`${resources} resources, ${influence} influence`}
+        style={{ zIndex: 1 }}
+      >
+        <Box
+          bg={DEFAULT_THEME.colors.yellow[6]}
+          style={{ borderRadius: 8 }}
+          px={2}
+          py={2}
+        >
+          <Text size={fontSize} lh={1.55} fw="bolder" c="white">
+            {resources}
+          </Text>
+        </Box>
+        <Box
+          bg={DEFAULT_THEME.colors.blue[6]}
+          style={{ borderRadius: 8 }}
+          px={2}
+          py={2}
+        >
+          <Text size={fontSize} lh={1.55} c="white" fw="bolder">
+            {influence}
+          </Text>
+        </Box>
+      </Group>
+    );
+  }
   return (
     <Group
       gap={3}
@@ -20,24 +53,26 @@ export function PlanetStats({
       aria-label={`${resources} resources, ${influence} influence`}
       style={{ zIndex: 1 }}
     >
-      <Box
-        bg="var(--command-resources)"
-        px={3}
-        style={{ borderRadius: 3, border: "1px solid #071321" }}
+      <Text
+        size={fontSize}
+        lh={1.55}
+        fw="bolder"
+        style={{
+          color: "#edff00",
+          WebkitTextStroke: "2px #40578a5e",
+          paintOrder: "stroke fill",
+        }}
       >
-        <Text size={fontSize} lh={1.25} fw={700} c="#071321">
-          {resources}
-        </Text>
-      </Box>
-      <Box
-        bg="var(--command-influence)"
-        px={3}
-        style={{ borderRadius: 3, border: "1px solid #071321" }}
+        {resources}
+      </Text>
+      <Text
+        size={fontSize}
+        lh={1.55}
+        c={DEFAULT_THEME.colors.blue[9]}
+        fw="bolder"
       >
-        <Text size={fontSize} lh={1.25} fw={700} c="#fff">
-          {influence}
-        </Text>
-      </Box>
+        {influence}
+      </Text>
     </Group>
   );
 }

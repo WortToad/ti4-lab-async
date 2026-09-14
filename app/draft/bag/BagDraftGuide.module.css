@@ -1,7 +1,7 @@
 .stages {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--mantine-spacing-sm);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -11,9 +11,9 @@
   display: grid;
   grid-template-rows: subgrid;
   grid-row: span 2;
-  gap: 12px;
+  gap: var(--mantine-spacing-sm);
   min-width: 0;
-  padding: 16px;
+  padding: var(--mantine-spacing-md);
   border: 1px solid var(--command-border);
   border-radius: var(--mantine-radius-md);
   background: var(--command-ink);
@@ -28,7 +28,7 @@
   display: grid;
   grid-template-columns: 40px minmax(0, 1fr);
   align-items: start;
-  gap: 12px;
+  gap: var(--mantine-spacing-sm);
 }
 
 .number {

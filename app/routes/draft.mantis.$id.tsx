@@ -64,6 +64,7 @@ import {
 } from "~/drizzle/mantisDraft.server";
 import { LobbyPanel, type LobbyOperation } from "~/draft/LobbyPanel";
 import { GameTerms } from "~/components/GameTerm";
+import { LobbyDraftGuide } from "~/draft/LobbyDraftGuide";
 import { DraftTurnStatus } from "~/draft/DraftTurnStatus";
 import { useLobbyRefresh } from "~/hooks/useLobbyRefresh";
 import { createOrderedLoader } from "~/hooks/orderedLoader";
@@ -539,10 +540,77 @@ export default function MantisRoom() {
           error={fetcher.data?.error}
           onOperation={lobbyOperation}
           exportState={fetcher.data?.exportState}
-        />
+        >
+          <MantisDraftGuide room={room} />
+        </LobbyPanel>
       </Container>
       {room.draft && <ActiveMantisRoom room={{ ...room, draft: room.draft }} />}
     </>
+  );
+}
+
+function MantisDraftGuide({ room }: { room: LoadedMantisRoom }) {
+  const draft = room.draft;
+  const playerId = room.ownPlayers[0];
+  if (!draft) return null;
+  return (
+    <LobbyDraftGuide>
+      <Stack gap="md">
+        <Text>
+          {draft.phase === "draft"
+            ? "On each turn, choose one faction, one speaker position, or one tile. By the end, you need one faction, one speaker position, and your full quota of blue and red tiles. The order reverses each round."
+            : draft.phase === "home"
+              ? "Keleres chooses the home system and hero of an unplayed Mentak, Xxcha, or Argent faction before map building."
+              : draft.phase === "discard"
+                ? "Keep exactly 3 blue and 2 red tiles. Everyone can remove their extras at the same time. Map building begins automatically when all hands are ready."
+                : draft.phase === "build"
+                  ? "The active player draws one tile privately, then places it in a highlighted space. Each player's five tiles become their own section of the map. A mulligan redraws without losing the previous tile."
+                  : "Your factions, speaker positions, and map are ready. Copy a map string below to set up your game."}
+        </Text>
+        <Group gap="xs" aria-label="Mantis draft stages">
+          {[
+            "Draft faction + speaker + tiles",
+            "Choose Keleres home",
+            "Discard extras",
+            "Build map",
+            "Play",
+          ].map((label, index) => (
+            <Badge
+              key={label}
+              variant={
+                ["draft", "home", "discard", "build", "complete"][index] ===
+                draft.phase
+                  ? "filled"
+                  : "light"
+              }
+            >
+              {index + 1}. {label}
+            </Badge>
+          ))}
+        </Group>
+        {draft.phase !== "complete" && (
+          <Accordion variant="contained">
+            <Accordion.Item value="tile-placement">
+              <Accordion.Control>
+                How your tiles build the shared map
+              </Accordion.Control>
+              <Accordion.Panel>
+                <MapBuildDiagram
+                  playerCount={draft.players.length}
+                  playerSeat={
+                    playerId === undefined ? undefined : draft.seats[playerId]
+                  }
+                  source={draft.bagDraftId ? "kept" : "pool"}
+                  draftBlues={3 + draft.settings.extraBlues}
+                  draftReds={2 + draft.settings.extraReds}
+                  mulligans={draft.settings.mulligans}
+                />
+              </Accordion.Panel>
+            </Accordion.Item>
+          </Accordion>
+        )}
+      </Stack>
+    </LobbyDraftGuide>
   );
 }
 
@@ -726,27 +794,6 @@ function ActiveMantisRoom({
           can be used, the tile is placed automatically and recorded in the
           draft log. The admin can undo these placements like any other action.
         </Text>
-        {draft.phase !== "complete" && (
-          <Accordion variant="contained">
-            <Accordion.Item value="tile-placement">
-              <Accordion.Control>
-                How your tiles build the shared map
-              </Accordion.Control>
-              <Accordion.Panel>
-                <MapBuildDiagram
-                  playerCount={draft.players.length}
-                  playerSeat={
-                    playerId === undefined ? undefined : draft.seats[playerId]
-                  }
-                  source={draft.bagDraftId ? "kept" : "pool"}
-                  draftBlues={3 + draft.settings.extraBlues}
-                  draftReds={2 + draft.settings.extraReds}
-                  mulligans={draft.settings.mulligans}
-                />
-              </Accordion.Panel>
-            </Accordion.Item>
-          </Accordion>
-        )}
         <Group>
           <Badge size="lg">{draft.phase}</Badge>
           <Text fw={600} style={{ overflowWrap: "anywhere" }}>
@@ -760,45 +807,6 @@ function ActiveMantisRoom({
           </Text>
         </Group>
         {fetcher.data?.error && <Alert color="red">{fetcher.data.error}</Alert>}
-        <Alert
-          color="sky.4"
-          title={
-            draft.phase === "complete"
-              ? "Ready to play"
-              : "How this phase works"
-          }
-        >
-          {draft.phase === "draft"
-            ? "On each turn, choose one faction, one speaker position, or one tile. By the end, you need one faction, one speaker position, and your full quota of blue and red tiles. The order reverses each round."
-            : draft.phase === "home"
-              ? "Keleres chooses the home system and hero of an unplayed Mentak, Xxcha, or Argent faction before map building."
-              : draft.phase === "discard"
-                ? "Keep exactly 3 blue and 2 red tiles. Everyone can remove their extras at the same time. Map building begins automatically when all hands are ready."
-                : draft.phase === "build"
-                  ? "The active player draws one tile privately, then places it in a highlighted space. Each player's five tiles become their own section of the map. A mulligan redraws without losing the previous tile."
-                  : "Your factions, speaker positions, and map are ready. Copy a map string below to set up your game."}
-        </Alert>
-        <Group gap="xs" aria-label="Mantis draft stages">
-          {[
-            "Draft faction + speaker + tiles",
-            "Choose Keleres home",
-            "Discard extras",
-            "Build map",
-            "Play",
-          ].map((label, index) => (
-            <Badge
-              key={label}
-              variant={
-                ["draft", "home", "discard", "build", "complete"][index] ===
-                draft.phase
-                  ? "filled"
-                  : "light"
-              }
-            >
-              {index + 1}. {label}
-            </Badge>
-          ))}
-        </Group>
         <Text size="sm">
           Draft order:{" "}
           {draft.order

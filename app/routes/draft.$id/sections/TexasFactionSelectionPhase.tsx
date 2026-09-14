@@ -101,7 +101,7 @@ export function TexasFactionSelectionPhase() {
 
       {/* Main content */}
       <Center p="md" pt="lg">
-        <Grid maw={1400} w="100%" gap="xl">
+        <Grid maw={1400} w="100%" gap="lg">
           <Grid.Col span={{ base: 12, md: 4 }}>
             <PlayerSelectionSidebar
               players={phase.hydratedPlayers}

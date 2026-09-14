@@ -20,6 +20,13 @@ Flavor copy uses the setting's imperial history, rival civilizations, diplomacy 
 
 `app/theme.ts` defines the Mantine theme. `app/main.css` provides shared typography, focus, control sizing, and reduced-motion behavior.
 
+### Spacing and draft guidance
+
+- Shared spacing uses 8, 12, 16, 24 and 32px tokens. Page cards, section stacks and choice grids use a 24px gap; content groups use 16px and related labels/actions use 8–12px. Parent layouts own the space between cards: lobby cards have no external margins, and route containers do not add padding between stacked cards.
+- Bag, RAW and Mantis phase instructions live in “How this draft works” inside the lobby, below recovery and admin controls. The bag guide includes the current player's picking, ready, assembly or completion instructions alongside the stage overview, collection limits and map setup. Turn status and selection/confirmation actions stay next to the choices. Round rewind is an admin control.
+- Bag passing-order cards share equal grid dimensions, including the final “Back to” card, at desktop and phone widths.
+- Simplified system tiles retain the cloned ti4-lab renderer's Quantico font, radius-dependent system IDs, compact planet names, unboxed ordinary resource/influence values, legendary value treatment and tile colors. These metrics are scoped to the tiles so page typography changes do not enlarge their contents. The same rendering is used in maps and tile previews.
+
 ### Typography and heading hierarchy
 
 - `Title.order` follows the document outline; `Title.size` chooses the visual scale. The shared theme selects Cinzel for `h1`/`h2` sizes and Source Sans 3 for compact headings, so an `h2` rendered at `h3` size uses the same font as other 22px section titles.
@@ -62,6 +69,8 @@ After joining a managed lobby, players see a Mantine dialog prompting them to sa
 The redesign is checked with TypeScript, the production build, the existing Vitest suite, and Chromium interactions. Automated accessibility checks use axe against WCAG A/AA tags through 2.2; these are supplemented by keyboard and responsive layout checks. Automated results are not a claim of complete WCAG conformance.
 
 Completed checks:
+
+- The lobby/layout follow-up passes the production build, TypeScript, full lint (no errors, 20 existing warnings), all 847 unit tests and the complete 151-test Chromium suite (the desktop-only skip is the touch test). All ten bag variants create lobbies, restore pending selections, confirm and undo picks, and advance a complete round on desktop and mobile. The 22 appearance baselines were reviewed and updated for the intended layout changes. Bag picking, ready, assembly, finished and completed views were reviewed at 320, 390 and 1440px: the main card gaps measure 24px, passing-order cards including “Back to” have equal dimensions, and none of these views overflow horizontally. Browser interactions confirm picking, confirmation, undo and the relocated admin rewind control. Homepage, setup and recovery layouts also fit at 320px; simplified two-ring and six-player maps were visually checked against the cloned renderer's tile metrics.
 
 - The lore copy review checks the homepage, setup introductions, map builder and rejoin at 320px, 390px and 1440px, plus the draft preview at 320px. The 25 reviewed views have no horizontal overflow or reported WCAG A/AA axe violations. All 21 homepage format links remain available, and the briefing links directly to its verified quote source. The production build, TypeScript and scoped ESLint pass.
 

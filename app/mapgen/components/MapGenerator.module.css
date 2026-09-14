@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 24px;
+  gap: var(--mantine-spacing-lg);
   padding: 32px 0;
 }
 .heading,
@@ -14,7 +14,7 @@
 .workspace {
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);
-  gap: 24px;
+  gap: var(--mantine-spacing-lg);
   align-items: start;
 }
 .library {
@@ -33,7 +33,7 @@
   box-shadow: var(--command-shadow);
 }
 .toolbar {
-  padding: 24px;
+  padding: var(--mantine-spacing-lg);
   border-bottom: 1px solid var(--command-border);
   border-radius: var(--command-radius) var(--command-radius) 0 0;
   background: var(--command-surface);
@@ -41,16 +41,16 @@
 .settings {
   display: grid;
   grid-template-columns: minmax(150px, 1fr) minmax(180px, 1.3fr);
-  gap: 20px;
-  padding-top: 20px;
+  gap: var(--mantine-spacing-md);
+  padding-top: var(--mantine-spacing-md);
 }
 .settings > :last-child {
   grid-column: 1 / -1;
 }
 .tools {
   border-block: 1px solid var(--command-border-subtle);
-  padding-block: 18px;
-  margin-top: 20px;
+  padding-block: var(--mantine-spacing-md);
+  margin-top: var(--mantine-spacing-md);
 }
 .toolbar :global(.mantine-ActionIcon-root) {
   min-width: 44px;
@@ -69,17 +69,17 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .toolbar {
-    padding: 16px;
+    padding: var(--mantine-spacing-md);
   }
   .heading {
     padding-block: 16px;
-    gap: 12px;
+    gap: var(--mantine-spacing-sm);
   }
   .heading h1 {
     font-size: 1.75rem;
   }
   .headingActions {
-    gap: 8px;
+    gap: var(--mantine-spacing-xs);
   }
   .headingActions :global(.mantine-Button-root) {
     padding-inline: 12px;

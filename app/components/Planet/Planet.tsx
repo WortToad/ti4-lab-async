@@ -1,4 +1,4 @@
-import { Box, Flex, useMantineTheme } from "@mantine/core";
+import { Box, Flex, DEFAULT_THEME } from "@mantine/core";
 import { Planet as PlanetType, PlanetTrait } from "~/types";
 import { PlanetName } from "./PlanetName";
 import { PlanetStats } from "./PlanetStats";
@@ -50,7 +50,7 @@ export function Planet({
   largeFonts = false,
   disablePopover = false,
 }: Props) {
-  const theme = useMantineTheme();
+  const theme = DEFAULT_THEME;
 
   const bgColors: Record<PlanetTrait, string> = {
     CULTURAL: theme.colors.blue[4],
@@ -62,7 +62,9 @@ export function Planet({
 
   const fontSize = largeFonts ? "35px" : "24px";
   const size = 50 + (planet.legendary ? 20 : 0);
-  const planetColor = trait ? getBgColor(bgColors, trait) : "gray.6";
+  const planetColor = trait
+    ? getBgColor(bgColors, trait)
+    : DEFAULT_THEME.colors.gray[6];
 
   const showBg = !hasLegendaryImage && !planet.tradeStation;
 

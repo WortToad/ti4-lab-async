@@ -90,7 +90,7 @@ export function HomeSystemSelectionPhase() {
       <SpectatorModeNotice isSpectatorMode={isSpectatorMode} />
 
       <Center p="md" pt="lg">
-        <Grid maw={1600} w="100%" gap="xl" style={{ alignItems: "flex-start" }}>
+        <Grid maw={1600} w="100%" gap="lg" style={{ alignItems: "flex-start" }}>
           <Grid.Col span={{ base: 12, md: 4, lg: 3 }}>
             <PlayerSelectionSidebar
               players={phase.hydratedPlayers}
